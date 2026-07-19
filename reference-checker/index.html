@@ -549,7 +549,7 @@
       const parsed=parseReference(reference);
       if(parsed.type==='EB/OL'||(parsed.url&&!parsed.doi&&!['J','C','M','D','R'].includes(parsed.type)))return verifyWebReference(reference,parsed);
       try{
-        const jobs=[queryCrossref(parsed),queryOpenAlex(parsed)];if(parsed.doi)jobs.push(queryDoiRegistry(parsed));
+        const jobs=[queryCrossref(parsed),queryOpenAlex(parsed)];if(parsed.doi&&(!parsed.type||parsed.type==='J'))jobs.push(queryDoiRegistry(parsed));
         const checks=await Promise.allSettled(jobs),available=checks.filter(x=>x.status==='fulfilled').map(x=>x.value.source),all=checks.flatMap(x=>x.status==='fulfilled'?x.value.candidates:[]);
         let candidates=mergeCandidates(all),ranked=candidates.map(candidate=>({candidate,metrics:scoreCandidate(parsed,candidate)})).sort((a,b)=>b.metrics.score-a.metrics.score);
         const shouldUseBroadFallback=!parsed.doi&&!hasHan(parsed.title)&&(!ranked.length||ranked[0].metrics.score<.86);
