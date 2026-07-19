@@ -180,15 +180,20 @@
     function splitSubmittedAuthors(value){
       return String(value||'').replace(/\bet\s+al\.?/ig,'').split(/\s*(?:,|，|、|;|；|\band\b|&)\s*/i).map(cleanValue).filter(Boolean);
     }
-    function mainlandEvidenceLinks(parsed,doi=''){
-      if(!hasHan(parsed.raw))return[];
+    function scholarlyEvidenceLinks(parsed,doi=''){
       const terms=[parsed.title?`"${parsed.title}"`:'',parsed.authors,parsed.container].filter(Boolean).join(' '),title=parsed.title||parsed.work;
       const links=[
-        {label:'百度精确复核',url:`https://www.baidu.com/s?wd=${encodeURIComponent(terms)}`},
-        {label:'万方题名检索',url:`https://s.wanfangdata.com.cn/paper?q=${encodeURIComponent(title)}`},
-        {label:'PubScholar 检索',url:`https://pubscholar.cn/explore?query=${encodeURIComponent(title)}&searchType=article`}
+        {label:'百度精确复核',url:`https://www.baidu.com/s?wd=${encodeURIComponent(terms)}`}
       ];
-      if(doi)links.unshift({label:'万方 DOI 记录',url:`https://doi.wanfangdata.com.cn/${encodeURIComponent(doi)}`});
+      if(hasHan(parsed.raw)){
+        links.push(
+          {label:'万方题名检索',url:`https://s.wanfangdata.com.cn/paper?q=${encodeURIComponent(title)}`},
+          {label:'PubScholar 检索',url:`https://pubscholar.cn/explore?query=${encodeURIComponent(title)}&searchType=article`}
+        );
+        if(doi)links.unshift({label:'万方 DOI 记录',url:`https://doi.wanfangdata.com.cn/${encodeURIComponent(doi)}`});
+      }else{
+        links.push({label:'Semantic Scholar 题名检索',url:`https://www.semanticscholar.org/search?q=${encodeURIComponent(title)}&sort=relevance`});
+      }
       return links;
     }
     function unesdocArk(value){
@@ -403,6 +408,10 @@
       const people=(item.authorships||[]).map(a=>a.author?.display_name||a.raw_author_name).filter(Boolean),biblio=item.biblio||{},location=item.primary_location||{};
       return{source:'OpenAlex',sources:['OpenAlex'],exactDoi,title:item.title||item.display_name||'',authors:people,authorKeys:people.map(authorKey).filter(Boolean),year:item.publication_year||null,container:location.source?.display_name||location.raw_source_name||'',volume:biblio.volume||'',issue:biblio.issue||'',pages:biblio.first_page?(biblio.last_page&&biblio.last_page!==biblio.first_page?`${biblio.first_page}-${biblio.last_page}`:String(biblio.first_page)):'',doi:String(item.doi||'').replace(/^https?:\/\/doi\.org\//i,'').toLowerCase(),type:item.type||location.raw_type||'',sourceUrl:item.doi||location.landing_page_url||item.id||''};
     }
+    function semanticScholarCandidate(item){
+      const people=(item.authors||[]).map(author=>cleanValue(author?.name)).filter(Boolean),types=(item.publicationTypes||[]).filter(Boolean),externalIds=item.externalIds||{};
+      return{source:'Semantic Scholar',sources:['Semantic Scholar'],exactDoi:false,title:item.title||'',authors:people,authorKeys:people.map(authorKey).filter(Boolean),year:item.year||null,container:item.venue||'',volume:'',issue:'',pages:'',doi:String(externalIds.DOI||externalIds.Doi||'').toLowerCase(),type:types.join(' '),sourceUrl:item.url||item.openAccessPdf?.url||'',semanticPaperId:item.paperId||''};
+    }
     async function fetchJson(url){
       const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),REQUEST_TIMEOUT);
       try{
@@ -431,15 +440,24 @@
       if(settled.every(x=>x.status==='rejected'))throw Error('OpenAlex 无法连接');
       return{source:'OpenAlex',candidates};
     }
+    async function querySemanticScholar(parsed){
+      const title=cleanValue(parsed.title);if(!title||normalizeText(title).length<4)return{source:'Semantic Scholar',candidates:[]};
+      const endpoint=new URL('https://api.semanticscholar.org/graph/v1/paper/search/bulk');
+      endpoint.searchParams.set('query',`"${title.replace(/"/g,' ')}"`);
+      endpoint.searchParams.set('fields','title,authors,year,venue,publicationTypes,externalIds,url,openAccessPdf');
+      const data=await fetchJson(endpoint.href),candidates=(data?.data||[]).slice(0,10).map(semanticScholarCandidate);
+      return{source:'Semantic Scholar',candidates};
+    }
     function mergeCandidates(candidates){
       const merged=new Map();
       for(const candidate of candidates){
         if(!candidate.title&&!candidate.doi)continue;
         const key=candidate.doi?`doi:${candidate.doi}`:`title:${normalizeText(candidate.title)}:${candidate.year||''}`;
         const prior=merged.get(key);
-        if(!prior){merged.set(key,{...candidate,sources:[...candidate.sources]});continue}
+        if(!prior){merged.set(key,{...candidate,sources:[...candidate.sources],partialFields:[...(candidate.partialFields||[])]});continue}
         prior.sources=[...new Set([...prior.sources,...candidate.sources])];
         prior.source=prior.sources.join(' + ');prior.exactDoi=prior.exactDoi||candidate.exactDoi;
+        prior.partialFields=[...new Set([...(prior.partialFields||[]),...(candidate.partialFields||[])])];
         for(const field of ['title','authors','authorKeys','year','container','volume','issue','pages','doi','type','sourceUrl'])if(!prior[field]&&candidate[field])prior[field]=candidate[field];
       }
       return[...merged.values()];
@@ -490,16 +508,29 @@
     function canonicalCitation(candidate,parsed){
       const names=(candidate.authors||[]).map(gtAuthor).filter(Boolean),hasChinese=names.some(x=>/\p{Script=Han}/u.test(x));
       let authors=names.slice(0,3).join(hasChinese?'，':', ');if(names.length>3)authors+=hasChinese?'，等':', et al.';
-      const type=/book/.test(candidate.type)?'M':/proceedings|conference/.test(candidate.type)?'C':/report/.test(candidate.type)?'R':'J';
+      const candidateType=String(candidate.type||'').toLowerCase(),type=/book/.test(candidateType)?'M':/proceedings|conference/.test(candidateType)?'C':/report/.test(candidateType)?'R':parsed?.type||'J';
       const submittedTitle=cleanValue(parsed?.title),verifiedTitle=cleanValue(candidate.title),submittedNorm=normalizeText(submittedTitle),verifiedNorm=normalizeText(verifiedTitle);
       const title=submittedNorm&&verifiedNorm&&submittedNorm.includes(verifiedNorm)?submittedTitle:verifiedTitle;
+      const container=cleanValue(candidate.container||parsed?.container),year=candidate.year||parsed?.year,volume=cleanValue(candidate.volume||parsed?.volume),issue=cleanValue(candidate.issue||parsed?.issue),pages=cleanValue(candidate.pages||parsed?.pages);
       let citation=`${authors?`${authors}. `:''}${title}[${type}]`;
-      if(candidate.container)citation+=type==='C'?`//${cleanValue(candidate.container)}`:`. ${cleanValue(candidate.container)}`;
-      if(candidate.year)citation+=`${candidate.container?', ':'. '}${candidate.year}`;
-      if(candidate.volume)citation+=`, ${candidate.volume}${candidate.issue?`(${candidate.issue})`:''}`;
-      if(candidate.pages)citation+=`: ${candidate.pages}`;
+      if(container)citation+=type==='C'?`//${container}`:`. ${container}`;
+      if(year)citation+=`${container?', ':'. '}${year}`;
+      if(volume)citation+=`, ${volume}${issue?`(${issue})`:''}`;
+      if(pages)citation+=`: ${pages}`;
       citation+='.';if(candidate.doi)citation+=` DOI:${candidate.doi}.`;
       return citation.replace(/\.\./g,'.');
+    }
+    function missingMetadataFields(parsed,candidate){
+      const fields=[];
+      if(parsed.authors&&!(candidate.authors||[]).length)fields.push('作者');
+      if(parsed.year&&!candidate.year)fields.push('年份');
+      if(parsed.container&&!candidate.container)fields.push('刊名/来源');
+      if(parsed.volume&&!candidate.volume)fields.push('卷号');
+      if(parsed.issue&&!candidate.issue)fields.push('期号');
+      if(parsed.pages&&!candidate.pages)fields.push('页码');
+      if(parsed.doi&&!candidate.doi)fields.push('DOI');
+      if(parsed.type&&!candidate.type)fields.push('文献类型');
+      return fields;
     }
     function differences(parsed,candidate,metrics){
       const out=[],add=(field,submitted,verified)=>out.push({field,submitted:submitted||'未提供',verified:verified||'未提供'}),same=(a,b)=>normalizeText(a)===normalizeText(b);
@@ -521,24 +552,28 @@
         const jobs=[queryCrossref(parsed),queryOpenAlex(parsed)];if(parsed.doi)jobs.push(queryDoiRegistry(parsed));
         const checks=await Promise.allSettled(jobs),available=checks.filter(x=>x.status==='fulfilled').map(x=>x.value.source),all=checks.flatMap(x=>x.status==='fulfilled'?x.value.candidates:[]);
         let candidates=mergeCandidates(all),ranked=candidates.map(candidate=>({candidate,metrics:scoreCandidate(parsed,candidate)})).sort((a,b)=>b.metrics.score-a.metrics.score);
+        const shouldUseBroadFallback=!parsed.doi&&!hasHan(parsed.title)&&(!ranked.length||ranked[0].metrics.score<.86);
+        if(shouldUseBroadFallback){
+          try{const semantic=await querySemanticScholar(parsed);available.push(semantic.source);all.push(...semantic.candidates);candidates=mergeCandidates(all);ranked=candidates.map(candidate=>({candidate,metrics:scoreCandidate(parsed,candidate)})).sort((a,b)=>b.metrics.score-a.metrics.score)}catch(e){}
+        }
         const shouldUseChineseFallback=!parsed.doi&&hasHan(parsed.raw)&&(!ranked.length||ranked[0].metrics.score<.86);
         if(shouldUseChineseFallback){
           try{const registry=await queryDoiRegistry(parsed);available.push(registry.source);all.push(...registry.candidates);candidates=mergeCandidates(all);ranked=candidates.map(candidate=>({candidate,metrics:scoreCandidate(parsed,candidate)})).sort((a,b)=>b.metrics.score-a.metrics.score)}catch(e){}
         }
-        const checked=[...new Set(available)],evidenceBase=mainlandEvidenceLinks(parsed,parsed.doi);
+        const checked=[...new Set(available)],evidenceBase=scholarlyEvidenceLinks(parsed,parsed.doi);
         if(!checked.length)throw Error('所有开放核验源均无法连接');
         if(!candidates.length)return{status:'unverified',confidence:0,submitted:reference,differences:[],note:`已查询 ${checked.join('、')}，未检出可自动确认的记录。请使用下方公开检索入口继续复核；未收录不等于虚假。`,checkedSources:checked,evidenceLinks:evidenceBase};
-        const best=ranked[0],confidence=best.metrics.score,evidenceLinks=mainlandEvidenceLinks(parsed,best.candidate.doi||parsed.doi);
+        const best=ranked[0],confidence=best.metrics.score,evidenceLinks=scholarlyEvidenceLinks(parsed,best.candidate.doi||parsed.doi);
         if(confidence<.67)return{status:'unverified',confidence,submitted:reference,differences:[],note:`已查询 ${checked.join('、')}，但没有找到足以确认的同一文献；这可能是未收录或著录信息不足，不应仅据此判为虚假。`,checkedSources:checked,evidenceLinks};
         const diffs=differences(parsed,best.candidate,best.metrics),source=best.candidate.sources.join(' + '),unavailable=['Crossref','OpenAlex'].filter(name=>!checked.includes(name)),connectionNote=unavailable.length===2?'；两个通用数据库本次均未提供可用结果':unavailable.length?`；${unavailable[0]} 本次未连通`:'';
         if(confidence<.80)return{status:'review',confidence,submitted:reference,differences:diffs,note:`在 ${source} 找到近似记录，匹配度尚不足以自动确认，请人工复核${connectionNote}。`,canonical:canonicalCitation(best.candidate,parsed),sourceUrl:best.candidate.sourceUrl,source,checkedSources:checked,evidenceLinks};
-        const partialFields=best.candidate.partialFields||[],status=diffs.length?'corrected':partialFields.length?'partial':'verified';
+        const partialFields=[...new Set([...(best.candidate.partialFields||[]),...missingMetadataFields(parsed,best.candidate)])],status=diffs.length?'corrected':partialFields.length?'partial':'verified';
         let note=diffs.length?`已在 ${source} 找到同一文献，以下字段与来源记录不一致${connectionNote}。`:`已在 ${source} 找到高度一致的记录${connectionNote}。`;
-        if(partialFields.length&&!diffs.length)note=`已由 DOI 注册元数据确认篇名、年份、期刊、卷期、首页和 DOI；注册记录未完整提供${partialFields.join('、')}，本站保留原著录，并提供百度、万方入口供继续核对。`;
-        if(partialFields.length&&diffs.length)note+=` DOI 注册记录未完整提供${partialFields.join('、')}，相关原著录仍需通过下方公开检索入口复核。`;
+        if(partialFields.length&&!diffs.length)note=source==='DOI 注册元数据'?`已由 DOI 注册元数据确认篇名、年份、期刊、卷期、首页和 DOI；注册记录未完整提供${partialFields.join('、')}，本站保留原著录，并提供公开检索入口供继续核对。`:`已在 ${source} 通过篇名、作者和年份等核心字段确认该文献真实存在；该记录未完整提供${partialFields.join('、')}，这些字段暂时保留原著录，仍建议通过原始文献或下方公开检索入口复核。`;
+        if(partialFields.length&&diffs.length)note+=source.includes('DOI 注册元数据')?` DOI 注册记录未完整提供${partialFields.join('、')}，相关原著录仍需通过下方公开检索入口复核。`:` 来源记录未完整提供${partialFields.join('、')}，相关原著录仍需通过下方公开检索入口复核。`;
         return{status,confidence,submitted:reference,differences:diffs,note,canonical:canonicalCitation(best.candidate,parsed),sourceUrl:best.candidate.sourceUrl,source,checkedSources:checked,evidenceLinks};
       }catch(e){
-        return{status:'error',confidence:0,submitted:reference,differences:[],note:`核验失败：${e.name==='AbortError'?'开放数据源连接超时':e.message||'网络错误'}。可使用下方公开检索入口继续复核。`,checkedSources:[],evidenceLinks:mainlandEvidenceLinks(parsed,parsed.doi)};
+        return{status:'error',confidence:0,submitted:reference,differences:[],note:`核验失败：${e.name==='AbortError'?'开放数据源连接超时':e.message||'网络错误'}。可使用下方公开检索入口继续复核。`,checkedSources:[],evidenceLinks:scholarlyEvidenceLinks(parsed,parsed.doi)};
       }
     }
     verifyBtn.onclick=async()=>{const list=refs(input.value);if(!list.length||list.length>MAX)return;verifyBtn.disabled=true;clearBtn.disabled=true;verifyBtn.innerHTML='<span class="spinner"></span>核验中';$('#results').classList.remove('hidden');$('#cards').innerHTML='';$('#summary').innerHTML='';$('#progress').textContent=`0 / ${list.length}`;const out=new Array(list.length);let next=0,done=0;async function worker(){while(next<list.length){const i=next++;out[i]=await verifyOne(list[i]);done++;$('#progress').textContent=`${done} / ${list.length}`;render(out.filter(Boolean))}}await Promise.all(Array.from({length:Math.min(2,list.length)},worker));verifyBtn.textContent='重新核验';update();$('#results').scrollIntoView({behavior:'smooth',block:'start'})};
