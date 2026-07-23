@@ -1,0 +1,47 @@
+.privacy-page {
+  padding: 42rpx 28rpx calc(60rpx + env(safe-area-inset-bottom));
+}
+
+.privacy-title {
+  font-family: "Songti SC", serif;
+  font-size: 50rpx;
+  font-weight: 700;
+}
+
+.updated {
+  margin: 8rpx 0 30rpx;
+  color: #7b818c;
+  font-size: 22rpx;
+}
+
+.privacy-card {
+  margin-top: 18rpx;
+  padding: 28rpx;
+  border: 1rpx solid rgba(169, 157, 139, .58);
+  border-radius: 22rpx;
+  background: rgba(255, 253, 250, .94);
+  box-shadow: 0 12rpx 36rpx rgba(36, 43, 55, .05);
+}
+
+.item-title {
+  color: #182640;
+  font-size: 29rpx;
+  font-weight: 700;
+}
+
+.item-copy {
+  margin-top: 12rpx;
+  color: #616b7b;
+  font-size: 25rpx;
+  line-height: 1.8;
+  text-align: justify;
+}
+
+.privacy-note {
+  margin-top: 34rpx;
+  color: #7b818c;
+  font-size: 22rpx;
+  line-height: 1.75;
+  text-align: center;
+}
+
