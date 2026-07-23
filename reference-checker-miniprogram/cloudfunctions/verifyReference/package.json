@@ -1,0 +1,13 @@
+{
+  "name": "verify-reference",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cheerio": "1.0.0",
+    "iconv-lite": "0.7.0"
+  }
+}
