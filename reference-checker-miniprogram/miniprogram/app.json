@@ -1,0 +1,16 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/privacy/privacy"
+  ],
+  "window": {
+    "navigationBarTitleText": "文证·参考文献核验",
+    "navigationBarBackgroundColor": "#f7f3ed",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f3eee6",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}
