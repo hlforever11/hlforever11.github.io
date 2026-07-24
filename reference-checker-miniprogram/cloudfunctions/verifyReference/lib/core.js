@@ -2,10 +2,16 @@ const cheerio = require("cheerio");
 const iconv = require("iconv-lite");
 const dns = require("node:dns").promises;
 const net = require("node:net");
+const nodeFetch = require("node-fetch");
+const CompatibleAbortController = globalThis.AbortController || require("abort-controller");
 const JOURNALS = require("./cn-journals.json");
 
 const REQUEST_TIMEOUT = 10500;
 const USER_AGENT = "ReferenceVerifierMiniProgram/1.0 (mailto:linhu@scu.edu.cn)";
+
+function compatibleFetch(...args) {
+  return (globalThis.fetch || nodeFetch)(...args);
+}
 
 function normalizeText(value) {
   return String(value ?? "")
@@ -300,10 +306,10 @@ function webEvidenceLinks(parsed) {
 }
 
 async function fetchWithTimeout(url, options = {}, timeout = REQUEST_TIMEOUT) {
-  const controller = new AbortController();
+  const controller = new CompatibleAbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
-    const response = await fetch(url, {
+    const response = await compatibleFetch(url, {
       redirect: "follow",
       ...options,
       headers: {
@@ -406,13 +412,13 @@ async function assertPublicUrl(value) {
 }
 
 async function fetchPublicPage(value, options = {}, timeout = 13500) {
-  const controller = new AbortController();
+  const controller = new CompatibleAbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   let current = value;
   try {
     for (let redirectCount = 0; redirectCount <= 5; redirectCount += 1) {
       const checked = await assertPublicUrl(current);
-      const response = await fetch(checked.href, {
+      const response = await compatibleFetch(checked.href, {
         ...options,
         redirect: "manual",
         headers: {
@@ -1053,7 +1059,9 @@ async function fetchWebCandidate(parsed) {
   const contentType = response.headers.get("content-type") || "";
   const length = Number(response.headers.get("content-length") || 0);
   if (length > 4 * 1024 * 1024) throw new Error("原始页面内容过大");
-  const buffer = Buffer.from(await response.arrayBuffer());
+  const buffer = typeof response.arrayBuffer === "function"
+    ? Buffer.from(await response.arrayBuffer())
+    : await response.buffer();
   if (buffer.length > 4 * 1024 * 1024) throw new Error("原始页面内容过大");
 
   if (/application\/pdf/i.test(contentType) || buffer.subarray(0, 4).toString() === "%PDF") {
