@@ -14,6 +14,27 @@
     </view>
   </view>
 
+  <view class="account-strip">
+    <view class="account-copy">
+      <view class="account-title">{{historyEnabled ? "历史记录已启用" : "无需登录也能核验"}}</view>
+      <view class="account-note">
+        {{historyEnabled ? "已保存 " + historyCount + " 次核验，可在当前微信账号下查看" : "启用微信身份后，可保存和查看核验历史"}}
+      </view>
+    </view>
+    <view class="account-actions" wx:if="{{historyEnabled}}">
+      <button class="account-button" size="mini" bindtap="openHistory">查看历史</button>
+      <button class="account-link" size="mini" bindtap="disableHistory">停止保存</button>
+    </view>
+    <button
+      wx:else
+      class="account-button"
+      size="mini"
+      loading="{{accountLoading}}"
+      disabled="{{accountLoading}}"
+      bindtap="enableHistory"
+    >启用历史记录</button>
+  </view>
+
   <view class="card workspace">
     <view class="workspace-head">
       <view>
