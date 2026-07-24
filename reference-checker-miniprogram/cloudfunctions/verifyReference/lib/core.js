@@ -6,7 +6,9 @@ const nodeFetch = require("node-fetch");
 const CompatibleAbortController = globalThis.AbortController || require("abort-controller");
 const JOURNALS = require("./cn-journals.json");
 
-const REQUEST_TIMEOUT = 10500;
+// CloudBase 免费体验版的云函数执行时间只有 3 秒。所有外部请求必须在平台
+// 截止前主动结束，给解析、评分和返回结果预留时间。
+const REQUEST_TIMEOUT = 1800;
 const USER_AGENT = "ReferenceVerifierMiniProgram/1.0 (mailto:linhu@scu.edu.cn)";
 
 function compatibleFetch(...args) {
@@ -411,7 +413,7 @@ async function assertPublicUrl(value) {
   return url;
 }
 
-async function fetchPublicPage(value, options = {}, timeout = 13500) {
+async function fetchPublicPage(value, options = {}, timeout = 2100) {
   const controller = new CompatibleAbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   let current = value;
@@ -598,10 +600,79 @@ async function querySemanticScholar(parsed) {
     "fields",
     "title,authors,year,venue,publicationTypes,externalIds,url,openAccessPdf"
   );
-  const data = await fetchJson(endpoint.href, 12500);
+  const data = await fetchJson(endpoint.href);
   return {
     source: "Semantic Scholar",
     candidates: (data?.data || []).map(semanticScholarCandidate)
+  };
+}
+
+function searchSnippetCandidate(parsed, sourceUrl) {
+  const authors = splitSubmittedAuthors(parsed.authors);
+  return {
+    source: "搜索引擎结果摘要",
+    sources: ["搜索引擎结果摘要"],
+    exactDoi: false,
+    evidenceStrength: "search-snippet",
+    title: parsed.title,
+    authors,
+    authorKeys: authors.map(authorKey).filter(Boolean),
+    year: parsed.year || null,
+    container: parsed.container || "",
+    volume: parsed.volume || "",
+    issue: parsed.issue || "",
+    pages: parsed.pages || "",
+    doi: parsed.doi || "",
+    type: parsed.type || "",
+    sourceUrl
+  };
+}
+
+async function querySearchEngineEvidence(parsed) {
+  const title = cleanValue(parsed.title);
+  if (!hasHan(title) || normalizeText(title).length < 6) {
+    return { source: "搜索引擎结果摘要", candidates: [] };
+  }
+
+  const terms = [
+    `"${title}"`,
+    splitSubmittedAuthors(parsed.authors)[0] || "",
+    parsed.container || ""
+  ].filter(Boolean).join(" ");
+  const searchUrl = `https://www.baidu.com/s?wd=${encodeURIComponent(terms)}`;
+  const response = await fetchWithTimeout(searchUrl, {
+    headers: {
+      accept: "text/html,application/xhtml+xml",
+      "accept-language": "zh-CN,zh;q=0.9"
+    }
+  });
+  const html = await response.text();
+  const $ = cheerio.load(html);
+  const titleKey = normalizeText(title);
+  const supportTerms = [
+    ...splitSubmittedAuthors(parsed.authors),
+    parsed.container,
+    parsed.year ? String(parsed.year) : ""
+  ].map(normalizeText).filter((value) => value.length >= 2);
+  let evidenceUrl = "";
+
+  $(".result, .c-container").each((_, element) => {
+    if (evidenceUrl) return;
+    const node = $(element);
+    const block = normalizeText(node.text());
+    if (!block.includes(titleKey)) return;
+    if (!supportTerms.some((term) => block.includes(term))) return;
+    evidenceUrl = cleanValue(
+      node.attr("mu") ||
+      node.find("h3 a").first().attr("href") ||
+      node.find("a").first().attr("href") ||
+      searchUrl
+    );
+  });
+
+  return {
+    source: "搜索引擎结果摘要",
+    candidates: evidenceUrl ? [searchSnippetCandidate(parsed, evidenceUrl)] : []
   };
 }
 
@@ -661,7 +732,7 @@ function parseDoiCitation(text, doi, parsed) {
 
 async function fetchDoiCitation(doi, parsed) {
   const url = `https://citation.doi.org/format?doi=${encodeURIComponent(doi)}&style=apa&lang=zh-CN`;
-  const text = await fetchText(url, 12500);
+  const text = await fetchText(url);
   return parseDoiCitation(text, doi, parsed);
 }
 
@@ -1344,11 +1415,23 @@ async function verifyWebReference(reference, parsed) {
 }
 
 async function verifyAcademicReference(reference, parsed) {
-  const jobs = [queryCrossref(parsed), queryOpenAlex(parsed)];
+  const jobs = [
+    { source: "Crossref", promise: queryCrossref(parsed) },
+    { source: "OpenAlex", promise: queryOpenAlex(parsed) }
+  ];
   if (parsed.doi && (!parsed.type || parsed.type === "J")) {
-    jobs.push(queryDoiRegistry(parsed));
+    jobs.push({ source: "DOI 注册元数据", promise: queryDoiRegistry(parsed) });
   }
-  const checks = await Promise.allSettled(jobs);
+  if (!parsed.doi && !hasHan(parsed.title)) {
+    jobs.push({ source: "Semantic Scholar", promise: querySemanticScholar(parsed) });
+  }
+  if (!parsed.doi && hasHan(parsed.raw)) {
+    jobs.push({
+      source: "搜索引擎结果摘要",
+      promise: querySearchEngineEvidence(parsed)
+    });
+  }
+  const checks = await Promise.allSettled(jobs.map((job) => job.promise));
   const available = checks
     .filter((item) => item.status === "fulfilled")
     .map((item) => item.value.source);
@@ -1360,39 +1443,19 @@ async function verifyAcademicReference(reference, parsed) {
     .map((candidate) => ({ candidate, metrics: scoreCandidate(parsed, candidate) }))
     .sort((a, b) => b.metrics.score - a.metrics.score);
 
-  const shouldUseEnglishFallback = !parsed.doi &&
-    !hasHan(parsed.title) &&
-    (!ranked.length || ranked[0].metrics.score < 0.86);
-  if (shouldUseEnglishFallback) {
-    try {
-      const semantic = await querySemanticScholar(parsed);
-      available.push(semantic.source);
-      all.push(...semantic.candidates);
-      candidates = mergeCandidates(all);
-      ranked = candidates
-        .map((candidate) => ({ candidate, metrics: scoreCandidate(parsed, candidate) }))
-        .sort((a, b) => b.metrics.score - a.metrics.score);
-    } catch {}
-  }
-
-  const shouldUseChineseFallback = !parsed.doi &&
-    hasHan(parsed.raw) &&
-    (!ranked.length || ranked[0].metrics.score < 0.86);
-  if (shouldUseChineseFallback) {
-    try {
-      const registry = await queryDoiRegistry(parsed);
-      available.push(registry.source);
-      all.push(...registry.candidates);
-      candidates = mergeCandidates(all);
-      ranked = candidates
-        .map((candidate) => ({ candidate, metrics: scoreCandidate(parsed, candidate) }))
-        .sort((a, b) => b.metrics.score - a.metrics.score);
-    } catch {}
-  }
-
   const checked = [...new Set(available)];
   const evidenceBase = scholarlyEvidenceLinks(parsed, parsed.doi);
-  if (!checked.length) throw new Error("所有开放核验源均无法连接");
+  if (!checked.length) {
+    return {
+      status: "unverified",
+      confidence: 0,
+      submitted: reference,
+      differences: [],
+      note: `已尝试 ${jobs.map((job) => job.source).join("、")}，但核验源没有在本次限时内返回。未能自动确认不等于文献虚假，请使用复核链接继续核对。`,
+      checkedSources: [],
+      evidenceLinks: evidenceBase
+    };
+  }
   if (!candidates.length) {
     return {
       status: "unverified",
@@ -1441,12 +1504,15 @@ async function verifyAcademicReference(reference, parsed) {
     ...(best.candidate.partialFields || []),
     ...missingMetadataFields(parsed, best.candidate)
   ])];
+  const snippetEvidence = best.candidate.evidenceStrength === "search-snippet";
   const status = differences.length
     ? "corrected"
-    : partialFields.length
+    : snippetEvidence || partialFields.length
       ? "partial"
       : "verified";
-  let note = differences.length
+  let note = snippetEvidence
+    ? "已在搜索引擎结果摘要中找到题名及辅助字段一致的记录，可确认文献存在；卷期页等细节仍建议打开来源页复核。"
+    : differences.length
     ? `已在 ${source} 找到同一文献，以下字段与来源记录不一致。`
     : `已在 ${source} 找到高度一致的记录。`;
   if (partialFields.length && !differences.length) {
