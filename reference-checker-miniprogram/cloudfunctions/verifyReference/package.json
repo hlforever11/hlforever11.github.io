@@ -4,10 +4,12 @@
   "private": true,
   "main": "index.js",
   "engines": {
-    "node": ">=18"
+    "node": ">=16"
   },
   "dependencies": {
-    "cheerio": "1.0.0",
+    "abort-controller": "3.0.0",
+    "cheerio": "1.0.0-rc.12",
+    "node-fetch": "2.7.0",
     "iconv-lite": "0.7.0"
   }
 }
