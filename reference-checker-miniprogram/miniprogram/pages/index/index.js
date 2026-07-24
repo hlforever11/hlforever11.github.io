@@ -346,7 +346,8 @@ Page({
       }
     };
 
-    await Promise.all(Array.from({ length: Math.min(2, references.length) }, worker));
+    // 免费体验版云函数执行窗口较短，逐条调用可避免慢查询相互争抢资源。
+    await Promise.all(Array.from({ length: Math.min(1, references.length) }, worker));
     this.setData({
       loading: false,
       canVerify: true,
