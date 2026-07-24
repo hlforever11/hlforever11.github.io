@@ -26,52 +26,27 @@ test("可解析 OpenAI Blog 灰色文献的关键字段", () => {
   assert.equal(parsed.pages, "9");
 });
 
-test("Crossref 和 OpenAlex 未收录时可由 Semantic Scholar 确认英文灰色文献", async () => {
-  global.fetch = async (input) => {
-    const url = String(input);
-    if (url.includes("api.crossref.org")) {
-      return new Response(JSON.stringify({ message: { items: [] } }), {
-        status: 200,
-        headers: { "content-type": "application/json" }
-      });
-    }
-    if (url.includes("api.openalex.org")) {
-      return new Response(JSON.stringify({ results: [] }), {
-        status: 200,
-        headers: { "content-type": "application/json" }
-      });
-    }
-    if (url.includes("api.semanticscholar.org")) {
-      return new Response(JSON.stringify({
-        data: [{
-          paperId: "radford-2019",
-          title: "Language Models are Unsupervised Multitask Learners",
-          authors: [
-            { name: "Alec Radford" },
-            { name: "Jeff Wu" },
-            { name: "Rewon Child" },
-            { name: "Ilya Sutskever" }
-          ],
-          year: 2019,
-          venue: "OpenAI Blog",
-          publicationTypes: ["Review"],
-          externalIds: {},
-          url: "https://www.semanticscholar.org/paper/radford-2019"
-        }]
-      }), {
-        status: 200,
-        headers: { "content-type": "application/json" }
-      });
-    }
-    throw new Error(`Unexpected URL ${url}`);
-  };
-
+test("OpenAI 官方来源可确认英文技术报告并修正文献类型", async () => {
   const result = await verifyReference(
     "RADFORD A, WU J, CHILD R, et al. Language models are unsupervised multitask learners[J]. OpenAI Blog, 2019, 1(8): 9."
   );
-  assert.ok(["verified", "partial"].includes(result.status));
+  assert.equal(result.status, "corrected");
   assert.ok(result.confidence >= 0.8);
-  assert.match(result.source, /Semantic Scholar/);
+  assert.match(result.source, /OpenAI 官方报告/);
+  assert.ok(result.differences.some((item) => item.field === "文献类型"));
+  assert.match(result.canonical, /\[R\/OL\]/);
+  assert.doesNotMatch(result.canonical, /1\(8\)/);
+  assert.match(result.canonical, /cdn\.openai\.com/);
+});
+
+test("《图书馆论坛》官网索引可确认中文期刊完整字段", async () => {
+  const result = await verifyReference(
+    "李书宁,刘一鸣.ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战[J].图书馆论坛,2023,43(05):104-110."
+  );
+  assert.equal(result.status, "verified");
+  assert.ok(result.confidence >= 0.9);
+  assert.match(result.source, /图书馆论坛/);
+  assert.equal(result.differences.length, 0);
 });
 
 test("中文期刊可由搜索引擎结果摘要确认存在", async () => {
@@ -91,9 +66,9 @@ test("中文期刊可由搜索引擎结果摘要确认存在", async () => {
     }
     if (url.includes("baidu.com/s")) {
       const html = `<!doctype html><html><body>
-        <div class="result c-container" mu="https://tsglt.zslib.com.cn/CN/Y2023/V43/I5/104">
-          <h3><a href="https://www.baidu.com/link?url=official">ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战</a></h3>
-          <p>李书宁，刘一鸣．图书馆论坛，2023，43(05)：104-110</p>
+        <div class="result c-container" mu="https://example.edu.cn/article/2024/101">
+          <h3><a href="https://www.baidu.com/link?url=official">生成式人工智能环境下的高校知识服务研究</a></h3>
+          <p>张三，李四．知识服务研究，2024，12(03)：20-28</p>
         </div>
       </body></html>`;
       return new Response(html, {
@@ -105,12 +80,12 @@ test("中文期刊可由搜索引擎结果摘要确认存在", async () => {
   };
 
   const result = await verifyReference(
-    "李书宁,刘一鸣.ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战[J].图书馆论坛,2023,43(05):104-110."
+    "张三,李四.生成式人工智能环境下的高校知识服务研究[J].知识服务研究,2024,12(03):20-28."
   );
   assert.equal(result.status, "partial");
   assert.ok(result.confidence >= 0.8);
   assert.match(result.source, /搜索引擎/);
-  assert.match(result.sourceUrl, /tsglt\.zslib\.com\.cn/);
+  assert.match(result.sourceUrl, /example\.edu\.cn/);
 });
 
 test("核验源超时时返回暂未核实而不是核验失败", async () => {
