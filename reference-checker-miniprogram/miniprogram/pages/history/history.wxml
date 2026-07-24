@@ -31,10 +31,10 @@
       </view>
       <view class="record-input">{{record.preview}}</view>
       <view class="record-summary">
-        <text>已确认 {{record.summary.confirmed}}</text>
-        <text>需修正 {{record.summary.corrected}}</text>
-        <text>待复核 {{record.summary.review}}</text>
-        <text>未核实 {{record.summary.unresolved}}</text>
+        <text>已确认真实 {{record.summary.confirmed}}</text>
+        <text>真实但需修正 {{record.summary.corrected}}</text>
+        <text>需人工复核 {{record.summary.review}}</text>
+        <text>暂未证实 {{record.summary.unresolved}}</text>
       </view>
       <view class="record-actions">
         <button class="reuse-button" size="mini" data-id="{{record._id}}" bindtap="reuseRecord">载入并再次核验</button>
