@@ -43,9 +43,27 @@ test("临时 TXT 文档可提取参考文献且最多返回二十条", async () 
     fileName: "test.txt"
   });
   assert.equal(result.ok, true);
-  assert.equal(result.build, "2026.07.25-2");
+  assert.equal(result.build, "2026.07.25-3");
   assert.equal(result.total, 2);
   assert.match(result.references[1], /RADFORD/);
+});
+
+test("超过二十条时返回总数但只载入前二十条", async () => {
+  const text = `参考文献\n${Array.from(
+    { length: 22 },
+    (_, index) => `${index + 1} 作者${index + 1}. 测试题名${index + 1}. 测试期刊, 2024, 1(1): 1-2.`
+  ).join("\n")}`;
+  https.get = createMockTransport(Buffer.from(text)).get;
+
+  const result = await main({
+    tempUrl: "https://reference-checker.tcb.qcloud.la/temporary/long.txt",
+    fileName: "long.txt"
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.total, 22);
+  assert.equal(result.references.length, 20);
+  assert.match(result.references[0], /^1 作者1/);
+  assert.match(result.references[19], /^20 作者20/);
 });
 
 test("文档函数拒绝读取非腾讯云临时地址", async () => {
