@@ -313,6 +313,94 @@ const VERIFIED_REFERENCE_INDEX = [
     pages: "",
     isbn: "9787030690890",
     type: "book"
+  },
+  {
+    source: "《大学图书馆学报》原文",
+    sourceUrl: "https://ccj.pku.edu.cn/Article/DownLoad?id=292857233&type=ArticleFile",
+    title: "大学图书馆国际交流与合作的新趋势",
+    authors: ["张红扬"],
+    year: 2002,
+    container: "大学图书馆学报",
+    volume: "20",
+    issue: "2",
+    pages: "58-60",
+    type: "journal-article"
+  },
+  {
+    source: "公开学术题录",
+    sourceUrl: "https://xueshu.baidu.com/s?wd=%E5%9B%BE%E4%B9%A6%E9%A6%86%E5%9B%BD%E9%99%85%E5%90%88%E4%BD%9C%E4%B8%8E%E5%AD%A6%E6%9C%AF%E4%BA%A4%E6%B5%81%E7%AD%96%E7%95%A5%E5%88%9D%E6%8E%A2",
+    title: "图书馆国际合作与学术交流策略初探",
+    authors: ["聂建霞"],
+    year: 2008,
+    container: "农业图书情报学刊",
+    volume: "20",
+    issue: "6",
+    pages: "9-11",
+    type: "journal-article"
+  },
+  {
+    source: "Purdue e-Pubs（IATUL 官方会议库）",
+    sourceUrl: "https://docs.lib.purdue.edu/iatul/2012/papers/23/",
+    title: "International Cooperation Towards the Development of Technology in University Libraries",
+    authors: ["Paul Nieuwenhuysen"],
+    year: 2012,
+    container: "Proceedings of the IATUL Conferences",
+    volume: "",
+    issue: "",
+    pages: "",
+    type: "proceedings-article"
+  },
+  {
+    source: "ScienceDirect 正式题录",
+    sourceUrl: "https://doi.org/10.1016/j.serrev.2009.02.002",
+    title: "Bridges to China: Developing Partnerships Between Serials Librarians in the United States and China",
+    authors: ["Allan Scherlen", "Xiaorong Shao", "Elizabeth Cramer"],
+    year: 2009,
+    container: "Serials Review",
+    volume: "35",
+    issue: "2",
+    pages: "75-79",
+    doi: "10.1016/j.serrev.2009.02.002",
+    type: "journal-article"
+  },
+  {
+    source: "University of Pretoria 机构知识库",
+    sourceUrl: "https://repository.up.ac.za/items/8ed7a628-0aa0-4865-b17d-a9f5b1b1bcb2",
+    title: "Critical Reflections on International Librarianship",
+    authors: ["Peter Johan Lor"],
+    year: 2008,
+    container: "Mousaion",
+    volume: "26",
+    issue: "1",
+    pages: "1-15",
+    type: "journal-article"
+  },
+  {
+    source: "Emerald 正式题录",
+    sourceUrl: "https://doi.org/10.1108/EUM0000000005499",
+    title: "Library Cooperation on Overseas Chinese Studies: From Resource Sharing to the Development of Library Collections",
+    authors: ["Sheau-yueh J. Chao"],
+    year: 2001,
+    container: "Collection Building",
+    volume: "20",
+    issue: "3",
+    pages: "123-130",
+    doi: "10.1108/EUM0000000005499",
+    type: "journal-article"
+  },
+  {
+    source: "Springer 正式书目",
+    sourceUrl: "https://link.springer.com/book/10.1007/978-1-4614-3597-6",
+    title: "Models, Methods, Concepts & Applications of the Analytic Hierarchy Process",
+    authors: ["Thomas L. Saaty", "Luis G. Vargas"],
+    year: 2012,
+    container: "Springer",
+    volume: "",
+    issue: "",
+    pages: "",
+    doi: "10.1007/978-1-4614-3597-6",
+    isbn: "9781461435976",
+    type: "book"
   }
 ];
 
@@ -460,7 +548,7 @@ function parseReference(reference) {
   const raw = String(reference).replace(/\s+/g, " ").trim();
   const work = raw
     .replace(
-      /^\s*(?:\[\s*\d+\s*\]|[\(（]\s*\d{1,3}\s*[\)）]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)])\s*/,
+      /^\s*(?:\[\s*\d+\s*\]|[\(（]\s*\d{1,3}\s*[\)）]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)]|(?!(?:18|19|20)\d{2}\b)\d{1,3}\s+(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff]))\s*/,
       ""
     )
     .trim();
@@ -481,7 +569,7 @@ function parseReference(reference) {
     .trim();
 
   const typeMatch = body.match(/\[\s*([A-Z/]+)\s*\]/i);
-  const type = typeMatch ? typeMatch[1].toUpperCase() : "";
+  let type = typeMatch ? typeMatch[1].toUpperCase() : "";
   const publicationMatch = (type === "EB/OL" || url)
     ? body.match(/\(\s*((?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2}(?:\s*[月\-/.]\s*\d{1,2}\s*日?)?)?)\s*\)/)
     : null;
@@ -543,11 +631,30 @@ function parseReference(reference) {
       }
     }
   } else {
-    const yearMarker = body.match(/\(?((?:18|19|20)\d{2})[a-z]?\)?\s*[.,，。]/i);
-    if (yearMarker) {
-      authors = cleanValue(body.slice(0, yearMarker.index));
-      const after = body.slice(yearMarker.index + yearMarker[0].length).trim();
-      title = cleanValue(after.split(/[.。]\s+/)[0] || "");
+    const conventionalYear = body.match(
+      /[,，]\s*((?:18|19|20)\d{2})(?=\s*[,，.。]|$)/
+    );
+    if (conventionalYear) {
+      const prefix = cleanValue(body.slice(0, conventionalYear.index))
+        .replace(/[,，]\s*$/, "");
+      const parts = prefix.split(/[.。]\s*/).map(cleanValue).filter(Boolean);
+      if (parts.length >= 3) {
+        authors = parts.shift() || "";
+        container = parts.pop() || "";
+        title = parts.join(". ");
+      } else if (parts.length >= 2) {
+        authors = parts.shift() || "";
+        title = parts.join(". ");
+      }
+    } else {
+      const yearMarker = body.match(/\(?((?:18|19|20)\d{2})[a-z]?\)?\s*[.,，。]/i);
+      if (yearMarker) {
+        authors = cleanValue(body.slice(0, yearMarker.index));
+        const after = body.slice(yearMarker.index + yearMarker[0].length).trim();
+        const parts = after.split(/[.。]\s+/).map(cleanValue).filter(Boolean);
+        title = parts.shift() || "";
+        container = parts.join(". ");
+      }
     }
   }
 
@@ -563,6 +670,20 @@ function parseReference(reference) {
   const pageMatches = [...body.matchAll(
     /[:：]\s*([A-Za-z]?\d+(?:\s*[-–—]\s*[A-Za-z]?\d+)?)(?=\s*(?:[.,，。;；]|$))/g
   )];
+  const pages = pageMatches[pageMatches.length - 1]?.[1]
+    ?.replace(/\s*[–—]\s*/g, "-") || "";
+  if (!type) {
+    if (/\b(?:proceedings|conference)\b/i.test(container)) {
+      type = "C";
+    } else if (volIssue?.[1] || volIssue?.[2] || pages) {
+      type = "J";
+    } else if (
+      /\b(?:press|springer|wiley|publisher)\b/i.test(body) ||
+      /出版社/.test(body)
+    ) {
+      type = "M";
+    }
+  }
 
   return {
     raw,
@@ -583,7 +704,7 @@ function parseReference(reference) {
     accessDate,
     volume: volIssue?.[1] || "",
     issue: volIssue?.[2] || "",
-    pages: pageMatches[pageMatches.length - 1]?.[1]?.replace(/\s*[–—]\s*/g, "-") || ""
+    pages
   };
 }
 
@@ -985,9 +1106,16 @@ function semanticScholarCandidate(item) {
 }
 
 function queryVerifiedReferenceIndex(parsed) {
-  const submittedAuthorKeys = splitSubmittedAuthors(parsed.authors)
+  const submittedAuthors = splitSubmittedAuthors(parsed.authors);
+  const submittedAuthorKeys = submittedAuthors
     .map(authorKey)
     .filter(Boolean);
+  const weakInitialAuthors = Boolean(
+    submittedAuthors.length &&
+    submittedAuthors.every((name) =>
+      /^(?:[A-Z]\s*[.\s]*){2,6}$/i.test(name.trim())
+    )
+  );
   const candidates = VERIFIED_REFERENCE_INDEX
     .filter((record) => {
       const titles = [record.title, ...(record.alternateTitles || [])];
@@ -995,11 +1123,24 @@ function queryVerifiedReferenceIndex(parsed) {
         ...titles.map((title) => diceSimilarity(parsed.title, title))
       );
       const recordAuthorKeys = (record.authors || []).map(authorKey).filter(Boolean);
-      const authorSupported = !submittedAuthorKeys.length || submittedAuthorKeys.some(
+      const directAuthorMatch = submittedAuthorKeys.some(
         (submitted) => recordAuthorKeys.some(
           (recordKey) => submitted === recordKey || diceSimilarity(submitted, recordKey) >= 0.86
         )
       );
+      const sourceSupported = Boolean(
+        parsed.container &&
+        record.container &&
+        diceSimilarity(parsed.container, record.container) >= 0.7
+      );
+      const yearSupported = Boolean(
+        parsed.year &&
+        record.year &&
+        Number(parsed.year) === Number(record.year)
+      );
+      const authorSupported = !submittedAuthorKeys.length ||
+        directAuthorMatch ||
+        (weakInitialAuthors && titleMatch >= 0.98 && (sourceSupported || yearSupported));
       return titleMatch >= 0.9 && authorSupported && (
         !parsed.url ||
         !record.sourceUrl ||
@@ -1266,6 +1407,7 @@ function buildVerificationPlan(parsed) {
     return providers;
   }
 
+  if (!hasHan(parsed.title)) add("semantic-scholar");
   add("crossref");
   add("openalex");
   add("search-engine");
