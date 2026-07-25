@@ -78,7 +78,7 @@ Page({
     this.setData({
       inputValue: value,
       count,
-      canVerify: Boolean(count && count <= MAX_REFERENCES && !this.data.loading)
+      canVerify: Boolean(count && !this.data.loading)
     });
   },
 
@@ -137,9 +137,11 @@ Page({
 
       this.showFileMessage(`正在读取 ${file.name}…`, "working");
       let list;
+      let detectedTotal = 0;
       if (extension === "txt") {
         const text = await this.readTextFile(file.path);
         list = extractReferencesFromDocument(text);
+        detectedTotal = list.length;
       } else {
         this.ensureCloudAvailable();
         const cloudPath = `temporary/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
@@ -164,6 +166,7 @@ Page({
             throw new Error(`${response.message || "文档解析失败。"}${build}`);
           }
           list = response.references || [];
+          detectedTotal = Number(response.total || list.length);
         } finally {
           if (fileID) {
             try {
@@ -179,8 +182,8 @@ Page({
       const shown = list.slice(0, MAX_REFERENCES);
       this.resetResults();
       this.updateInput(shown.join("\n"));
-      const suffix = list.length > MAX_REFERENCES ? "，已载入前 20 条" : "";
-      this.showFileMessage(`识别出 ${list.length} 条参考文献${suffix}。`, "success");
+      const suffix = detectedTotal > MAX_REFERENCES ? "，已载入前 20 条" : "";
+      this.showFileMessage(`识别出 ${detectedTotal} 条参考文献${suffix}。`, "success");
     } catch (error) {
       this.showFileMessage(error?.message || "读取文档失败。", "error");
     }
@@ -289,11 +292,11 @@ Page({
   },
 
   async verifyAll() {
-    const references = splitReferences(this.data.inputValue);
+    const allReferences = splitReferences(this.data.inputValue);
+    const references = allReferences.slice(0, MAX_REFERENCES);
     if (!references.length) return;
-    if (references.length > MAX_REFERENCES) {
-      wx.showToast({ title: "一次最多核验 20 条", icon: "none" });
-      return;
+    if (allReferences.length > MAX_REFERENCES) {
+      wx.showToast({ title: "本次核验前 20 条", icon: "none" });
     }
 
     try {
