@@ -4,7 +4,7 @@ const https = require("node:https");
 const pdfParse = require("pdf-parse");
 const { extractReferences } = require("./lib/references");
 
-const FUNCTION_BUILD = "2026.07.25-3";
+const FUNCTION_BUILD = "2026.07.25-4";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_TEXT_LENGTH = 2 * 1024 * 1024;
 
