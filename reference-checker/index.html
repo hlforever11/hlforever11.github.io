@@ -19,7 +19,7 @@
 </head>
 <body>
   <header><div class="brand"><b>文证</b> · <span>参考文献核验</span></div><nav><a href="#tool">开始核验</a><a href="#history">历史记录</a><a href="#limits">使用边界</a></nav></header>
-  <section class="hero"><div class="eyebrow">Evidence before confidence</div><h1>让每一条参考文献<br>都经得起核验</h1><p>上传 DOCX、文字版 PDF、TXT 文档，或粘贴最多 20 条中英文参考文献。系统先依据篇名、作者、来源、DOI 和网址等身份字段判断文献是否真实存在，再单独检查年份、卷期页和文献类型等著录准确性。</p></section>
+  <section class="hero"><div class="eyebrow">Evidence before confidence</div><h1>让每一条参考文献<br>都经得起核验</h1><p>上传 DOCX、文字版 PDF、TXT 文档，或粘贴多条中英文参考文献；单次自动核验前 20 条。系统先依据篇名、作者、来源、DOI 和网址等身份字段判断文献是否真实存在，再单独检查年份、卷期页和文献类型等著录准确性。</p></section>
   <main>
     <section class="workspace" id="tool" aria-label="参考文献核验工具">
       <div class="workspace-head"><div><h2>提交参考文献</h2><p>文档在当前浏览器解析；中文期刊和含网址的网络文献会自动走专用核验流程</p></div><button class="link-btn" id="sampleBtn" type="button">填入示例</button></div>
@@ -65,7 +65,14 @@
       {source:'高等教育出版社正式书目',sourceUrl:'https://xuanshu.hep.com.cn/front/book/bookSearch?searchType=book&wd=%E7%94%9F%E6%88%90%E5%BC%8F%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%8A%80%E6%9C%AF%E4%B8%8E%E7%B4%A0%E5%85%BB',title:'生成式人工智能技术与素养',authors:['向文娟','袁云立'],year:2025,container:'高等教育出版社',volume:'',issue:'',pages:'',isbn:'9787040654073',type:'book'},
       {source:'高校图书馆书目记录',sourceUrl:'https://lib.buaa.edu.cn/engine2/general/more?t=6E7E493C098ECA7C341C092184033DA440A50586DC4EB39E5FFE77492EB61D83AE0AD77971CD432A36F87843C5A08D82',title:'信息素养通识教程',authors:['潘燕桃','肖鹏'],year:2019,container:'高等教育出版社',volume:'',issue:'',pages:'',isbn:'9787040515442',type:'book'},
       {source:'人民邮电出版社正式书目',sourceUrl:'https://m.ryjiaoyu.com/book/details/53151',title:'数字素养与技能导论（慕课版）',alternateTitles:['数字素养与技能导论'],authors:['黄如花','李白杨','黄雨婷'],year:2025,container:'人民邮电出版社',volume:'',issue:'',pages:'',isbn:'9787115663092',type:'book'},
-      {source:'高校图书馆书目记录',sourceUrl:'https://libnlis.ldu.edu.cn/mspace/searchDetailLocal/m9d236e8105f6826b2d913b45fcb42ab3',title:'信息素养与信息检索',authors:['周建芳'],year:2021,container:'科学出版社',volume:'',issue:'',pages:'',isbn:'9787030690890',type:'book'}
+      {source:'高校图书馆书目记录',sourceUrl:'https://libnlis.ldu.edu.cn/mspace/searchDetailLocal/m9d236e8105f6826b2d913b45fcb42ab3',title:'信息素养与信息检索',authors:['周建芳'],year:2021,container:'科学出版社',volume:'',issue:'',pages:'',isbn:'9787030690890',type:'book'},
+      {source:'《大学图书馆学报》原文',sourceUrl:'https://ccj.pku.edu.cn/Article/DownLoad?id=292857233&type=ArticleFile',title:'大学图书馆国际交流与合作的新趋势',authors:['张红扬'],year:2002,container:'大学图书馆学报',volume:'20',issue:'2',pages:'58-60',type:'journal-article'},
+      {source:'公开学术题录',sourceUrl:'https://xueshu.baidu.com/s?wd=%E5%9B%BE%E4%B9%A6%E9%A6%86%E5%9B%BD%E9%99%85%E5%90%88%E4%BD%9C%E4%B8%8E%E5%AD%A6%E6%9C%AF%E4%BA%A4%E6%B5%81%E7%AD%96%E7%95%A5%E5%88%9D%E6%8E%A2',title:'图书馆国际合作与学术交流策略初探',authors:['聂建霞'],year:2008,container:'农业图书情报学刊',volume:'20',issue:'6',pages:'9-11',type:'journal-article'},
+      {source:'Purdue e-Pubs（IATUL 官方会议库）',sourceUrl:'https://docs.lib.purdue.edu/iatul/2012/papers/23/',title:'International Cooperation Towards the Development of Technology in University Libraries',authors:['Paul Nieuwenhuysen'],year:2012,container:'Proceedings of the IATUL Conferences',volume:'',issue:'',pages:'',type:'proceedings-article'},
+      {source:'ScienceDirect 正式题录',sourceUrl:'https://doi.org/10.1016/j.serrev.2009.02.002',title:'Bridges to China: Developing Partnerships Between Serials Librarians in the United States and China',authors:['Allan Scherlen','Xiaorong Shao','Elizabeth Cramer'],year:2009,container:'Serials Review',volume:'35',issue:'2',pages:'75-79',doi:'10.1016/j.serrev.2009.02.002',type:'journal-article'},
+      {source:'University of Pretoria 机构知识库',sourceUrl:'https://repository.up.ac.za/items/8ed7a628-0aa0-4865-b17d-a9f5b1b1bcb2',title:'Critical Reflections on International Librarianship',authors:['Peter Johan Lor'],year:2008,container:'Mousaion',volume:'26',issue:'1',pages:'1-15',type:'journal-article'},
+      {source:'Emerald 正式题录',sourceUrl:'https://doi.org/10.1108/EUM0000000005499',title:'Library Cooperation on Overseas Chinese Studies: From Resource Sharing to the Development of Library Collections',authors:['Sheau-yueh J. Chao'],year:2001,container:'Collection Building',volume:'20',issue:'3',pages:'123-130',doi:'10.1108/EUM0000000005499',type:'journal-article'},
+      {source:'Springer 正式书目',sourceUrl:'https://link.springer.com/book/10.1007/978-1-4614-3597-6',title:'Models, Methods, Concepts & Applications of the Analytic Hierarchy Process',authors:['Thomas L. Saaty','Luis G. Vargas'],year:2012,container:'Springer',volume:'',issue:'',pages:'',doi:'10.1007/978-1-4614-3597-6',isbn:'9781461435976',type:'book'}
     ];
     const $=s=>document.querySelector(s), input=$('#input'), counter=$('#counter'), clearBtn=$('#clearBtn'), verifyBtn=$('#verifyBtn'), fileInput=$('#fileInput'), drop=$('#dropZone'), msg=$('#fileMessage');
     const visitCounter=$('#siteCounter'),visitValue=$('#busuanzi_site_pv');
@@ -77,7 +84,7 @@
       const visitObserver=new MutationObserver(()=>{if(revealVisitCounter())visitObserver.disconnect()});visitObserver.observe(visitValue,{childList:true,subtree:true,characterData:true});setTimeout(()=>visitObserver.disconnect(),10000);
     }
     const sample=['[1] 李书宁,刘一鸣. ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战[J]. 图书馆论坛, 2023, 43(05): 104-110.','[2] 陈金榜.朱民博士畅谈ChatGPT与人工智能未来[EB/OL].(2023-03-13)[2023-04-18]. https://www.shanghaitech.edu.cn/2023/0313/c1001a1075770/page.htm','[3] BENDER E M, GEBRU T, MCMILLAN-MAJOR A, et al. On the dangers of stochastic parrots: Can language models be too big?[C]//Proceedings of the 2021 ACM Conference on Fairness, Accountability, and Transparency. 2021: 610-623. DOI:10.1145/3442188.3445922.'].join('\n');
-    const numberedReferenceStart=/^(?:\[\s*\d{1,3}\s*\]|[\(（]\s*\d{1,3}\s*[\)）]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)])\s*/;
+    const numberedReferenceStart=/^(?:\[\s*\d{1,3}\s*\]|[\(（]\s*\d{1,3}\s*[\)）]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)]|\d{1,3}\s+(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff]))\s*/;
     const bibliographicCue=value=>/(?:18|19|20)\d{2}|\[[A-Z/]+\]|https?:\/\/|10\.\d{4,9}\//i.test(String(value||''));
     function normalizeReferenceChunk(value){return String(value||'').replace(/\s*\n\s*/g,' ').replace(/[\t\u00a0 ]+/g,' ').trim()}
     function looksLikeReferenceStart(value){
@@ -91,7 +98,10 @@
       return!!(chineseHead&&/^[\p{Script=Han}·]{2,}(?:\s*[,，、]\s*[\p{Script=Han}·]{2,}){0,12}$/u.test(chineseHead)&&bibliographicCue(text));
     }
     function inlineNumberedMarkers(clean){
-      const markers=[...clean.matchAll(/\[\s*(\d{1,3})\s*\]/g)].filter(match=>match.index===0||/[\s。.;；]/.test(clean[match.index-1]||''));
+      const bracketed=[...clean.matchAll(/\[\s*(\d{1,3})\s*\]/g)].filter(match=>match.index===0||/[\s。.;；]/.test(clean[match.index-1]||''));
+      const bare=[...clean.matchAll(/(^|[。.;；]\s*)(\d{1,3})\s+(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff])/g)]
+        .map(match=>({index:match.index+match[1].length}));
+      const markers=[...bracketed,...bare].sort((a,b)=>a.index-b.index).filter((item,index,all)=>!index||item.index!==all[index-1].index);
       return markers.length>=2?markers:[];
     }
     function refs(value){
@@ -107,12 +117,12 @@
       const lines=clean.split('\n').map(normalizeReferenceChunk).filter(Boolean);if(lines.length>1&&lines.every(line=>looksLikeReferenceStart(line)||bibliographicCue(line)))return lines;
       return[normalizeReferenceChunk(clean)];
     }
-    function update(){const n=refs(input.value).length;counter.innerHTML=`<strong>${n}</strong> / 20`;counter.classList.toggle('over',n>MAX);verifyBtn.disabled=!n||n>MAX;clearBtn.disabled=!input.value.trim()}
+    function update(){const n=refs(input.value).length;counter.innerHTML=`<strong>${Math.min(n,MAX)}</strong> / 20${n>MAX?` <span>（共 ${n} 条）</span>`:''}`;counter.classList.remove('over');verifyBtn.disabled=!n;clearBtn.disabled=!input.value.trim()}
     function clearInput(){input.value='';fileInput.value='';msg.textContent='';msg.className='message hidden';$('#results').classList.add('hidden');$('#cards').innerHTML='';$('#summary').innerHTML='';$('#progress').textContent='';verifyBtn.textContent='开始核验';update();input.focus()}
     input.addEventListener('input',update);clearBtn.onclick=clearInput;$('#sampleBtn').onclick=()=>{input.value=sample;update();input.focus()};$('#chooseBtn').onclick=()=>fileInput.click();fileInput.onchange=()=>fileInput.files[0]&&handleFile(fileInput.files[0]);
     ['dragenter','dragover'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.add('drag')}));['dragleave','drop'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.remove('drag')}));drop.addEventListener('drop',e=>e.dataTransfer.files[0]&&handleFile(e.dataTransfer.files[0]));
     function fileState(text,kind=''){msg.className=`message ${kind}`;msg.textContent=text;msg.classList.remove('hidden')}
-    function extractReferences(text){const normalized=text.replace(/\s*(参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?\s*/gi,'\n$1\n').replace(/\s+(?=\[\s*\d+\s*\]\s*)/g,'\n');const lines=normalized.replace(/\r/g,'').replace(/\u00a0/g,' ').split('\n').map(x=>x.replace(/\s+/g,' ').trim());let heading=-1;lines.forEach((x,i)=>{/^(?:参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?$/i.test(x)&&(heading=i)});const source=(heading>=0?lines.slice(heading+1):lines).filter(Boolean),out=[];let current='';if(source.some(x=>numberedReferenceStart.test(x))){source.forEach(x=>{if(numberedReferenceStart.test(x)||looksLikeReferenceStart(x)){if(current)out.push(current.trim());current=x}else if(current)current+=' '+x});if(current)out.push(current.trim())}else out.push(...source.filter(x=>bibliographicCue(x)&&(/[.。]/.test(x)||/10\.\d{4,9}\//i.test(x))));if(!out.length)throw Error('未识别出参考文献。请确认文档含“参考文献”标题及带序号的条目，扫描版 PDF 请先做文字识别。');return out}
+    function extractReferences(text){const normalized=text.replace(/\s*(参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?\s*/gi,'\n$1\n').replace(/\s+(?=\[\s*\d+\s*\]\s*)/g,'\n').replace(/([。.;；])\s+(?=(?!(?:18|19|20)\d{2}\b)\d{1,3}\s+[A-Za-z\u00c0-\u024f\u3400-\u9fff])/g,'$1\n');const lines=normalized.replace(/\r/g,'').replace(/\u00a0/g,' ').split('\n').map(x=>x.replace(/\s+/g,' ').trim());let heading=-1;lines.forEach((x,i)=>{/^(?:参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?$/i.test(x)&&(heading=i)});const source=(heading>=0?lines.slice(heading+1):lines).filter(Boolean),out=[];let current='';if(source.some(x=>numberedReferenceStart.test(x))){source.forEach(x=>{if(numberedReferenceStart.test(x)||looksLikeReferenceStart(x)){if(current)out.push(current.trim());current=x}else if(current)current+=' '+x});if(current)out.push(current.trim())}else out.push(...source.filter(x=>bibliographicCue(x)&&(/[.。]/.test(x)||/10\.\d{4,9}\//i.test(x))));if(!out.length)throw Error('未识别出参考文献。请确认文档含“参考文献”标题及带序号的条目，扫描版 PDF 请先做文字识别。');return out}
     async function handleFile(file){try{if(file.size>MAX_SIZE)throw Error('文件不能超过 15 MB。');const ext=file.name.split('.').pop().toLowerCase();if(!['docx','pdf','txt'].includes(ext))throw Error('暂只支持 DOCX、文字版 PDF 和 TXT。');fileState('正在本地读取文档…');let text='';if(ext==='txt')text=new TextDecoder('utf-8').decode(await file.arrayBuffer());else if(ext==='docx'){if(!window.mammoth)throw Error('DOCX 解析组件加载失败，请刷新后重试。');text=(await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()})).value}else{const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;if(pdf.numPages>100)throw Error('PDF 超过 100 页，请只保留参考文献部分。');const pages=[];for(let n=1;n<=pdf.numPages;n++){const content=await(await pdf.getPage(n)).getTextContent();pages.push(content.items.map(i=>i.str+(i.hasEOL?'\n':' ')).join(''))}text=pages.join('\n')};const list=extractReferences(text),shown=list.slice(0,MAX);input.value=shown.join('\n');update();fileState(`从 ${file.name} 识别出 ${list.length} 条参考文献，已载入${list.length>MAX?'前 20 条':'待核验区'}。`,'success')}catch(e){fileState(e.message||'读取文档失败。','error')}finally{fileInput.value=''}}
     const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
     const meta={verified:['已确认真实，著录一致','✓'],partial:['已确认真实，部分字段待复核','✓'],corrected:['已确认真实，著录需修正','!'],review:['真实性需人工复核','?'],unverified:['暂未证实','—'],error:['核验失败','×']};
@@ -218,12 +228,12 @@
     }
     function parseReference(reference){
       const raw=String(reference).replace(/\s+/g,' ').trim();
-      const work=raw.replace(/^\s*(?:\[\s*\d+\s*\]|[\(（]\s*\d{1,3}\s*[\)）]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)])\s*/,'').trim();
+      const work=raw.replace(/^\s*(?:\[\s*\d+\s*\]|[\(（]\s*\d{1,3}\s*[\)）]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)]|(?!(?:18|19|20)\d{2}\b)\d{1,3}\s+(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff]))\s*/,'').trim();
       const doi=extractDoi(work),isbn=extractIsbn(work),pmid=extractPmid(work),arxivId=extractArxivId(work),standardNumber=extractStandardNumber(work),patentNumber=extractPatentNumber(work),urlMatch=extractUrl(work),url=urlMatch.url;
       let body=urlMatch.raw?work.replace(urlMatch.raw,''):work;
       body=doi?body.replace(new RegExp(doi.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),''):body;
       body=body.replace(/(?:doi\s*[:：]?|https?:\/\/(?:dx\.)?doi\.org\/?)\s*[.,。]?\s*$/i,'').trim();
-      const typeMatch=body.match(/\[\s*([A-Z/]+)\s*\]/i),type=typeMatch?typeMatch[1].toUpperCase():'';
+      const typeMatch=body.match(/\[\s*([A-Z/]+)\s*\]/i);let type=typeMatch?typeMatch[1].toUpperCase():'';
       const publicationMatch=(type==='EB/OL'||url)?body.match(/\(\s*((?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2}(?:\s*[月\-/.]\s*\d{1,2}\s*日?)?)?)\s*\)/):null;
       const accessMatch=body.match(/\[\s*((?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2}(?:\s*[月\-/.]\s*\d{1,2}\s*日?)?)?)\s*\]/);
       const publicationDate=normalizeDate(publicationMatch?.[1]||''),accessDate=normalizeDate(accessMatch?.[1]||'');
@@ -249,17 +259,30 @@
           }
         }
       }else{
-        const yearMarker=body.match(/\(?((?:18|19|20)\d{2})[a-z]?\)?\s*[.,，。]/i);
-        if(yearMarker){
-          authors=cleanValue(body.slice(0,yearMarker.index));
-          const after=body.slice(yearMarker.index+yearMarker[0].length).trim();
-          title=cleanValue((after.split(/[.。]\s+/)[0]||''));
+        const conventionalYear=body.match(/[,，]\s*((?:18|19|20)\d{2})(?=\s*[,，.。]|$)/);
+        if(conventionalYear){
+          const prefix=cleanValue(body.slice(0,conventionalYear.index)).replace(/[,，]\s*$/,''),parts=prefix.split(/[.。]\s*/).map(cleanValue).filter(Boolean);
+          if(parts.length>=3){authors=parts.shift()||'';container=parts.pop()||'';title=parts.join('. ')}
+          else if(parts.length>=2){authors=parts.shift()||'';title=parts.join('. ')}
+        }else{
+          const yearMarker=body.match(/\(?((?:18|19|20)\d{2})[a-z]?\)?\s*[.,，。]/i);
+          if(yearMarker){
+            authors=cleanValue(body.slice(0,yearMarker.index));
+            const after=body.slice(yearMarker.index+yearMarker[0].length).trim(),parts=after.split(/[.。]\s+/).map(cleanValue).filter(Boolean);
+            title=parts.shift()||'';container=parts.join('. ');
+          }
         }
       }
       const years=[...body.matchAll(/(?:18|19|20)\d{2}/g)].map(x=>Number(x[0])),year=publicationDate?Number(publicationDate.slice(0,4)):years.length?years.at(-1):null;
       const volIssue=body.match(/(?:18|19|20)\d{2}\s*[,，]\s*([A-Za-z]?\d+[A-Za-z]?)\s*(?:\(\s*([^)]+?)\s*\))?/);
       const pageMatches=[...body.matchAll(/[:：]\s*([A-Za-z]?\d+(?:\s*[-–—]\s*[A-Za-z]?\d+)?)(?=\s*(?:[.,，。;；]|$))/g)];
-      return{raw,work,doi,isbn,pmid,arxivId,standardNumber,patentNumber,url,type,title,authors,container,year,publicationDate,accessDate,volume:volIssue?.[1]||'',issue:volIssue?.[2]||'',pages:pageMatches.at(-1)?.[1]?.replace(/\s*[–—]\s*/g,'-')||''};
+      const pages=pageMatches.at(-1)?.[1]?.replace(/\s*[–—]\s*/g,'-')||'';
+      if(!type){
+        if(/\b(?:proceedings|conference)\b/i.test(container))type='C';
+        else if(volIssue?.[1]||volIssue?.[2]||pages)type='J';
+        else if(/\b(?:press|springer|wiley|publisher)\b/i.test(body)||/出版社/.test(body))type='M';
+      }
+      return{raw,work,doi,isbn,pmid,arxivId,standardNumber,patentNumber,url,type,title,authors,container,year,publicationDate,accessDate,volume:volIssue?.[1]||'',issue:volIssue?.[2]||'',pages};
     }
     const hasHan=value=>/\p{Script=Han}/u.test(String(value||''));
     function splitSubmittedAuthors(value){
@@ -563,11 +586,15 @@
       return{source:'arXiv',candidates:[{source:'arXiv',sources:['arXiv'],exactDoi:false,title:cleanValue(String(entry.querySelector('title')?.textContent||'').replace(/\s+/g,' ')),authors,authorKeys:authors.map(authorKey).filter(Boolean),year:Number(published.slice(0,4))||null,container:'arXiv',volume:'',issue:'',pages:'',doi:doi.toLowerCase(),arxivId:parsed.arxivId,type:'report',sourceUrl:`https://arxiv.org/abs/${parsed.arxivId}`}]};
     }
     function queryTrustedReferenceCache(parsed){
-      const submittedAuthorKeys=splitSubmittedAuthors(parsed.authors).map(authorKey).filter(Boolean);
+      const submittedAuthors=splitSubmittedAuthors(parsed.authors),submittedAuthorKeys=submittedAuthors.map(authorKey).filter(Boolean);
+      const weakInitialAuthors=!!(submittedAuthors.length&&submittedAuthors.every(name=>/^(?:[A-Z]\s*[.\s]*){2,6}$/i.test(name.trim())));
       const candidates=TRUSTED_REFERENCE_CACHE.filter(record=>{
         const titleScore=Math.max(...[record.title,...(record.alternateTitles||[])].map(title=>diceSimilarity(parsed.title,title)));
         const recordAuthorKeys=(record.authors||[]).map(authorKey).filter(Boolean);
-        const authorSupported=!submittedAuthorKeys.length||submittedAuthorKeys.some(submitted=>recordAuthorKeys.some(recordKey=>submitted===recordKey||diceSimilarity(submitted,recordKey)>=.86));
+        const directAuthorMatch=submittedAuthorKeys.some(submitted=>recordAuthorKeys.some(recordKey=>submitted===recordKey||diceSimilarity(submitted,recordKey)>=.86));
+        const sourceSupported=!!(parsed.container&&record.container&&diceSimilarity(parsed.container,record.container)>=.7);
+        const yearSupported=!!(parsed.year&&record.year&&Number(parsed.year)===Number(record.year));
+        const authorSupported=!submittedAuthorKeys.length||directAuthorMatch||(weakInitialAuthors&&titleScore>=.98&&(sourceSupported||yearSupported));
         return titleScore>=.9&&authorSupported&&(!parsed.url||!record.sourceUrl||comparableUrl(parsed.url)===comparableUrl(record.sourceUrl));
       }).map(record=>({...record,sources:[record.source],authorKeys:record.authors.map(authorKey).filter(Boolean),exactDoi:false,trustedIndex:true}));
       return{source:'已核对权威来源缓存',candidates};
@@ -722,7 +749,7 @@
         return{status:'error',confidence:0,submitted:reference,differences:[],note:`核验失败：${e.name==='AbortError'?'开放数据源连接超时':e.message||'网络错误'}。可使用下方公开检索入口继续复核。`,checkedSources:[],evidenceLinks:scholarlyEvidenceLinks(parsed,parsed.doi)};
       }
     }
-    verifyBtn.onclick=async()=>{const list=refs(input.value);if(!list.length||list.length>MAX)return;verifyBtn.disabled=true;clearBtn.disabled=true;verifyBtn.innerHTML='<span class="spinner"></span>核验中';$('#results').classList.remove('hidden');$('#cards').innerHTML='';$('#summary').innerHTML='';$('#progress').textContent=`0 / ${list.length}`;const out=new Array(list.length);let next=0,done=0;async function worker(){while(next<list.length){const i=next++;out[i]=await verifyOne(list[i]);done++;$('#progress').textContent=`${done} / ${list.length}`;render(out.filter(Boolean))}}await Promise.all(Array.from({length:Math.min(2,list.length)},worker));saveHistory(list,out);verifyBtn.textContent='重新核验';update();$('#results').scrollIntoView({behavior:'smooth',block:'start'})};
+    verifyBtn.onclick=async()=>{const all=refs(input.value),list=all.slice(0,MAX);if(!list.length)return;if(all.length>MAX)fileState(`共识别 ${all.length} 条参考文献，本次自动核验前 20 条。`,'success');verifyBtn.disabled=true;clearBtn.disabled=true;verifyBtn.innerHTML='<span class="spinner"></span>核验中';$('#results').classList.remove('hidden');$('#cards').innerHTML='';$('#summary').innerHTML='';$('#progress').textContent=`0 / ${list.length}`;const out=new Array(list.length);let next=0,done=0;async function worker(){while(next<list.length){const i=next++;out[i]=await verifyOne(list[i]);done++;$('#progress').textContent=`${done} / ${list.length}`;render(out.filter(Boolean))}}await Promise.all(Array.from({length:Math.min(2,list.length)},worker));saveHistory(list,out);verifyBtn.textContent='重新核验';update();$('#results').scrollIntoView({behavior:'smooth',block:'start'})};
   </script>
 </body>
 </html>
