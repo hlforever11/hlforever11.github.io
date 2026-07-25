@@ -1,5 +1,6 @@
 const iconv = require("iconv-lite");
 const mammoth = require("mammoth");
+const nodeFetch = require("node-fetch");
 const pdfParse = require("pdf-parse");
 const { extractReferences } = require("./lib/references");
 
@@ -55,25 +56,41 @@ function permittedTemporaryUrl(value) {
   }
 }
 
+function getFetchImplementation() {
+  return typeof globalThis.fetch === "function"
+    ? globalThis.fetch.bind(globalThis)
+    : nodeFetch;
+}
+
 async function downloadTemporaryFile(tempUrl) {
   if (!permittedTemporaryUrl(tempUrl)) {
     throw new Error("临时文件地址无效。");
   }
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const controller =
+    typeof globalThis.AbortController === "function"
+      ? new globalThis.AbortController()
+      : null;
+  const timer = controller
+    ? setTimeout(() => controller.abort(), 15000)
+    : null;
   try {
-    const response = await fetch(tempUrl, {
+    const fetchImpl = getFetchImplementation();
+    const response = await fetchImpl(tempUrl, {
       redirect: "follow",
-      signal: controller.signal
+      timeout: 15000,
+      ...(controller ? { signal: controller.signal } : {})
     });
     if (!response.ok) throw new Error(`临时文件下载失败（HTTP ${response.status}）。`);
     const contentLength = Number(response.headers.get("content-length") || 0);
     if (contentLength > MAX_FILE_SIZE) throw new Error("文件不能超过 10 MB。");
-    const buffer = Buffer.from(await response.arrayBuffer());
+    const buffer =
+      typeof response.arrayBuffer === "function"
+        ? Buffer.from(await response.arrayBuffer())
+        : await response.buffer();
     if (buffer.length > MAX_FILE_SIZE) throw new Error("文件不能超过 10 MB。");
     return buffer;
   } finally {
-    clearTimeout(timer);
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -109,4 +126,8 @@ exports.main = async (event) => {
       message: error?.message || "文档解析失败。"
     };
   }
+};
+
+exports._test = {
+  getFetchImplementation
 };
