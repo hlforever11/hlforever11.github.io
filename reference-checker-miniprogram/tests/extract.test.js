@@ -43,7 +43,7 @@ test("临时 TXT 文档可提取参考文献且最多返回二十条", async () 
     fileName: "test.txt"
   });
   assert.equal(result.ok, true);
-  assert.equal(result.build, "2026.07.25-3");
+  assert.equal(result.build, "2026.07.25-4");
   assert.equal(result.total, 2);
   assert.match(result.references[1], /RADFORD/);
 });
@@ -64,6 +64,27 @@ test("超过二十条时返回总数但只载入前二十条", async () => {
   assert.equal(result.references.length, 20);
   assert.match(result.references[0], /^1 作者1/);
   assert.match(result.references[19], /^20 作者20/);
+});
+
+test("没有序号且自动换行的英文文献可完整提取", async () => {
+  const text = `参考文献
+Nieuwenhuysen P. International cooperation towards the development
+of technology in university libraries. Proceedings of the IATUL
+Conferences, 2012.
+Scherlen A, Shao X. Bridges to China: Developing partnerships
+between serials librarians in the United States and China.
+Serials Review, 2009, 35(2): 75-79.`;
+  https.get = createMockTransport(Buffer.from(text)).get;
+
+  const result = await main({
+    tempUrl: "https://reference-checker.tcb.qcloud.la/temporary/unnumbered.txt",
+    fileName: "unnumbered.txt"
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.total, 2);
+  assert.equal(result.references.length, 2);
+  assert.match(result.references[0], /Conferences, 2012/);
+  assert.match(result.references[1], /Serials Review, 2009/);
 });
 
 test("文档函数拒绝读取非腾讯云临时地址", async () => {
