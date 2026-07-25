@@ -11,10 +11,33 @@ function normalizeReferenceChunk(value) {
     .trim();
 }
 
+function looksLikeEnglishAuthorHead(value) {
+  const head = String(value || "")
+    .match(/^(.{2,140}?)[.。](?:\s|$)/)?.[1]
+    ?.trim()
+    .replace(/\bet\s+al\.?$/i, "")
+    .trim();
+  if (!head || /\d/.test(head)) return false;
+  const parts = head
+    .split(/\s*(?:,|;|&|\band\b)\s*/i)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (!parts.length) return false;
+  return parts.every((part) =>
+    /^[A-Z][A-Za-z\u00c0-\u024f'’\-]+(?:\s+[A-Z]{1,5}){1,5}$/.test(part) ||
+    /^(?:[A-Z]\s+){1,5}[A-Z]$/.test(part) ||
+    (
+      /^[A-Z][A-Za-z\u00c0-\u024f'’\-]+(?:\s+[A-Z][A-Za-z\u00c0-\u024f'’\-]+){1,8}$/.test(part) &&
+      /\b(?:Association|Organization|Organisation|University|Institute|Council|Committee|Academy|Library|Libraries)\b/i.test(part)
+    )
+  );
+}
+
 function looksLikeReferenceStart(value) {
   const text = String(value || "").trim();
   if (!text) return false;
   if (NUMBERED_START.test(text)) return true;
+  if (looksLikeEnglishAuthorHead(text)) return true;
 
   const apa = text.match(/^(.{1,140}?)\(\s*((?:18|19|20)\d{2})[a-z]?\s*\)\s*[.。]/);
   if (apa) {
@@ -120,7 +143,20 @@ function extractReferencesFromDocument(text) {
     });
     if (current) output.push(current.trim());
   } else {
-    output.push(...source.filter((line) => bibliographicCue(line) && (/[.。]/.test(line) || /10\.\d{4,9}\//i.test(line))));
+    source.forEach((line) => {
+      if (looksLikeReferenceStart(line)) {
+        if (current) output.push(current.trim());
+        current = line;
+      } else if (current) {
+        current += ` ${line}`;
+      }
+    });
+    if (current) output.push(current.trim());
+    if (!output.length) {
+      output.push(...source.filter(
+        (line) => bibliographicCue(line) && (/[.。]/.test(line) || /10\.\d{4,9}\//i.test(line))
+      ));
+    }
   }
 
   if (!output.length) {
