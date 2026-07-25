@@ -59,3 +59,41 @@ test("文档可统计超过二十条纯数字序号参考文献", () => {
   const references = extractReferencesFromDocument(value);
   assert.equal(references.length, 22);
 });
+
+test("没有序号的一行一条中英文参考文献可准确计数", () => {
+  const value = `张红扬. 大学图书馆国际交流与合作的新趋势. 大学图书馆学报, 2002, 20(02): 58-60.
+聂建霞. 图书馆国际合作与学术交流策略初探. 农业图书情报学刊, 2008, 20(06): 9-11.
+Nieuwenhuysen P. International cooperation towards the development of technology in university libraries. Proceedings of the IATUL Conferences, 2012.
+Scherlen A, Shao X. Bridges to China: Developing partnerships between serials librarians in the United States and China. Serials Review, 2009, 35(2): 75-79.
+Lor PJ. Critical reflections on international librarianship. Mousaion, 2008, 26(1): 1-15.
+American Library Association. Presidential Committee on Information Literacy: Final Report[R]. Chicago: American Library Association, 1989.
+UNESCO. (2021). Recommendation on the ethics of artificial intelligence. United Nations Educational, Scientific and Cultural Organization. https://unesdoc.unesco.org/ark:/48223/pf0000381137`;
+  const references = splitReferences(value);
+  assert.equal(references.length, 7);
+  assert.match(references[0], /^张红扬/);
+  assert.match(references[6], /^UNESCO/);
+});
+
+test("没有序号且英文条目在文档中自动换行时仍能合并并计数", () => {
+  const value = `参考文献
+Nieuwenhuysen P. International cooperation towards the development
+of technology in university libraries. Proceedings of the IATUL
+Conferences, 2012.
+Scherlen A, Shao X. Bridges to China: Developing partnerships
+between serials librarians in the United States and China.
+Serials Review, 2009, 35(2): 75-79.`;
+  const pasted = splitReferences(value);
+  const imported = extractReferencesFromDocument(value);
+  assert.equal(pasted.length, 2);
+  assert.equal(imported.length, 2);
+  assert.match(imported[0], /Conferences, 2012/);
+  assert.match(imported[1], /Serials Review, 2009/);
+});
+
+test("没有序号的二十二条参考文献可统计完整总数", () => {
+  const value = `参考文献\n${Array.from(
+    { length: 22 },
+    (_, index) => `作者${index + 1}. 无序号测试题名${index + 1}. 测试期刊, 2024, 1(1): 1-2.`
+  ).join("\n")}`;
+  assert.equal(extractReferencesFromDocument(value).length, 22);
+});
