@@ -795,7 +795,10 @@
           console.warn('云端核验暂不可用，回退浏览器开放数据源',error);
         }
       }
-      if(!result)result=await verifyOneLocal(reference);
+      if(!result||['review','unverified','error'].includes(result.status)){
+        const local=await verifyOneLocal(reference);
+        if(!result||resultQuality(local)>resultQuality(result))result={...local,browserFallback:true};
+      }
       rememberVerification(reference,result);
       return result;
     }
