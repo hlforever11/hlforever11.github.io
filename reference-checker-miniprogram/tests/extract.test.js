@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { main } = require("../cloudfunctions/extractDocument");
+const nodeFetch = require("../cloudfunctions/extractDocument/node_modules/node-fetch");
+const { main, _test } = require("../cloudfunctions/extractDocument");
 
 const originalFetch = global.fetch;
 
@@ -41,3 +42,7 @@ test("文档函数拒绝读取非腾讯云临时地址", async () => {
   assert.match(result.message, /临时文件地址无效/);
 });
 
+test("云函数运行环境没有原生 fetch 时使用兼容下载器", () => {
+  global.fetch = undefined;
+  assert.equal(_test.getFetchImplementation(), nodeFetch);
+});
