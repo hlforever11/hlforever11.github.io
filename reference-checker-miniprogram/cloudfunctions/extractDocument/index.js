@@ -4,6 +4,7 @@ const https = require("node:https");
 const pdfParse = require("pdf-parse");
 const { extractReferences } = require("./lib/references");
 
+const FUNCTION_BUILD = "2026.07.25-2";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_TEXT_LENGTH = 2 * 1024 * 1024;
 
@@ -147,6 +148,7 @@ exports.main = async (event) => {
   if (!tempUrl || !["txt", "docx", "pdf"].includes(extension)) {
     return {
       ok: false,
+      build: FUNCTION_BUILD,
       message: "文件信息不完整或格式不受支持。"
     };
   }
@@ -162,6 +164,7 @@ exports.main = async (event) => {
     const references = extractReferences(text);
     return {
       ok: true,
+      build: FUNCTION_BUILD,
       total: references.length,
       references: references.slice(0, 20)
     };
@@ -169,6 +172,7 @@ exports.main = async (event) => {
     console.error("extractDocument failed", error);
     return {
       ok: false,
+      build: FUNCTION_BUILD,
       message: error?.message || "文档解析失败。"
     };
   }
