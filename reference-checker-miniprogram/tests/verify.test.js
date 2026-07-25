@@ -470,3 +470,57 @@ test("中英文括号、方括号和圈号编号均可拆分为独立参考文�
   assert.match(list[2], /^\[3\] American Library Association/);
   assert.match(list[3], /^④周建芳/);
 });
+
+test("无类型标识的常见著录格式可解析为作者、篇名、来源和卷期页", () => {
+  const journal = parseReference(
+    "7 张红扬. 大学图书馆国际交流与合作的新趋势. 大学图书馆学报, 2002, 20(02): 58-60."
+  );
+  assert.equal(journal.authors, "张红扬");
+  assert.equal(journal.title, "大学图书馆国际交流与合作的新趋势");
+  assert.equal(journal.container, "大学图书馆学报");
+  assert.equal(journal.year, 2002);
+  assert.equal(journal.volume, "20");
+  assert.equal(journal.issue, "02");
+  assert.equal(journal.pages, "58-60");
+  assert.equal(journal.type, "J");
+
+  const book = parseReference(
+    "25 L S T, G V L. Models, methods, concepts & applications of the analytic hierarchy process. New York: Springer Science & Business Media, 2012. 3-5."
+  );
+  assert.equal(book.authors, "L S T, G V L");
+  assert.equal(book.title, "Models, methods, concepts & applications of the analytic hierarchy process");
+  assert.equal(book.container, "New York: Springer Science & Business Media");
+  assert.equal(book.year, 2012);
+  assert.equal(book.type, "M");
+});
+
+test("纯数字序号的中英文期刊、会议文献和图书可由权威记录确认", async () => {
+  global.fetch = async () => {
+    throw new Error("已核对权威记录不应依赖本次外部请求");
+  };
+  const references = [
+    "7 张红扬. 大学图书馆国际交流与合作的新趋势. 大学图书馆学报, 2002, 20(02): 58-60.",
+    "8 聂建霞. 图书馆国际合作与学术交流策略初探. 农业图书情报学刊, 2008, 20(06): 9-11.",
+    "21 Nieuwenhuysen P. International cooperation towards the development of technology in university libraries. Proceedings of the IATUL Conferences, 2012.",
+    "22 Scherlen A, Shao X. Bridges to China: Developing partnerships between serials librarians in the United States and China. Serials Review, 2009, 35(2): 75-79.",
+    "23 Lor PJ. Critical reflections on international librarianship. Mousaion, 2008, 25(1): 1-15.",
+    "24 Chao S J. Library cooperation on overseas Chinese studies: from resource sharing to the development of library collections. Collection Building, 2001, 20(3): 123-130.",
+    "25 L S T, G V L. Models, methods, concepts & applications of the analytic hierarchy process. New York: Springer Science & Business Media, 2012. 3-5."
+  ];
+
+  const results = await Promise.all(references.map(verifyReference));
+  results.forEach((result, index) => {
+    assert.ok(
+      ["verified", "partial", "corrected"].includes(result.status),
+      `第 ${index + 1} 条不应返回 ${result.status}: ${result.note}`
+    );
+    assert.ok(result.confidence >= 0.8, `第 ${index + 1} 条置信度过低`);
+    assert.ok(result.sourceUrl, `第 ${index + 1} 条缺少可追溯来源`);
+  });
+  assert.ok(results[4].differences.some((item) =>
+    item.field === "卷号" && item.submitted === "25" && item.verified === "26"
+  ));
+  assert.match(results[5].canonical, /10\.1108\/EUM0000000005499/i);
+  assert.ok(results[6].differences.some((item) => item.field === "作者"));
+  assert.match(results[6].canonical, /SAATY T L/);
+});
