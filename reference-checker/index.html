@@ -140,6 +140,12 @@
     }
     function render(all){const counts={verified:0,partial:0,corrected:0,review:0,unverified:0,error:0};all.forEach(x=>counts[x.status]=(counts[x.status]||0)+1);$('#summary').innerHTML=[['已确认真实',counts.verified+counts.partial],['真实但需修正',counts.corrected],['需人工复核',counts.review],['暂未证实/失败',counts.unverified+counts.error]].map(x=>`<div><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');$('#cards').innerHTML=all.map(card).join('')}
     const HISTORY_KEY='wenzheng-verification-history-v1',HISTORY_LIMIT=20,historyList=$('#historyList'),clearHistoryBtn=$('#clearHistoryBtn');
+    const VERIFY_CACHE_KEY='wenzheng-success-cache-v1',VERIFY_CACHE_TTL=180*24*60*60*1000,VERIFY_CACHE_LIMIT=120;
+    function verificationCacheKey(reference){const value=String(reference||''),normalized=typeof value.normalize==='function'?value.normalize('NFKC'):value;return normalized.toLowerCase().replace(/[\s\u3000.,，。;；:：'"“”‘’()[\]（）【】{}<>《》\-–—_/\\]+/g,'')}
+    function readVerificationCache(){try{const value=JSON.parse(localStorage.getItem(VERIFY_CACHE_KEY)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch(e){return{}}}
+    function cachedVerification(reference){const key=verificationCacheKey(reference),cache=readVerificationCache(),item=cache[key];if(!item)return null;if(Date.now()-Number(item.storedAt||0)>VERIFY_CACHE_TTL){delete cache[key];try{localStorage.setItem(VERIFY_CACHE_KEY,JSON.stringify(cache))}catch(e){}return null}return{...item.result,submitted:reference,cacheHit:true,note:`已使用本机最近一次成功核验的公开书目证据。${item.result.note||''}`}}
+    function rememberVerification(reference,result){const confidence=Number(result?.authenticityConfidence??result?.confidence??0);if(!['verified','partial','corrected'].includes(result?.status)||confidence<.8)return;const cache=readVerificationCache(),key=verificationCacheKey(reference);cache[key]={storedAt:Date.now(),result:{...result,submitted:''}};const kept=Object.fromEntries(Object.entries(cache).sort((a,b)=>Number(b[1]?.storedAt||0)-Number(a[1]?.storedAt||0)).slice(0,VERIFY_CACHE_LIMIT));try{localStorage.setItem(VERIFY_CACHE_KEY,JSON.stringify(kept))}catch(e){}}
+    function resultQuality(result){const rank={verified:6,partial:5,corrected:5,review:3,unverified:2,error:1}[result?.status]||0;return rank*10+Number(result?.authenticityConfidence??result?.confidence??0)}
     function resultCounts(results){
       const counts={verified:0,partial:0,corrected:0,review:0,unverified:0,error:0};
       (results||[]).forEach(result=>counts[result.status]=(counts[result.status]||0)+1);
@@ -543,7 +549,14 @@
       const fields='DOI,title,author,published,container-title,type,URL,page,volume,issue';
       const jobs=[];
       if(parsed.doi)jobs.push({exact:true,url:`https://api.crossref.org/works/${encodeURIComponent(parsed.doi)}`});
-      jobs.push({exact:false,url:`https://api.crossref.org/works?query.bibliographic=${encodeURIComponent(parsed.work)}&rows=5&select=${fields}`});
+      const endpoint=new URL('https://api.crossref.org/works');
+      endpoint.searchParams.set('query.title',parsed.title||parsed.work);
+      if(parsed.authors?.length)endpoint.searchParams.set('query.author',parsed.authors.slice(0,3).join(' '));
+      if(parsed.container)endpoint.searchParams.set('query.container-title',parsed.container);
+      endpoint.searchParams.set('rows','5');
+      endpoint.searchParams.set('select',fields);
+      endpoint.searchParams.set('mailto','linhu@scu.edu.cn');
+      jobs.push({exact:false,url:endpoint.href});
       const settled=await Promise.allSettled(jobs.map(x=>fetchJson(x.url))),candidates=[];
       settled.forEach((result,i)=>{if(result.status!=='fulfilled')return;const message=result.value?.message,items=Array.isArray(message?.items)?message.items:message?[message]:[];items.forEach(item=>candidates.push(crossrefCandidate(item,jobs[i].exact)))});
       if(settled.every(x=>x.status==='rejected'))throw Error('Crossref 无法连接');
@@ -757,21 +770,34 @@
         return{status:'error',confidence:0,submitted:reference,differences:[],note:`核验失败：${e.name==='AbortError'?'开放数据源连接超时':e.message||'网络错误'}。可使用下方公开检索入口继续复核。`,checkedSources:[],evidenceLinks:scholarlyEvidenceLinks(parsed,parsed.doi)};
       }
     }
+    async function callCloudVerification(reference){
+      const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+      try{
+        const response=await fetch(CLOUD_VERIFY_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reference}),mode:'cors',credentials:'omit',signal:controller.signal});
+        if(!response.ok)throw Error(`云端核验返回 HTTP ${response.status}`);
+        let result=await response.json();
+        if(result&&typeof result.body==='string')result=JSON.parse(result.body);
+        if(!result||!result.status)throw Error('云端核验返回格式无效');
+        return result;
+      }finally{clearTimeout(timer)}
+    }
     async function verifyOne(reference){
+      const cached=cachedVerification(reference);if(cached)return cached;
+      let result=null;
       if(CLOUD_VERIFY_ENDPOINT){
-        const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
         try{
-          const response=await fetch(CLOUD_VERIFY_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reference}),mode:'cors',credentials:'omit',signal:controller.signal});
-          if(!response.ok)throw Error(`云端核验返回 HTTP ${response.status}`);
-          let result=await response.json();
-          if(result&&typeof result.body==='string')result=JSON.parse(result.body);
-          if(!result||!result.status)throw Error('云端核验返回格式无效');
-          return result;
+          const first=await callCloudVerification(reference);result=first;
+          if(['review','unverified','error'].includes(first.status)){
+            await new Promise(resolve=>setTimeout(resolve,160));
+            try{const second=await callCloudVerification(reference);result={...(resultQuality(second)>resultQuality(first)?second:first),attemptCount:2}}catch(retryError){console.warn('云端核验自动重试失败',retryError)}
+          }
         }catch(error){
           console.warn('云端核验暂不可用，回退浏览器开放数据源',error);
-        }finally{clearTimeout(timer)}
+        }
       }
-      return verifyOneLocal(reference);
+      if(!result)result=await verifyOneLocal(reference);
+      rememberVerification(reference,result);
+      return result;
     }
     verifyBtn.onclick=async()=>{const all=refs(input.value),list=all.slice(0,MAX);if(!list.length)return;if(all.length>MAX)fileState(`共识别 ${all.length} 条参考文献，本次自动核验前 20 条。`,'success');verifyBtn.disabled=true;clearBtn.disabled=true;verifyBtn.innerHTML='<span class="spinner"></span>核验中';$('#results').classList.remove('hidden');$('#cards').innerHTML='';$('#summary').innerHTML='';$('#progress').textContent=`0 / ${list.length}`;const out=new Array(list.length);let next=0,done=0;async function worker(){while(next<list.length){const i=next++;out[i]=await verifyOne(list[i]);done++;$('#progress').textContent=`${done} / ${list.length}`;render(out.filter(Boolean))}}await Promise.all(Array.from({length:Math.min(2,list.length)},worker));saveHistory(list,out);verifyBtn.textContent='重新核验';update();$('#results').scrollIntoView({behavior:'smooth',block:'start'})};
   </script>
