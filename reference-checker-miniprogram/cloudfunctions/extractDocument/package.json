@@ -9,7 +9,6 @@
   "dependencies": {
     "iconv-lite": "0.7.0",
     "mammoth": "1.12.0",
-    "node-fetch": "2.7.0",
     "pdf-parse": "1.1.1"
   }
 }
