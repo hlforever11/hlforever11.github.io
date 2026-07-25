@@ -43,6 +43,7 @@ test("临时 TXT 文档可提取参考文献且最多返回二十条", async () 
     fileName: "test.txt"
   });
   assert.equal(result.ok, true);
+  assert.equal(result.build, "2026.07.25-2");
   assert.equal(result.total, 2);
   assert.match(result.references[1], /RADFORD/);
 });
