@@ -1,6 +1,6 @@
 const iconv = require("iconv-lite");
 const mammoth = require("mammoth");
-const nodeFetch = require("node-fetch");
+const https = require("node:https");
 const pdfParse = require("pdf-parse");
 const { extractReferences } = require("./lib/references");
 
@@ -56,42 +56,88 @@ function permittedTemporaryUrl(value) {
   }
 }
 
-function getFetchImplementation() {
-  return typeof globalThis.fetch === "function"
-    ? globalThis.fetch.bind(globalThis)
-    : nodeFetch;
+function downloadWithHttps(tempUrl, redirectCount = 0, transport = https) {
+  return new Promise((resolve, reject) => {
+    const request = transport.get(
+      tempUrl,
+      {
+        headers: {
+          "User-Agent": "Wenzheng-MiniProgram/1.0"
+        }
+      },
+      (response) => {
+        const status = Number(response.statusCode || 0);
+        const location = response.headers?.location;
+
+        if (status >= 300 && status < 400 && location) {
+          response.resume();
+          if (redirectCount >= 5) {
+            reject(new Error("临时文件重定向次数过多。"));
+            return;
+          }
+          const nextUrl = new URL(location, tempUrl).toString();
+          if (!permittedTemporaryUrl(nextUrl)) {
+            reject(new Error("临时文件重定向地址无效。"));
+            return;
+          }
+          resolve(downloadWithHttps(nextUrl, redirectCount + 1, transport));
+          return;
+        }
+
+        if (status < 200 || status >= 300) {
+          response.resume();
+          reject(new Error(`临时文件下载失败（HTTP ${status}）。`));
+          return;
+        }
+
+        const contentLength = Number(response.headers?.["content-length"] || 0);
+        if (contentLength > MAX_FILE_SIZE) {
+          response.resume();
+          reject(new Error("文件不能超过 10 MB。"));
+          return;
+        }
+
+        const chunks = [];
+        let totalBytes = 0;
+        let finished = false;
+        const fail = (error) => {
+          if (finished) return;
+          finished = true;
+          reject(error);
+        };
+
+        response.on("data", (chunk) => {
+          if (finished) return;
+          const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+          totalBytes += buffer.length;
+          if (totalBytes > MAX_FILE_SIZE) {
+            fail(new Error("文件不能超过 10 MB。"));
+            response.destroy();
+            return;
+          }
+          chunks.push(buffer);
+        });
+        response.on("end", () => {
+          if (finished) return;
+          finished = true;
+          resolve(Buffer.concat(chunks, totalBytes));
+        });
+        response.on("error", fail);
+      }
+    );
+
+    request.setTimeout(15000, () => {
+      request.destroy(new Error("临时文件下载超时，请稍后重试。"));
+    });
+    request.on("error", reject);
+  });
 }
 
-async function downloadTemporaryFile(tempUrl) {
+async function downloadTemporaryFile(tempUrl, transport = https) {
   if (!permittedTemporaryUrl(tempUrl)) {
     throw new Error("临时文件地址无效。");
   }
-  const controller =
-    typeof globalThis.AbortController === "function"
-      ? new globalThis.AbortController()
-      : null;
-  const timer = controller
-    ? setTimeout(() => controller.abort(), 15000)
-    : null;
-  try {
-    const fetchImpl = getFetchImplementation();
-    const response = await fetchImpl(tempUrl, {
-      redirect: "follow",
-      timeout: 15000,
-      ...(controller ? { signal: controller.signal } : {})
-    });
-    if (!response.ok) throw new Error(`临时文件下载失败（HTTP ${response.status}）。`);
-    const contentLength = Number(response.headers.get("content-length") || 0);
-    if (contentLength > MAX_FILE_SIZE) throw new Error("文件不能超过 10 MB。");
-    const buffer =
-      typeof response.arrayBuffer === "function"
-        ? Buffer.from(await response.arrayBuffer())
-        : await response.buffer();
-    if (buffer.length > MAX_FILE_SIZE) throw new Error("文件不能超过 10 MB。");
-    return buffer;
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
+  return downloadWithHttps(tempUrl, 0, transport);
 }
 
 exports.main = async (event) => {
@@ -129,5 +175,5 @@ exports.main = async (event) => {
 };
 
 exports._test = {
-  getFetchImplementation
+  downloadTemporaryFile
 };
