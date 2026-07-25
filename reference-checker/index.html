@@ -22,7 +22,7 @@
   <section class="hero"><div class="eyebrow">Evidence before confidence</div><h1>让每一条参考文献<br>都经得起核验</h1><p>上传 DOCX、文字版 PDF、TXT 文档，或粘贴多条中英文参考文献；单次自动核验前 20 条。系统先依据篇名、作者、来源、DOI 和网址等身份字段判断文献是否真实存在，再单独检查年份、卷期页和文献类型等著录准确性。</p></section>
   <main>
     <section class="workspace" id="tool" aria-label="参考文献核验工具">
-      <div class="workspace-head"><div><h2>提交参考文献</h2><p>文档在当前浏览器解析；中文期刊和含网址的网络文献会自动走专用核验流程</p></div><button class="link-btn" id="sampleBtn" type="button">填入示例</button></div>
+      <div class="workspace-head"><div><h2>提交参考文献</h2><p>文档在当前浏览器解析；核验时优先搜索公开题录，再由专业来源补强证据</p></div><button class="link-btn" id="sampleBtn" type="button">填入示例</button></div>
       <div class="divider">直接粘贴参考文献</div>
       <textarea id="input" aria-label="参考文献列表" placeholder="例如：&#10;[1] 作者. 篇名[J]. 刊名, 2024, 12(3): 20-28. DOI: …&#10;[2] Author. (2023). Title. Journal, 8(2), 10–19."></textarea>
       <div class="actions"><div class="counter" id="counter"><strong>0</strong> / 20</div><div class="action-buttons"><button class="secondary" id="clearBtn" type="button" disabled>清空</button><button class="primary" id="verifyBtn" type="button" disabled>开始核验</button></div></div>
@@ -30,18 +30,19 @@
       <div class="upload" id="dropZone"><input id="fileInput" type="file" accept=".docx,.pdf,.txt"><div class="upload-icon">↑</div><div><strong id="uploadTitle">上传整篇文档</strong><p>拖入文件，或 <button id="chooseBtn" type="button">选择文件</button>；最大 15 MB</p></div><small>DOCX · 文字版 PDF · TXT<br>扫描版 PDF 暂不支持</small></div>
       <div id="fileMessage" class="message hidden" role="status"></div>
     </section>
-    <div class="trust"><span><b>✓</b> 不把“数据库未收录”直接判为虚假</span><span><b>✓</b> 中文增强：期刊名录 · DOI 元数据 · 原始网页 · 多源复核入口</span></div>
+    <div class="trust"><span><b>✓</b> 不把“数据库未收录”直接判为虚假</span><span><b>✓</b> 搜索发现 · 专业来源复核 · 核心字段概率判断</span></div>
     <section class="results hidden" id="results"><div class="results-head"><h2>核验结果</h2><div class="progress" id="progress"></div></div><div class="summary" id="summary"></div><div id="cards"></div></section>
     <section class="history" id="history" aria-label="本机核验历史"><div class="history-head"><div><h2>本机历史记录</h2><p>免登录保存最近 20 次核验，仅存于当前浏览器；可一键载入后重新核验。</p></div><button class="history-clear hidden" id="clearHistoryBtn" type="button">清空记录</button></div><div class="history-list" id="historyList"></div></section>
     <section class="boundary" id="limits"><div class="kicker">BOUNDARIES</div><h2>“暂未证实”不等于“虚假”</h2><p>真实性置信度只依据篇名、作者、来源、永久标识和原始网址等作品身份字段及证据强度计算。年份、卷期页、文献类型和格式差异会在确认是同一作品后单独列为著录准确性问题，不会反向降低真实性。若来源暂时不可访问或未被数据库收录，系统只会标记为“暂未证实”，并保留官网与搜索引擎复核入口。</p></section>
   </main>
-  <footer><div>核验请求由浏览器直接发送；网页文献优先访问所提交的原始官网。重要用途请以出版者原始记录为准。</div><div class="footer-meta"><a class="author-email" href="mailto:linhu@scu.edu.cn" aria-label="网站联系邮箱">linhu@scu.edu.cn</a><span class="site-counter" id="siteCounter" aria-live="polite" title="本站累计页面访问量"><span class="dot" aria-hidden="true">·</span><span>累计访问 <span class="site-counter-value" id="busuanzi_site_pv">—</span> 次</span></span></div></footer>
+  <footer><div>系统优先检索公开题录，再由专业来源与原始网页复核。重要用途请以出版者原始记录为准。</div><div class="footer-meta"><a class="author-email" href="mailto:linhu@scu.edu.cn" aria-label="网站联系邮箱">linhu@scu.edu.cn</a><span class="site-counter" id="siteCounter" aria-live="polite" title="本站累计页面访问量"><span class="dot" aria-hidden="true">·</span><span>累计访问 <span class="site-counter-value" id="busuanzi_site_pv">—</span> 次</span></span></div></footer>
   <script src="./vendor/mammoth.browser.min.js"></script>
+  <script src="./config.js"></script>
   <script defer src="https://cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js"></script>
   <script type="module">
     import * as pdfjsLib from './vendor/pdf.min.mjs';
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://hlforever11.github.io/reference-checker/vendor/pdf.worker.min.mjs';
-    const MAX=20,MAX_SIZE=15*1024*1024,REQUEST_TIMEOUT=9000;
+    const MAX=20,MAX_SIZE=15*1024*1024,REQUEST_TIMEOUT=9000,CLOUD_VERIFY_ENDPOINT=String(window.WENZHENG_API_URL||'').trim();
     const TRUSTED_REFERENCE_CACHE=[
       {source:'《图书馆论坛》官网',sourceUrl:'https://tsglt.zslib.com.cn/CN/Y2023/V43/I5/104',title:'ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战',authors:['李书宁','刘一鸣'],year:2023,container:'图书馆论坛',volume:'43',issue:'5',pages:'104-110',type:'journal-article'},
       {source:'《现代情报》正式题录（DOI）',sourceUrl:'https://doi.org/10.3969/j.issn.1008-0821.2023.04.001',title:'从ChatGPT看生成式AI对情报学研究与实践的影响',authors:['曹树金','曹茹烨'],year:2023,container:'现代情报',volume:'43',issue:'4',pages:'3-10',doi:'10.3969/j.issn.1008-0821.2023.04.001',type:'journal-article'},
@@ -265,7 +266,7 @@
           }
         }
       }else{
-        const conventionalYear=body.match(/[,，]\s*((?:18|19|20)\d{2})(?=\s*[,，.。]|$)/);
+        const conventionalYear=body.match(/[,，]\s*((?:18|19|20)\d{2})(?=\s*[,，.。(（]|$)/);
         if(conventionalYear){
           const prefix=cleanValue(body.slice(0,conventionalYear.index)).replace(/[,，]\s*$/,''),parts=prefix.split(/[.。]\s*/).map(cleanValue).filter(Boolean);
           if(parts.length>=3){authors=parts.shift()||'';container=parts.pop()||'';title=parts.join('. ')}
@@ -281,6 +282,7 @@
       }
       const years=[...body.matchAll(/(?:18|19|20)\d{2}/g)].map(x=>Number(x[0])),year=publicationDate?Number(publicationDate.slice(0,4)):years.length?years.at(-1):null;
       const volIssue=body.match(/(?:18|19|20)\d{2}\s*[,，]\s*([A-Za-z]?\d+[A-Za-z]?)\s*(?:\(\s*([^)]+?)\s*\))?/);
+      const issueWithoutVolume=!volIssue?body.match(/(?:18|19|20)\d{2}\s*[\(（]\s*([^)）]+?)\s*[\)）]/):null;
       const pageMatches=[...body.matchAll(/[:：]\s*([A-Za-z]?\d+(?:\s*[-–—]\s*[A-Za-z]?\d+)?)(?=\s*(?:[.,，。;；]|$))/g)];
       const pages=pageMatches.at(-1)?.[1]?.replace(/\s*[–—]\s*/g,'-')||'';
       if(!type){
@@ -288,7 +290,7 @@
         else if(volIssue?.[1]||volIssue?.[2]||pages)type='J';
         else if(/\b(?:press|springer|wiley|publisher)\b/i.test(body)||/出版社/.test(body))type='M';
       }
-      return{raw,work,doi,isbn,pmid,arxivId,standardNumber,patentNumber,url,type,title,authors,container,year,publicationDate,accessDate,volume:volIssue?.[1]||'',issue:volIssue?.[2]||'',pages};
+      return{raw,work,doi,isbn,pmid,arxivId,standardNumber,patentNumber,url,type,title,authors,container,year,publicationDate,accessDate,volume:volIssue?.[1]||'',issue:volIssue?.[2]||issueWithoutVolume?.[1]||'',pages};
     }
     const hasHan=value=>/\p{Script=Han}/u.test(String(value||''));
     function splitSubmittedAuthors(value){
@@ -731,7 +733,7 @@
       let verifiedType=candidateGbType(candidate);if(verifiedType==='R'&&parsed.url)verifiedType='R/OL';if(parsed.type&&verifiedType&&parsed.type!==verifiedType)add('文献类型',`[${parsed.type}]`,`[${verifiedType}]`);
       return out;
     }
-    async function verifyOne(reference){
+    async function verifyOneLocal(reference){
       const parsed=parseReference(reference),type=String(parsed.type||'').toUpperCase(),trusted=queryTrustedReferenceCache(parsed);
       if(!trusted.candidates.length&&(type.includes('/OL')||(parsed.url&&!parsed.doi&&(!type||['EB','DB','CP','N','S','P'].includes(baseReferenceType(type))))))return verifyWebReference(reference,parsed);
       try{
@@ -754,6 +756,22 @@
       }catch(e){
         return{status:'error',confidence:0,submitted:reference,differences:[],note:`核验失败：${e.name==='AbortError'?'开放数据源连接超时':e.message||'网络错误'}。可使用下方公开检索入口继续复核。`,checkedSources:[],evidenceLinks:scholarlyEvidenceLinks(parsed,parsed.doi)};
       }
+    }
+    async function verifyOne(reference){
+      if(CLOUD_VERIFY_ENDPOINT){
+        const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+        try{
+          const response=await fetch(CLOUD_VERIFY_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reference}),mode:'cors',credentials:'omit',signal:controller.signal});
+          if(!response.ok)throw Error(`云端核验返回 HTTP ${response.status}`);
+          let result=await response.json();
+          if(result&&typeof result.body==='string')result=JSON.parse(result.body);
+          if(!result||!result.status)throw Error('云端核验返回格式无效');
+          return result;
+        }catch(error){
+          console.warn('云端核验暂不可用，回退浏览器开放数据源',error);
+        }finally{clearTimeout(timer)}
+      }
+      return verifyOneLocal(reference);
     }
     verifyBtn.onclick=async()=>{const all=refs(input.value),list=all.slice(0,MAX);if(!list.length)return;if(all.length>MAX)fileState(`共识别 ${all.length} 条参考文献，本次自动核验前 20 条。`,'success');verifyBtn.disabled=true;clearBtn.disabled=true;verifyBtn.innerHTML='<span class="spinner"></span>核验中';$('#results').classList.remove('hidden');$('#cards').innerHTML='';$('#summary').innerHTML='';$('#progress').textContent=`0 / ${list.length}`;const out=new Array(list.length);let next=0,done=0;async function worker(){while(next<list.length){const i=next++;out[i]=await verifyOne(list[i]);done++;$('#progress').textContent=`${done} / ${list.length}`;render(out.filter(Boolean))}}await Promise.all(Array.from({length:Math.min(2,list.length)},worker));saveHistory(list,out);verifyBtn.textContent='重新核验';update();$('#results').scrollIntoView({behavior:'smooth',block:'start'})};
   </script>
