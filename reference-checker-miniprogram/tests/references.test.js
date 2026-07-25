@@ -31,3 +31,31 @@ test("文档参考文献标题后的多行条目可正确合并", () => {
   assert.match(references[1], /shanghaitech/);
 });
 
+test("无括号的纯数字序号可拆分中文和英文参考文献", () => {
+  const value = `7 张红扬. 大学图书馆国际交流与合作的新趋势. 大学图书馆学报, 2002, 20(02): 58-60.
+8 聂建霞. 图书馆国际合作与学术交流策略初探. 农业图书情报学刊, 2008, 20(06): 9-11.
+21 Nieuwenhuysen P. International cooperation towards the development of technology in university libraries. Proceedings of the IATUL Conferences, 2012.
+22 Scherlen A, Shao X. Bridges to China: Developing partnerships between serials librarians in the United States and China. Serials Review, 2009, 35(2): 75-79.
+23 Lor PJ. Critical reflections on international librarianship. Mousaion, 2008, 25(1): 1-15.
+24 Chao S J. Library cooperation on overseas Chinese studies: from resource sharing to the development of library collections. Collection Building, 2001, 20(3): 123-130.
+25 L S T, G V L. Models, methods, concepts & applications of the analytic hierarchy process. New York: Springer Science & Business Media, 2012. 3-5.`;
+  const references = splitReferences(value);
+  assert.equal(references.length, 7);
+  assert.match(references[0], /^7 张红扬/);
+  assert.match(references[6], /^25 L S T/);
+});
+
+test("同一行连续出现纯数字序号时仍能准确拆分", () => {
+  const value = "7 张红扬. 大学图书馆国际交流与合作的新趋势. 大学图书馆学报, 2002, 20(02): 58-60. 8 聂建霞. 图书馆国际合作与学术交流策略初探. 农业图书情报学刊, 2008, 20(06): 9-11.";
+  const references = splitReferences(value);
+  assert.equal(references.length, 2);
+});
+
+test("文档可统计超过二十条纯数字序号参考文献", () => {
+  const value = `参考文献\n${Array.from(
+    { length: 22 },
+    (_, index) => `${index + 1} 作者${index + 1}. 测试题名${index + 1}. 测试期刊, 2024, 1(1): 1-2.`
+  ).join("\n")}`;
+  const references = extractReferencesFromDocument(value);
+  assert.equal(references.length, 22);
+});
