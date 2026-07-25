@@ -159,7 +159,10 @@ Page({
             tempUrl,
             fileName: file.name
           });
-          if (!response.ok) throw new Error(response.message || "文档解析失败。");
+          if (!response.ok) {
+            const build = response.build ? `（文档服务 ${response.build}）` : "";
+            throw new Error(`${response.message || "文档解析失败。"}${build}`);
+          }
           list = response.references || [];
         } finally {
           if (fileID) {
