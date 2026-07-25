@@ -1,4 +1,4 @@
-const NUMBERED_START = /^(?:\[\s*\d{1,3}\s*\]|\d{1,3}[.、)])\s*/;
+const NUMBERED_START = /^(?:\[\s*\d{1,3}\s*\]|[（(]\s*\d{1,3}\s*[）)]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)]|\d{1,3}\s+(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff]))\s*/;
 
 function bibliographicCue(value) {
   return /(?:18|19|20)\d{2}|\[[A-Z/]+\]|https?:\/\/|10\.\d{4,9}\//i.test(String(value || ""));
@@ -21,7 +21,11 @@ function looksLikeReferenceStart(value) {
 function extractReferences(text) {
   const normalized = String(text || "")
     .replace(/\s*(参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?\s*/gi, "\n$1\n")
-    .replace(/\s+(?=\[\s*\d+\s*\]\s*)/g, "\n");
+    .replace(/\s+(?=(?:\[\s*\d{1,3}\s*\]|[（(]\s*\d{1,3}\s*[）)]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)])\s*)/g, "\n")
+    .replace(
+      /([。.;；])\s+(?=(?!(?:18|19|20)\d{2}\b)\d{1,3}\s+[A-Za-z\u00c0-\u024f\u3400-\u9fff])/g,
+      "$1\n"
+    );
   const lines = normalized
     .replace(/\r/g, "")
     .replace(/\u00a0/g, " ")
@@ -63,4 +67,3 @@ function extractReferences(text) {
 module.exports = {
   extractReferences
 };
-
