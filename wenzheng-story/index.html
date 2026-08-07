@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="文证参考文献核验平台的人机协作开发实录：从一个想法，到可运行的网站与微信小程序。">
+  <meta name="theme-color" content="#f4efe7">
+  <title>文证 · 一次人与 AI 协作开发实录</title>
+  <link rel="icon" href="../reference-checker/logo.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --ink:#162542; --muted:#687083; --paper:#fbf8f2; --card:#fffdf9;
+      --line:#ded7ca; --accent:#b64a3b; --accent-soft:#f4e2dc; --navy:#20385e;
+      --green:#2f765c; --amber:#a56b22; --shadow:0 18px 55px rgba(34,45,65,.09);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;color:var(--ink);background:
+      radial-gradient(circle at 9% 8%,rgba(190,106,78,.09),transparent 24rem),
+      radial-gradient(circle at 95% 26%,rgba(32,56,94,.07),transparent 28rem),var(--paper);
+      font-family:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;line-height:1.72}
+    a{color:inherit}.shell{width:min(1180px,calc(100% - 36px));margin:auto}
+    .topbar{position:sticky;top:0;z-index:20;background:rgba(251,248,242,.9);backdrop-filter:blur(18px);border-bottom:1px solid rgba(222,215,202,.8)}
+    .topbar-inner{height:68px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand{display:flex;align-items:center;gap:11px;text-decoration:none;font-weight:800;letter-spacing:.08em}
+    .brand img{width:38px;height:38px;border-radius:11px;box-shadow:0 6px 18px rgba(22,37,66,.12)}
+    .brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.16em;font-weight:700}
+    nav{display:flex;align-items:center;gap:22px;font-size:14px;color:#445068}
+    nav a{text-decoration:none} nav a:hover{color:var(--accent)}
+    .hero{padding:88px 0 58px;display:grid;grid-template-columns:1.25fr .75fr;gap:62px;align-items:end}
+    .eyebrow{display:flex;align-items:center;gap:12px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+    .eyebrow:before{content:"";width:42px;height:1px;background:currentColor}
+    h1{font-family:STSong,"Songti SC","Noto Serif CJK SC",serif;font-size:clamp(42px,6.3vw,79px);line-height:1.12;letter-spacing:-.045em;margin:24px 0 24px;font-weight:800}
+    h1 em{font-style:normal;color:var(--accent)}
+    .lead{max-width:760px;color:#4e596f;font-size:clamp(17px,2vw,21px);margin:0}
+    .hero-note{padding:28px;border:1px solid var(--line);border-radius:22px;background:rgba(255,253,249,.76);box-shadow:var(--shadow)}
+    .hero-note b{display:block;font-family:STSong,"Songti SC",serif;font-size:23px;margin-bottom:8px}
+    .hero-note p{margin:0;color:var(--muted);font-size:14px}.hero-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 17px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:700;border:1px solid var(--navy);background:var(--navy);color:white}
+    .btn.alt{background:transparent;color:var(--navy)}
+    .metrics{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:20px;background:rgba(255,253,249,.72);overflow:hidden;margin-bottom:86px}
+    .metric{padding:25px 28px;border-right:1px solid var(--line)}.metric:last-child{border:0}
+    .metric strong{display:block;font:800 31px/1.15 STSong,"Songti SC",serif;color:var(--navy)}
+    .metric span{display:block;color:var(--muted);font-size:13px;margin-top:7px}
+    section{padding:72px 0}.section-head{display:grid;grid-template-columns:.7fr 1.3fr;gap:45px;margin-bottom:38px}
+    .kicker{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.17em;text-transform:uppercase}
+    h2{font:800 clamp(30px,4vw,48px)/1.2 STSong,"Songti SC",serif;margin:10px 0 0;letter-spacing:-.03em}
+    .section-head p{margin:10px 0 0;color:var(--muted);font-size:16px}
+    .disclosure{border-left:4px solid var(--accent);background:var(--accent-soft);padding:18px 22px;border-radius:0 14px 14px 0;color:#5b403e;font-size:14px}
+    .journey{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .stage{position:relative;min-height:220px;padding:26px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 10px 30px rgba(34,45,65,.045)}
+    .stage .no{font:800 12px/1 system-ui;color:var(--accent);letter-spacing:.14em}.stage h3{font:800 21px/1.4 STSong,"Songti SC",serif;margin:18px 0 10px}
+    .stage p{font-size:14px;color:var(--muted);margin:0}.stage .arrow{position:absolute;right:18px;bottom:16px;color:#b3aa9c;font-size:24px}
+    .principles{display:grid;grid-template-columns:1fr 1fr;gap:16px}.principle{padding:25px;border-radius:18px;border:1px solid var(--line);background:rgba(255,253,249,.78)}
+    .principle b{font:800 20px STSong,"Songti SC",serif}.principle p{margin:8px 0 0;color:var(--muted);font-size:14px}
+    .explorer{padding-top:82px}.tools{position:sticky;top:68px;z-index:12;padding:18px 0;background:linear-gradient(var(--paper) 74%,rgba(251,248,242,0));margin-bottom:12px}
+    .searchrow{display:grid;grid-template-columns:1fr auto auto;gap:10px}.search{width:100%;border:1px solid var(--line);border-radius:13px;background:white;padding:14px 16px;font:inherit;color:var(--ink);outline:none}
+    .search:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(32,56,94,.08)}
+    select,.toggle{border:1px solid var(--line);border-radius:13px;background:white;padding:0 15px;color:var(--ink);font:inherit}
+    .toggle{cursor:pointer;font-weight:700}.toggle.on{color:white;background:var(--navy);border-color:var(--navy)}
+    .chips{display:flex;gap:8px;overflow:auto;padding:11px 0 4px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+    .chip{white-space:nowrap;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.74);padding:8px 13px;cursor:pointer;color:#525d70;font-size:13px}
+    .chip.active{background:var(--accent);border-color:var(--accent);color:white}.resultbar{display:flex;justify-content:space-between;align-items:center;margin:20px 0;color:var(--muted);font-size:13px}
+    .timeline{position:relative;padding-left:34px}.timeline:before{content:"";position:absolute;left:10px;top:10px;bottom:10px;width:1px;background:var(--line)}
+    .entry{position:relative;margin-bottom:16px;border:1px solid var(--line);border-radius:17px;background:rgba(255,253,249,.9);overflow:hidden;box-shadow:0 8px 25px rgba(34,45,65,.035)}
+    .entry:before{content:"";position:absolute;width:11px;height:11px;border-radius:50%;background:var(--card);border:3px solid var(--accent);left:-32px;top:26px;z-index:2}
+    .entry.hidden{display:none}.entry-head{width:100%;border:0;background:transparent;display:grid;grid-template-columns:58px 1fr auto;gap:14px;text-align:left;padding:20px 22px;cursor:pointer;color:inherit;font:inherit}
+    .entry-id{font:800 12px/1.2 system-ui;color:var(--accent);letter-spacing:.08em}.entry-title{font-weight:800;line-height:1.5}.entry-tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    .tag{border-radius:999px;background:#f0ece5;color:#667083;padding:4px 9px;font-size:11px;white-space:nowrap}.tag.bug{background:#f7dfda;color:#9f4034}.tag.milestone{background:#dfeee7;color:#2f765c}.tag.decision{background:#ece6f6;color:#68518f}.tag.deploy{background:#e1e9f4;color:#31527e}
+    .chev{display:inline-block;margin-left:5px;transition:.2s}.entry.open .chev{transform:rotate(180deg)}
+    .entry-body{display:none;border-top:1px solid var(--line);padding:22px;grid-template-columns:1fr 1fr;gap:16px}.entry.open .entry-body{display:grid}
+    .speech,.action{padding:18px;border-radius:13px}.speech{background:#f5f1ea}.action{background:#f1f4f8}
+    .label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--accent);margin-bottom:8px}.action .label{color:var(--navy)}
+    .speech p,.action p{margin:0;font-size:14px;white-space:pre-line}.outcome{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:14px;color:var(--muted);font-size:13px}
+    mark{background:#ffe59a;color:inherit;border-radius:2px}.empty{display:none;padding:50px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:18px}
+    .lessons{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.lesson{padding:27px;border-radius:18px;color:white;background:var(--navy)}
+    .lesson:nth-child(2){background:#9b4b3f}.lesson:nth-child(3){background:#4d6158}.lesson:nth-child(4){background:#5e5673}.lesson:nth-child(5){background:#755939}.lesson:nth-child(6){background:#334b65}
+    .lesson .n{opacity:.58;font:800 12px system-ui}.lesson h3{font:800 21px/1.4 STSong,"Songti SC",serif;margin:18px 0 10px}.lesson p{margin:0;opacity:.82;font-size:14px}
+    .cta{margin-top:72px;border-radius:24px;padding:38px;background:linear-gradient(135deg,#182b4b,#294a78);color:white;display:flex;align-items:center;justify-content:space-between;gap:30px}
+    .cta h3{font:800 28px STSong,"Songti SC",serif;margin:0 0 8px}.cta p{margin:0;opacity:.75}.cta .btn{background:white;color:var(--navy);border-color:white;flex:0 0 auto}
+    footer{margin-top:72px;padding:34px 0 42px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+    .footer-inner{display:flex;justify-content:space-between;align-items:center;gap:20px}.footer-inner a{text-decoration:none;color:var(--ink)}
+    #busuanzi_container_site_pv{display:none}.backtop{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:rgba(255,253,249,.92);color:var(--navy);cursor:pointer;box-shadow:var(--shadow);display:none}
+    @media(max-width:900px){nav{display:none}.hero{grid-template-columns:1fr;padding-top:56px;gap:30px}.metrics{grid-template-columns:1fr 1fr}.metric:nth-child(2){border-right:0}.metric:nth-child(-n+2){border-bottom:1px solid var(--line)}.section-head{grid-template-columns:1fr}.journey{grid-template-columns:1fr 1fr}.lessons{grid-template-columns:1fr 1fr}}
+    @media(max-width:620px){.shell{width:min(100% - 24px,1180px)}.topbar-inner{height:60px}.brand small{display:none}.hero{padding-top:42px}.hero-note{padding:22px}h1{font-size:42px}.metrics{margin-bottom:48px}.metric{padding:20px 17px}.metric strong{font-size:25px}section{padding:50px 0}.journey,.principles,.lessons{grid-template-columns:1fr}.stage{min-height:0}.tools{top:60px}.searchrow{grid-template-columns:1fr 1fr}.search{grid-column:1/-1}.entry-head{grid-template-columns:44px 1fr;padding:17px 15px;gap:9px}.entry-tags{grid-column:2;justify-content:flex-start}.entry-body,.entry.open .entry-body{grid-template-columns:1fr;padding:15px}.timeline{padding-left:26px}.timeline:before{left:7px}.entry:before{left:-25px}.cta{align-items:flex-start;flex-direction:column;padding:28px}.footer-inner{align-items:flex-start;flex-direction:column}.backtop{right:14px;bottom:14px}}
+    @media print{.topbar,.tools,.backtop,.hero-links,.cta{display:none!important}.entry{break-inside:avoid}.entry-body{display:grid!important}.hero{padding-top:25px}body{background:white}.shell{width:100%}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="#top"><img src="../reference-checker/logo.svg" alt="文证标志"><span>文证 · 协作实录<small>HUMAN × AI BUILD LOG</small></span></a>
+      <nav><a href="#overview">项目全景</a><a href="#record">对话记录</a><a href="#lessons">给学生的启示</a><a href="../reference-checker/">打开文证</a></nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <div class="shell">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">Evidence before confidence · Build in public</div>
+          <h1>一项几乎不能完成的任务，<br>怎样被<em>一轮轮做成</em></h1>
+          <p class="lead">这是“文证”参考文献核验平台从想法到网站、再到微信小程序的真实协作过程。它不展示一个神奇提示词，而是展示需求如何被澄清、错误如何被发现、标准如何被重写，以及人如何始终掌握判断权。</p>
+        </div>
+        <aside class="hero-note">
+          <b>给学生的阅读方法</b>
+          <p>先看“项目全景”理解路线，再按分类筛选对话。重点观察每次失败之后，用户提供了什么证据，AI又怎样把个案转化为通用规则。</p>
+          <div class="hero-links"><a class="btn" href="#record">进入协作实录 ↓</a><a class="btn alt" href="../reference-checker/">体验成品 ↗</a></div>
+        </aside>
+      </div>
+
+      <div class="metrics" aria-label="项目数据">
+        <div class="metric"><strong>80+</strong><span>轮需求、测试与反馈</span></div>
+        <div class="metric"><strong>2 个</strong><span>可运行产品：网站 + 小程序</span></div>
+        <div class="metric"><strong>39 项</strong><span>最新自动化回归测试</span></div>
+        <div class="metric"><strong>0 元起步</strong><span>GitHub Pages 与免费云额度</span></div>
+      </div>
+    </div>
+
+    <section id="overview">
+      <div class="shell">
+        <div class="section-head">
+          <div><div class="kicker">Project map</div><h2>从“能不能做”<br>到“怎样做可靠”</h2></div>
+          <div><p>项目最初只是一个朴素问题：能否自动挑出 AI 生成的虚假参考文献？真正的难点随后浮现——中文资源覆盖、非标准著录拆分、不同文献类型、网络波动、真实性与准确性的区分、免费部署限制，以及网站与小程序的能力差异。</p></div>
+        </div>
+        <div class="disclosure"><b>记录说明：</b>用户的关键表述尽量保留原话；AI一侧由于并非每轮都保存了完整逐字回复，统一标为“AI执行摘要”。重复点击、账号口令和云环境标识已合并或脱敏，截图中的关键信息则转写为文字。这是一份忠实的教学整理，不是伪造的逐字聊天截图。</div>
+        <div class="journey" style="margin-top:28px">
+          <article class="stage"><span class="no">01 · DEFINE</span><h3>提出真实问题</h3><p>验证最多20条中英文参考文献，识别虚假条目并纠正年份、卷期、页码等错误。</p><span class="arrow">→</span></article>
+          <article class="stage"><span class="no">02 · BREAK</span><h3>用反例击穿系统</h3><p>不断提交中文论文、网页新闻、报告、图书、灰色文献和不规范格式，找出“看似能用”的假象。</p><span class="arrow">→</span></article>
+          <article class="stage"><span class="no">03 · REFRAME</span><h3>重写判断标准</h3><p>把真实性与著录准确性分开：核心身份字段决定“是否存在”，格式和卷期错误只影响“是否准确”。</p><span class="arrow">→</span></article>
+          <article class="stage"><span class="no">04 · SHIP</span><h3>跨平台上线</h3><p>GitHub Pages 网站、微信原生小程序、云函数、文档上传、历史记录与持续回归测试逐步落地。</p><span class="arrow">✓</span></article>
+        </div>
+
+        <div class="section-head" style="margin-top:76px">
+          <div><div class="kicker">Core decisions</div><h2>四个改变项目<br>走向的判断</h2></div>
+          <div class="principles">
+            <article class="principle"><b>真实性 ≠ 著录零误差</b><p>标题、作者、来源、DOI/链接等共同确认作品身份；“05/5”或文献类型标识差异应提示修正，不应判为虚假。</p></article>
+            <article class="principle"><b>搜索优先，多源互证</b><p>普通搜索引擎能发现大量中文与长尾文献，再结合 DOI、Crossref、OpenAlex、原始网页和机构来源提高置信度。</p></article>
+            <article class="principle"><b>失败不是“虚假”</b><p>网络超时、站点防护或数据库未收录只能说明暂时缺证，必须与“存在矛盾证据”区分开。</p></article>
+            <article class="principle"><b>修复必须能举一反三</b><p>每个个案都要沉淀为解析、归一化、容错、回退或回归测试规则，而不是只给某一篇文献开白名单。</p></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="explorer" id="record">
+      <div class="shell">
+        <div class="section-head" style="margin-bottom:10px">
+          <div><div class="kicker">Conversation explorer</div><h2>完整协作时间线</h2></div>
+          <div><p>按大类、子主题或关键词检索。点击卡片查看用户原话、AI执行摘要和这一轮留下的工程启示；“只看问题”适合集中学习调试过程。</p></div>
+        </div>
+        <div class="tools">
+          <div class="searchrow">
+            <input id="search" class="search" type="search" placeholder="搜索：中文文献、UNESCO、文档上传、云函数、历史记录……" aria-label="搜索协作记录">
+            <select id="subFilter" aria-label="按子主题筛选"><option value="all">全部子主题</option></select>
+            <button id="problemToggle" class="toggle" type="button" aria-pressed="false">只看问题</button>
+          </div>
+          <div id="chips" class="chips" aria-label="大类筛选"></div>
+        </div>
+        <div class="resultbar"><span id="resultCount"></span><button class="chip" id="expandAll" type="button">展开当前结果</button></div>
+        <div id="timeline" class="timeline"></div>
+        <div id="empty" class="empty">没有找到匹配记录，请换一个关键词或分类。</div>
+      </div>
+    </section>
+
+    <section id="lessons">
+      <div class="shell">
+        <div class="section-head">
+          <div><div class="kicker">Lessons learned</div><h2>这次协作真正<br>教会我们的事</h2></div>
+          <div><p>AI降低了实现门槛，却没有取消人的责任。领域知识、问题意识、测试样本、证据判断和取舍能力，决定了最后做出来的是演示品，还是可持续改进的真实工具。</p></div>
+        </div>
+        <div class="lessons">
+          <article class="lesson"><span class="n">01</span><h3>先定义“对”</h3><p>没有清楚区分真实性、准确性和可访问性，系统再复杂也会稳定地产生错误结论。</p></article>
+          <article class="lesson"><span class="n">02</span><h3>用真实反例说话</h3><p>“它不行”不如给出可被搜索引擎查到的具体文献；反例是人给AI最有价值的反馈。</p></article>
+          <article class="lesson"><span class="n">03</span><h3>让个案变成规则</h3><p>好的修复会覆盖同类文献、不同格式和未来输入；坏的修复只让一条测试数据变绿。</p></article>
+          <article class="lesson"><span class="n">04</span><h3>保留不确定性</h3><p>查不到不等于不存在。证据不足时诚实地返回“待复核”，比自信地误判更专业。</p></article>
+          <article class="lesson"><span class="n">05</span><h3>平台约束也是设计</h3><p>网络、免费额度、3秒超时、个人主体权限和跨域限制，都会反过来塑造产品架构。</p></article>
+          <article class="lesson"><span class="n">06</span><h3>人始终是主编</h3><p>用户负责目标、判断和验收；AI负责实现、搜索、归纳与加速。协作不是把责任外包。</p></article>
+        </div>
+        <div class="cta">
+          <div><h3>现在，去看看这段协作最终做成了什么</h3><p>无需登录，粘贴或上传参考文献即可体验。核验结果用于初筛，重要结论仍应结合证据人工复核。</p></div>
+          <a class="btn" href="../reference-checker/">打开“文证”参考文献核验 ↗</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-inner">
+      <div>“文证”人机协作开发实录 · 教学分享版</div>
+      <div>联系：<a href="mailto:linhu@scu.edu.cn">linhu@scu.edu.cn</a> · <span id="busuanzi_container_site_pv">访问 <span id="busuanzi_site_pv">—</span> 次</span></div>
+    </div>
+  </footer>
+  <button id="backtop" class="backtop" type="button" aria-label="返回顶部">↑</button>
+
+  <script>
+    const records = [
+      {cat:"产品构想",sub:"需求定义",kind:"decision",title:"从“验证参考文献”开始",user:`做一个验证参考文献真实性、准确性的网站。用户提交参考文献列表，一次最多20篇，可以是标准格式，也可以只包含几个关键字段。系统通过查证，将虚假的挑出来，不准确的修改正确。网站直接部署并可以真实运行，我有 GitHub。`,ai:`将任务拆成输入解析、外部证据检索、身份匹配、字段纠错、结果解释和静态部署六部分，并选择“最多20条”作为可操作的首版边界。`,out:"项目从一开始就不是格式化工具，而是“真实性判断 + 准确性纠错”的证据系统。"},
+      {cat:"产品构想",sub:"使用门槛",kind:"decision",title:"网站打开就能用，不要求登录",user:`我希望这个网站打开就能用，不需要登录。`,ai:`把匿名使用设为默认路径，不把账号系统作为核心功能的前置条件。`,out:"低门槛成为网站与后来小程序共同坚持的产品原则。"},
+      {cat:"部署发布",sub:"可访问性",kind:"deploy",title:"要求在常用网络环境直接访问",user:`希望是中国大陆也可以自由访问的网址。`,ai:`采用 GitHub Pages 作为首版静态托管，并在后续核验链路中避免把唯一能力建立在单一受限服务上。`,out:"“页面能打开”与“核验服务能访问”是两个必须分别解决的问题。"},
+      {cat:"网站设计",sub:"文档上传",kind:"decision",title:"从粘贴扩展到直接上传文档",user:`先改一下网站功能，支持直接上传文档，会对文档中的参考文献进行验证。然后部署网站，用我的 GitHub 账号。`,ai:`增加 TXT、DOCX 与文字版 PDF 的浏览器端提取流程，文件只用于抽取参考文献。`,out:"输入从单一文本框升级为“粘贴 + 文档导入”双入口。"},
+      {cat:"核验算法",sub:"中文文献",kind:"bug",title:"中文文献普遍无法核实",user:`现在这个网站无法验证中文参考文献。另外验证似乎必须翻墙，否则似乎也无法验证。请先解决这两个问题。`,ai:`补充中文检索策略、中文期刊名录和本地可达的数据回退，降低对单一境外学术 API 的依赖。`,out:"这是项目第一次暴露出：英文 DOI 数据库不能代表全部学术文献。"},
+      {cat:"核验算法",sub:"搜索策略",kind:"bug",title:"普通搜索能查到，系统为什么查不到",user:`像“李书宁,刘一鸣.ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战”这篇文献，即使用百度这样的搜索引擎也能验证，为什么却做不到？验证方法应该更灵活。`,ai:`将精确题名检索、作者/刊名联合查询和搜索结果摘要证据加入流程，不再只依赖 DOI 或结构化数据库。`,out:"长尾中文文献需要搜索引擎发现，专业数据库再做增强。"},
+      {cat:"核验算法",sub:"网页文献",kind:"bug",title:"网络新闻类参考文献也应被验证",user:`陈金榜.朱民博士畅谈ChatGPT与人工智能未来[EB/OL]… https://www.shanghaitech.edu.cn/... 这样的网络新闻类参考文献应该也能被验证才合理。`,ai:`增加 URL 提取、原始网页标题比对、发布日期和机构域名证据，并把网页文献从期刊规则中分流。`,out:"不同文献类型需要不同证据链，不能强行套用期刊字段。"},
+      {cat:"功能调试",sub:"参考文献拆分",kind:"bug",title:"同一行的三条文献被当成一条",user:`如果用户把 [1]… [2]… [3]… 连续粘贴在同一行，系统应该自动识别是三篇参考文献，而不是一篇。`,ai:`解析器增加方括号序号边界，允许序号前没有换行，并保护 URL、卷期和页码中的数字。`,out:"参考文献拆分必须理解“编号边界”，不能只按换行切割。"},
+      {cat:"交互视觉",sub:"输入体验",kind:"decision",title:"给输入框增加清空键",user:`输入框增加一个清空键。`,ai:`增加明确的清空操作，并同步重置条数、文件状态与核验结果。`,out:"小改动降低了反复测试时的操作成本。"},
+      {cat:"交互视觉",sub:"视觉优化",kind:"decision",title:"调整标题、整体审美与作者信息",user:`“让每一条参考文献，都经得起核验”字号大了一点。整个网站从审美角度适当优化，更有设计感。最下面低调留邮箱 linhu@scu.edu.cn，不出现我的名字。`,ai:`收紧标题字号与行距，建立深蓝、纸张白和克制红的视觉体系，并在页脚仅保留联系邮箱。`,out:"产品从功能演示逐步形成了“文证”的品牌气质。"},
+      {cat:"功能调试",sub:"永久链接",kind:"bug",title:"UNESCO ARK 链接可打开却审核失败",user:`UNESCO. (2021). Recommendation on the ethics of artificial intelligence… https://unesdoc.unesco.org/ark:/48223/pf0000381137 链接正常打开，为什么审核失败？`,ai:`识别 ARK 等永久标识符，跟随重定向，并把“机构页面可达 + 标题匹配”作为报告类文献的强证据。`,out:"URL 不应只按普通网页处理；DOI、ARK、Handle 都是持久标识符。"},
+      {cat:"网站设计",sub:"访问统计",kind:"decision",title:"页面下方增加访问量计数器",user:`在页面下方增加网站访问量的计数器。`,ai:`在静态页面接入轻量访客统计，并在服务返回数字前保持低调隐藏。`,out:"访问计数器成为网站和本实录页共同的页脚元素。"},
+      {cat:"网站设计",sub:"文案与解析",kind:"bug",title:"避免地域化术语，并识别混合格式的六条文献",user:`网站上不要出现“境外代理”“大陆”之类的文字。用户输入可能不够规范：三条带 [1][2][3]，再接三条英文无编号文献，应该识别为6篇。`,ai:`重写中性用户文案；解析器同时支持编号边界、空行、作者—年份模式、DOI/URL 结束和新条目启发式。`,out:"“真实输入不规范”被确立为正常场景，而不是用户错误。"},
+      {cat:"交互视觉",sub:"信息架构",kind:"decision",title:"粘贴参考文献放在上传附件上方",user:`将粘贴参考文献放到上传附件的上面，调整一下顺序。`,ai:`把高频、低成本的粘贴入口放在前面，把文件导入作为次级路径。`,out:"信息架构根据使用频率而不是开发顺序调整。"},
+      {cat:"产品构想",sub:"成本与算力",kind:"decision",title:"追问零成本网站如何运行",user:`这个网站我没有付出任何成本，它是怎么运行的呢？需要消耗算力吗？`,ai:`解释静态页面由浏览器执行解析和匹配，GitHub Pages 提供托管；外部检索消耗对方服务和用户设备资源，但不等于零资源。`,out:"“免费”是成本由免费额度和客户端分担，不是计算不存在。"},
+      {cat:"产品构想",sub:"成果申报",kind:"milestone",title:"把项目转化为大赛申报材料",user:`我准备用我做的这个网站来参加比赛，请按要求填写申报说明书，直接导出 Word 文档。`,ai:`将平台定位、技术路线、创新点、运行边界和应用成效整理为正式作品建设说明书。`,out:"项目从工具开发进入可传播、可申报的成果表达阶段。"},
+      {cat:"部署发布",sub:"GitHub Pages",kind:"deploy",title:"尝试缩短域名并保留旧地址",user:`请将现在网站域名中的 birth-of-the-universe 删除，让域名更简短，同时原域名依然有效，能自动转为新域名。我可以全权授权你操作。`,ai:`迁移到用户主页仓库的 /reference-checker/ 路径，并为旧入口设计重定向。`,out:"最终稳定入口为 GitHub 用户主页下的项目路径。"},
+      {cat:"功能调试",sub:"灰色文献",kind:"bug",title:"OpenAI Blog 论文被误判",user:`RADFORD A, WU J, CHILD R, et al. Language models are unsupervised multitask learners[J]. OpenAI Blog, 2019, 1(8): 9. 这条是真实的，搜索引擎能查证，系统未能核实。`,ai:`增加技术报告、机构博客和灰色文献分支，降低对标准期刊卷期的硬性要求，并补充题名检索入口。`,out:"文献类型标注可能不规范，但作品本身仍可真实存在。"},
+      {cat:"交互视觉",sub:"移动端排版",kind:"bug",title:"手机标题过大、断行和用词需要修正",user:`主页标题手机上太突兀，分两行时逗号不对称可以删掉；说明文字总把“期。”单独一行；说明中的“百度”改为“搜索引擎”。`,ai:`缩小移动端标题、删除标点、微调文本容器和字距，并将品牌化表述改为通用“搜索引擎”。`,out:"移动端不是桌面版缩小，需要单独检查断行与视觉重心。"},
+      {cat:"小程序开发",sub:"产品迁移",kind:"decision",title:"决定开发可上线的微信小程序",user:`我想把这个网站做适当简化和调整，开发成一个可以上线的微信小程序，请全流程帮我完成。`,ai:`选择原生微信小程序而非网页套壳，复用解析与核验核心，重新设计文件选择、云函数和隐私说明。`,out:"项目进入第二个平台，架构也从纯前端变为“客户端 + 云函数”。"},
+      {cat:"小程序开发",sub:"基础配置",kind:"decision",title:"确认小程序主体与 AppID",user:`AppID 已提供，主体：个人。`,ai:`按个人主体可用能力规划功能，避免依赖需要企业资质的接口；公开教学记录中对 AppID 脱敏。`,out:"主体类型直接影响登录、手机号能力和上线审核路径。"},
+      {cat:"小程序开发",sub:"品牌信息",kind:"decision",title:"补充正式名称、简称与简介",user:`补充小程序的基本信息，如名称（正式名称和简称，考虑传播度是否有更好的建议？）、简介。`,ai:`围绕“文证”这一短名称设计正式名、简称和突出“参考文献核验”的简介。`,out:"名称兼顾传播识别与平台审核规范。"},
+      {cat:"交互视觉",sub:"品牌图标",kind:"milestone",title:"为小程序创作图标并准备名称审核材料",user:`画一个小程序图标；并按平台要求提供与名称对应的材料，图片不超过10M。`,ai:`生成书页、放大镜和核验勾组合的图标，并整理名称使用说明材料。`,out:"形成了后来同步到网站的统一品牌标志。"},
+      {cat:"云开发部署",sub:"CloudBase",kind:"deploy",title:"第一次开通微信云开发环境",user:`我似乎已经完成“进入项目后点击云开发、开通或创建环境”，看是否有问题。`,ai:`根据截图确认当时打开的是云开发示例页，继续引导进入真实“文证”项目并创建环境。`,out:"第一次常见误区：开通了云开发，不等于项目代码已连接到正确环境。"},
+      {cat:"产品构想",sub:"登录与历史",kind:"decision",title:"匿名可用，同时希望登录保存历史",user:`小程序和网站不登录可以正常使用，但也可以用微信扫码或手机号验证码注册登录，这样可以保存、查看历史记录。`,ai:`把匿名核验保留为主路径，将登录与历史记录设计为可选增强；评估个人主体下手机号能力的限制。`,out:"可选登录不能阻断核心工具，历史记录要与身份体系解耦。"},
+      {cat:"云开发部署",sub:"环境配置",kind:"milestone",title:"看到真正首页并成功开通环境",user:`已经看到真正的“文证”首页，也点击“云开发→开通环境”了，但没让我增加手机号验证码登录。`,ai:`说明开通云环境不会自动生成登录界面，手机号验证码需要单独的产品权限、前端页面与后端流程。`,out:"平台开关与产品功能之间仍有大量开发工作。"},
+      {cat:"云开发部署",sub:"环境配置",kind:"deploy",title:"寻找环境ID和地域，询问能否代操作",user:`找不到“环境设置”或“环境信息”，在一处找到环境ID，仍没找到地域。这些操作你不能代我做吗？我可以授权。`,ai:`通过截图定位环境信息，解释可代做的代码与远程网页操作边界，并对公开记录脱敏环境标识。`,out:"协作中“授权”不等于能绕过登录、扫码或平台安全边界。"},
+      {cat:"云开发部署",sub:"远程操作",kind:"bug",title:"“Cloud Browser”概念造成理解困难",user:`没看懂，什么叫“本对话里的 Cloud Browser 中手动登录腾讯云”，具体怎么操作，我没看到链接。`,ai:`重新解释远程浏览器入口与本机 Chrome 的区别；登录或扫码必须由用户本人完成。`,out:"工具术语如果用户看不到对应入口，只会增加部署摩擦。"},
+      {cat:"云开发部署",sub:"数据库",kind:"bug",title:"数据库页面一直转圈，无法新建集合",user:`一直在转，出不来，没法新建集合。`,ai:`切换到新版腾讯云 CloudBase 控制台，避开开发者工具内嵌控制台加载异常。`,out:"同一云服务的不同管理入口，稳定性和界面可能完全不同。"},
+      {cat:"云开发部署",sub:"数据库",kind:"decision",title:"创建用户与核验历史集合",user:`找到了新建集合入口，权限选哪个？`,ai:`为 reference_users 和 verification_history 选择“仅创建者可读写（PRIVATE）”，避免所有用户互相读取数据。`,out:"历史记录功能先从数据最小权限开始设计。"},
+      {cat:"云开发部署",sub:"云函数",kind:"deploy",title:"部署三个云函数后仍然无法核验",user:`以上都完成了。然后？核验结果显示3条全部“核验失败”，服务暂时无法连接。`,ai:`引导分别上传并部署 verifyReference、extractDocument、userHistory，并用控制台测试区分“前端错误”与“函数错误”。`,out:"代码存在于项目目录，不代表已经部署到云端。"},
+      {cat:"功能调试",sub:"云函数错误",kind:"bug",title:"捕获到 -504002 FUNCTIONS_EXECUTE_FAIL",user:`控制台显示 cloud.callFunction fail，errCode: -504002，functions execute fail。`,ai:`从笼统的“无法连接”追到云函数执行失败，检查入口、依赖、运行时和超时。`,out:"拿到错误码是调试转折点；用户界面提示不能替代控制台证据。"},
+      {cat:"功能调试",sub:"日志",kind:"bug",title:"云函数详情没有日志记录",user:`没有日志记录。`,ai:`判断调用可能未进入当前部署版本，继续核对环境、函数名、部署状态和测试请求。`,out:"“没有日志”本身也是证据：错误可能发生在函数执行之前。"},
+      {cat:"云开发部署",sub:"开发环境",kind:"deploy",title:"换电脑后重新准备开发环境",user:`我换了台电脑，请发给我需要下载的开发软件和网站链接。`,ai:`提供微信开发者工具与腾讯云 CloudBase 控制台入口，并说明如何重新导入同一项目。`,out:"可复现的开发环境是项目交接的一部分。"},
+      {cat:"功能调试",sub:"云函数错误",kind:"bug",title:"重新导入后云调用仍失败",user:`现在项目已打开，但测试失败，三条文献都显示云函数调用错误。`,ai:`对照本地目录、云函数根目录和部署菜单，重新上传函数并安装依赖。`,out:"小程序前端能编译，不代表后端函数已经同步。"},
+      {cat:"核验算法",sub:"结果质量",kind:"bug",title:"服务恢复后仍有两条真实文献未核实",user:`3条文献仍然失败了2条。那两条有结果了，但还是未能核实，这两条应该是正确的。`,ai:`从“函数可运行”转向“结果是否正确”，扩展中文网页与灰色文献证据，并调整阈值。`,out:"服务可用性和核验准确率是两个不同层次的验收。"},
+      {cat:"交互视觉",sub:"信息架构",kind:"decision",title:"历史记录入口不应占据首屏顶部",user:`启用历史记录的功能不必放在最上面，放下面一点的位置。`,ai:`将可选历史功能移到提交区之后，让首屏首先解释价值并支持立即核验。`,out:"辅助功能不应压过核心任务。"},
+      {cat:"核验算法",sub:"判断模型",kind:"decision",title:"明确系统真正要判断的是什么",user:`主要目标是判断用户提交的参考文献真实性。应该通过作者、篇名、来源刊名、链接、DOI等核心字段做概率判断；年份、卷号、期号等错误涉及准确性，不应直接影响真实性。`,ai:`重构评分为“身份核心字段”和“著录字段”两层：前者决定存在概率，后者产生差异提示与建议著录。`,out:"这是整个项目最重要的领域建模决策。"},
+      {cat:"核验算法",sub:"容错规则",kind:"decision",title:"05与5、J与R不应导致虚假结论",user:`要考虑容错率。“期号05与5”“[J]、[R]、[R/OL]”等非核实字段不一致，不应该影响真实性概率，只涉及准确性，返回时指出问题并提供建议著录。`,ai:`增加卷期数字归一化、文献类型弱权重和差异分栏；将“真实但需修正”独立于“未能证实”。`,out:"容错不是放松标准，而是让不同字段承担正确的证据权重。"},
+      {cat:"部署发布",sub:"版本发布",kind:"milestone",title:"测试成功，准备上传正式小程序版本",user:`已经测试成功了。下一步“若需要在手机或正式版本中生效，再点击上传，提交新版小程序代码”该怎么做？`,ai:`说明开发工具“上传”生成开发版本，再到公众平台提交体验、审核与发布；云函数部署与小程序代码上传是两条独立流程。`,out:"测试版、体验版、审核版和正式版不是同一个状态。"},
+      {cat:"交互视觉",sub:"移动端布局",kind:"bug",title:"计数、清空与核验按钮排布失衡",user:`排布需要调整一下：手机上 0/20 被挤成竖排，清空和开始核验按钮比例不协调，空内容时也显得松散。`,ai:`重做移动端操作栏网格，固定计数宽度、保持数字横排，让主按钮占更明确的视觉权重。`,out:"真机截图比模拟器更容易暴露触控区与断行问题。"},
+      {cat:"核验算法",sub:"机构报告",kind:"bug",title:"小程序再次误判 UNESCO 报告",user:`UNESCO. (2021). Recommendation on the ethics of artificial intelligence… 刚才这篇文献核验失败。`,ai:`把 UNESCO ARK、机构名与报告题名规则同步到小程序云函数，而不是只修网站前端。`,out:"共享产品目标不代表两个代码库会自动同步。"},
+      {cat:"核验算法",sub:"中文期刊",kind:"bug",title:"中文核心期刊文章仍核验失败",user:`曹树金,曹茹烨.从ChatGPT看生成式AI对情报学研究与实践的影响[J].现代情报,2023,43(04):3-10. 也失败了。`,ai:`完善中文题名清洗、作者分隔符、期号前导零和期刊名匹配，并加入回归用例。`,out:"中文标点、作者连接和卷期形式必须系统归一化。"},
+      {cat:"功能调试",sub:"批量回归",kind:"bug",title:"换一大批真实文献后系统再次失效",user:`下面这些参考文献，无论用小程序还是网站都核验失败。普通搜索引擎都可以验证，不应该出这种低级错误。请一定举一反三，修改可能的所有 bug。`,ai:`用期刊、图书、报告、网页和灰色文献批量样本建立回归集，补充搜索摘要证据、书名检索和来源类型路由。`,out:"批量反例证明了定向修一篇文献无法带来稳定系统。"},
+      {cat:"核验算法",sub:"图书与报告",kind:"bug",title:"经典图书与 UNESCO 教师框架仍失败",user:`Floridi 的 The Ethics of Information、Gilster 的 Digital Literacy、Miao 与 Cukurova 的 AI Competency Framework for Teachers 仍核验失败；网站也还没有历史记录。`,ai:`增加 ISBN/出版社/书名组合检索和 UNESCO DataHub/机构站点证据；网站侧增加浏览器本地历史记录。`,out:"图书不应依赖期刊元数据，网站历史可先不依赖账号系统。"},
+      {cat:"产品构想",sub:"过程量化",kind:"decision",title:"询问对话轮次、代码量和算力成本",user:`请分别计算做网站和做小程序有多少轮对话、相当于多少行代码，以及消耗多少算力，折算成美元大概是多少？`,ai:`按可见记录、仓库代码和模型计费不可见性给出估算区间，并区分开发成本与线上运行成本。`,out:"项目材料后来概括为80多轮对话、用户未手写代码、零付费起步。"},
+      {cat:"功能调试",sub:"文档上传",kind:"bug",title:"小程序上传文档报 fetch is not defined",user:`刚测试，小程序上传文档后报错：fetch is not defined。`,ai:`移除微信云函数 Node 运行时中不兼容的 fetch 调用，改用 https 模块或云存储文件下载接口。`,out:"浏览器 API 不能假设在云函数运行时存在。"},
+      {cat:"功能调试",sub:"文档上传",kind:"bug",title:"修复后测试仍报错",user:`测试还是报错。`,ai:`继续检查 DOCX/PDF 依赖、临时文件路径和部署版本，生成包含依赖的新版包并要求重新部署 extractDocument。`,out:"本地改代码后若云函数未更新，用户看到的仍是旧错误。"},
+      {cat:"功能调试",sub:"参考文献拆分",kind:"bug",title:"文档识别成功但按钮禁用，超过20条无法核验",user:`成功识别了上传文档，但无法点击“开始核验”；超过20条应该默认核验前20条。直接用数字序号的参考文献条数也不准，而且中英文多条仍失败。网站也有这些问题。`,ai:`前端只取前20条并保持按钮可用；解析器支持“7 张红扬…”这类裸数字编号；同一规则同步到网站与小程序。`,out:"产品上限应截断输入并解释，而不是让整个任务不可执行。"},
+      {cat:"功能调试",sub:"参考文献拆分",kind:"milestone",title:"验证无序号参考文献也能识别",user:`请再测试下，如果参考文献没有序号，系统是否能识别条数。`,ai:`增加中文“作者.题名.来源,年份”与英文“Author. Title. Source, year”起始模式，并用无编号混合文本做自动测试。`,out:"解析不能依赖用户先把文献整理规范。"},
+      {cat:"核验算法",sub:"稳定性",kind:"bug",title:"换一批文献仍失败，暴露定向修复问题",user:`虽然能识别条数，但随便找几条参考文献仍然核验失败。感觉稳定性很差，每次只是对之前失败的文献定向修复，换一批文献还是不行。`,ai:`停止添加单条白名单，改为扩展可泛化的查询生成、证据聚合、标题相似度和来源回退；把新批次加入回归集。`,out:"用户明确把工程目标从“通过案例”提升为“对未知输入稳定”。"},
+      {cat:"核验算法",sub:"搜索策略",kind:"decision",title:"确立搜索引擎优先的核验步骤",user:`我觉得核验的步骤有问题，应该优先通过搜索引擎搜索，再是其他途径。因为大部分文献搜索引擎就能验证。`,ai:`重排证据流程：题名搜索发现候选 → 原始来源/专业元数据确认 → 字段差异分析；API 失败不再直接终止。`,out:"搜索负责召回，权威来源负责确认，两者承担不同任务。"},
+      {cat:"核验算法",sub:"中文长尾",kind:"bug",title:"七条中文图情文献仍未核实",user:`更新后的网站中，朱强、詹萌、王嘉陵、王鹤鸣、蔡筱青、钟海珍、孙阳阳等文章仍核验失败。`,ai:`优化长标题标点归一化、作者/题名拆解、地方刊物名匹配和搜索摘要证据，避免要求 DOI。`,out:"中文地方期刊和早期文章是检验长尾召回能力的关键样本。"},
+      {cat:"云开发部署",sub:"远程登录",kind:"bug",title:"再次解释云浏览器登录并由用户完成扫码",user:`“在 chatgpt.com 本对话中的 Cloud Browser 窗口登录腾讯云”是什么意思？具体怎么做。随后：已登录。`,ai:`重新打开远程腾讯云窗口，用户亲自扫码完成登录，AI继续查看已授权页面。`,out:"身份验证必须由用户完成，之后才能在授权会话内协作配置。"},
+      {cat:"云开发部署",sub:"代码部署",kind:"bug",title:"覆盖确认与前端编辑器版本冲突",user:`控制台提示当前工作区和已部署代码不一致，重新加载已部署代码会丢失未部署内容，下一步怎么办？`,ai:`先确认部署版本与本地目标，避免错误覆盖；保存并安装依赖后再发布新版本。`,out:"云端编辑器也需要版本控制意识，不能看到“确认”就盲点。"},
+      {cat:"云开发部署",sub:"免费额度",kind:"decision",title:"个人版云函数只有3秒超时",user:`点进去要收费，而且默认进标准版，个人版还改不了？`,ai:`确认个人免费版超时上限为3秒，放弃通过付费升级解决问题，改为缩短请求、分级回退与缓存。`,out:"架构必须适应免费额度，而不是把成本问题推给用户。"},
+      {cat:"云开发部署",sub:"版本部署",kind:"milestone",title:"新版云函数成功部署并返回正确结果",user:`新版已部署。控制台测试结果成功，返回了状态、置信度、检索来源和证据链接。`,ai:`验证云函数在约2.1秒内完成，低于个人版3秒限制，并确认搜索引擎回退链开始工作。`,out:"这是小程序核验后端从“能跑”到“在免费约束内可跑”的里程碑。"},
+      {cat:"云开发部署",sub:"HTTP网关",kind:"bug",title:"尝试给网站复用云函数，却遇到跨域付费限制",user:`找不到 HTTP 网关配置，能替我做吗？添加跨域域名又让我升级，要付费。`,ai:`创建 /api/verify-reference 路由并评估跨域策略；在付费墙出现后不强制升级，保留网站现有浏览器端核验。`,out:"“网站与小程序共用后端”在免费计划下受 CORS 能力限制。"},
+      {cat:"云开发部署",sub:"跨域",kind:"decision",title:"关闭跨域设置并保存",user:`已关闭跨域并保存。`,ai:`确认路由存在但不让网站依赖不可用的跨域调用，避免把已能工作的页面变成新故障。`,out:"有时正确修复是撤回一条架构路径，而不是继续堆配置。"},
+      {cat:"核验算法",sub:"稳定性",kind:"bug",title:"同一篇文章一会成功、一会失败",user:`还是失败，而且同一篇文章一会能核验，一会又不能。比如 Johnston B, Webber S. Information literacy in higher education…`,ai:`将瞬时网络失败与真实性结果分离，引入多源回退、短期缓存、稳定候选匹配和“服务暂不可用”状态。`,out:"不稳定的证据源不能被伪装成文献本身的不真实性。"},
+      {cat:"部署发布",sub:"小程序发布",kind:"decision",title:"澄清“上传”与“部署”的区别",user:`微信开发者工具中不需要再做什么“上传并部署”，直接上传就可以了？相当于发布的一个更新版本？`,ai:`说明前端代码点击“上传”生成新版本；云函数仍需单独上传部署；最终还要在微信公众平台提交审核并发布。`,out:"前端版本与后端函数拥有各自生命周期。"},
+      {cat:"网站设计",sub:"默认示例",kind:"decision",title:"设计四个中英文、不同类型与不同结果的示例",user:`默认填入的示例请设计成4个，涵盖中英文，且4种常见的不同文献类型，检索结果类型也是4种各一个。`,ai:`组合中文期刊、英文报告/图书、网页资源和学位论文，让示例同时展示“确认、需修正、待复核、疑似虚假”等结果。`,out:"默认数据既是教学材料，也是产品的冒烟测试。"},
+      {cat:"交互视觉",sub:"品牌统一",kind:"milestone",title:"把小程序 Logo 更新到网站",user:`上次做的小程序 logo 更新到网站上。`,ai:`将统一的书页—放大镜—核验勾图标用于网站 favicon、页头和品牌资产。`,out:"两个产品形成一致的视觉识别。"},
+      {cat:"网站设计",sub:"测试样例",kind:"bug",title:"虚构示例不能“一眼假”",user:`示例第4条太假了，“演示用虚构文献”显然不应该出现。要逼真、有迷惑性，包括人名。`,ai:`改为外观规范、作者与题名都可信但无法获得真实证据的虚构学位论文，取消任何主动露馅的措辞。`,out:"真实性核验的价值正是在面对“看起来很真”的条目时体现。"},
+      {cat:"部署发布",sub:"项目导入",kind:"bug",title:"V15 导入失败其实是目录已被工具占用",user:`下载小程序 V15 怎么导入失败？`,ai:`根据截图识别红字含义是“该目录下的项目已在工具中创建，可直接打开”，建议选择解压后的项目根目录或换一个未注册目录。`,out:"这是项目管理状态提示，不是代码包损坏。"},
+      {cat:"产品构想",sub:"教学传播",kind:"milestone",title:"把全过程做成学生可读的网站",user:`请将这个完整的对话记录做成一个网站，提供给学生参考，让他们知道我是如何与AI协作完成一项几乎不能完成的任务。按网站设计、微信小程序设计及功能调试、Bug修复等分类，并部署到我的 GitHub；下方保留邮箱和访问计数器。`,ai:`将80多轮协作整理为可搜索、可筛选的教学时间线，保留用户关键原话，以“AI执行摘要”还原动作与结果，并公开说明脱敏和整理规则。`,out:"项目最终不仅产出工具，也产出一份关于人机协作方法的开放教材。"}
+    ];
+
+    const catOrder=["全部","产品构想","网站设计","核验算法","功能调试","小程序开发","云开发部署","部署发布","交互视觉"];
+    const state={cat:"全部",sub:"all",q:"",problems:false,expanded:false};
+    const $=s=>document.querySelector(s); const timeline=$("#timeline"), chips=$("#chips"), subFilter=$("#subFilter");
+    const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    const mark=(s,q)=>{const safe=esc(s);if(!q)return safe;const terms=q.trim().split(/\s+/).filter(Boolean).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));if(!terms.length)return safe;return safe.replace(new RegExp(`(${terms.join("|")})`,`gi`),"<mark>$1</mark>")};
+    function buildFilters(){
+      catOrder.forEach(cat=>{const n=cat==="全部"?records.length:records.filter(r=>r.cat===cat).length;const b=document.createElement("button");b.className="chip"+(cat===state.cat?" active":"");b.textContent=`${cat} ${n}`;b.onclick=()=>{state.cat=cat;state.sub="all";subFilter.value="all";buildFilters();render()};chips.appendChild(b)});
+      const subs=[...new Set(records.filter(r=>state.cat==="全部"||r.cat===state.cat).map(r=>r.sub))].sort((a,b)=>a.localeCompare(b,"zh-CN"));
+      subFilter.innerHTML='<option value="all">全部子主题</option>'+subs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");subFilter.value=state.sub;
+    }
+    function filtered(){const q=state.q.trim().toLowerCase();return records.filter(r=>(state.cat==="全部"||r.cat===state.cat)&&(state.sub==="all"||r.sub===state.sub)&&(!state.problems||r.kind==="bug")&&(!q||[r.title,r.user,r.ai,r.out,r.cat,r.sub].join(" ").toLowerCase().includes(q)))}
+    function render(){
+      const list=filtered();$("#resultCount").textContent=`显示 ${list.length} / ${records.length} 轮记录`;$("#empty").style.display=list.length?"none":"block";
+      timeline.innerHTML=list.map((r,i)=>{const idx=records.indexOf(r)+1;const kindLabel={bug:"问题 / Bug",milestone:"阶段成果",decision:"关键决策",deploy:"部署操作"}[r.kind]||"协作记录";return `<article class="entry${state.expanded?" open":""}" data-id="${idx}">
+        <button class="entry-head" type="button" aria-expanded="${state.expanded}"><span class="entry-id">#${String(idx).padStart(2,"0")}</span><span class="entry-title">${mark(r.title,state.q)} <span class="chev">⌄</span></span><span class="entry-tags"><span class="tag ${r.kind}">${kindLabel}</span><span class="tag">${esc(r.cat)}</span><span class="tag">${esc(r.sub)}</span></span></button>
+        <div class="entry-body"><div class="speech"><span class="label">用户关键原话</span><p>${mark(r.user,state.q)}</p></div><div class="action"><span class="label">AI 执行摘要</span><p>${mark(r.ai,state.q)}</p></div><div class="outcome"><b>这一轮留下了什么：</b> ${mark(r.out,state.q)}</div></div></article>`}).join("");
+      timeline.querySelectorAll(".entry-head").forEach(b=>b.onclick=()=>{const e=b.closest(".entry");e.classList.toggle("open");b.setAttribute("aria-expanded",e.classList.contains("open"))});
+    }
+    $("#search").addEventListener("input",e=>{state.q=e.target.value;render()});
+    subFilter.addEventListener("change",e=>{state.sub=e.target.value;render()});
+    $("#problemToggle").onclick=e=>{state.problems=!state.problems;e.currentTarget.classList.toggle("on",state.problems);e.currentTarget.setAttribute("aria-pressed",state.problems);render()};
+    $("#expandAll").onclick=e=>{state.expanded=!state.expanded;e.currentTarget.textContent=state.expanded?"收起当前结果":"展开当前结果";render()};
+    buildFilters();render();
+    const back=$("#backtop");addEventListener("scroll",()=>back.style.display=scrollY>900?"block":"none",{passive:true});back.onclick=()=>scrollTo({top:0,behavior:"smooth"});
+    const revealCounter=()=>{const n=$("#busuanzi_site_pv");if(n&&/\d/.test(n.textContent))$("#busuanzi_container_site_pv").style.display="inline"};setInterval(revealCounter,800);setTimeout(revealCounter,1800);
+  </script>
+  <script defer src="https://cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js"></script>
+</body>
+</html>
