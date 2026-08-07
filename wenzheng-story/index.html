@@ -122,7 +122,7 @@
       <div class="metrics" aria-label="项目数据">
         <div class="metric"><strong>5 种</strong><span>每个人都能掌握的AI协作能力</span></div>
         <div class="metric"><strong>18 项</strong><span>从完整对话中提炼的真实小任务</span></div>
-        <div class="metric"><strong>66 轮</strong><span>保留在任务中的关键交互记录</span></div>
+        <div class="metric"><strong>65 轮</strong><span>保留在任务中的关键交互记录</span></div>
         <div class="metric"><strong>2 个</strong><span>最终上线的网站与微信小程序</span></div>
       </div>
     </div>
@@ -221,7 +221,6 @@
       {cat:"网站设计",sub:"文案与解析",kind:"bug",title:"避免地域化术语，并识别混合格式的六条文献",user:`网站上不要出现“境外代理”“大陆”之类的文字。用户输入可能不够规范：三条带 [1][2][3]，再接三条英文无编号文献，应该识别为6篇。`,ai:`重写中性用户文案；解析器同时支持编号边界、空行、作者—年份模式、DOI/URL 结束和新条目启发式。`,out:"“真实输入不规范”被确立为正常场景，而不是用户错误。"},
       {cat:"交互视觉",sub:"信息架构",kind:"decision",title:"粘贴参考文献放在上传附件上方",user:`将粘贴参考文献放到上传附件的上面，调整一下顺序。`,ai:`把高频、低成本的粘贴入口放在前面，把文件导入作为次级路径。`,out:"信息架构根据使用频率而不是开发顺序调整。"},
       {cat:"产品构想",sub:"成本与算力",kind:"decision",title:"追问零成本网站如何运行",user:`这个网站我没有付出任何成本，它是怎么运行的呢？需要消耗算力吗？`,ai:`解释静态页面由浏览器执行解析和匹配，GitHub Pages 提供托管；外部检索消耗对方服务和用户设备资源，但不等于零资源。`,out:"“免费”是成本由免费额度和客户端分担，不是计算不存在。"},
-      {cat:"产品构想",sub:"成果申报",kind:"milestone",title:"把项目转化为大赛申报材料",user:`我准备用我做的这个网站来参加比赛，请按要求填写申报说明书，直接导出 Word 文档。`,ai:`将平台定位、技术路线、创新点、运行边界和应用成效整理为正式作品建设说明书。`,out:"项目从工具开发进入可传播、可申报的成果表达阶段。"},
       {cat:"部署发布",sub:"GitHub Pages",kind:"deploy",title:"尝试缩短域名并保留旧地址",user:`请将现在网站域名中的 birth-of-the-universe 删除，让域名更简短，同时原域名依然有效，能自动转为新域名。我可以全权授权你操作。`,ai:`迁移到用户主页仓库的 /reference-checker/ 路径，并为旧入口设计重定向。`,out:"最终稳定入口为 GitHub 用户主页下的项目路径。"},
       {cat:"功能调试",sub:"灰色文献",kind:"bug",title:"OpenAI Blog 论文被误判",user:`RADFORD A, WU J, CHILD R, et al. Language models are unsupervised multitask learners[J]. OpenAI Blog, 2019, 1(8): 9. 这条是真实的，搜索引擎能查证，系统未能核实。`,ai:`增加技术报告、机构博客和灰色文献分支，降低对标准期刊卷期的硬性要求，并补充题名检索入口。`,out:"文献类型标注可能不规范，但作品本身仍可真实存在。"},
       {cat:"交互视觉",sub:"移动端排版",kind:"bug",title:"手机标题过大、断行和用词需要修正",user:`主页标题手机上太突兀，分两行时逗号不对称可以删掉；说明文字总把“期。”单独一行；说明中的“百度”改为“搜索引擎”。`,ai:`缩小移动端标题、删除标点、微调文本容器和字距，并将品牌化表述改为通用“搜索引擎”。`,out:"移动端不是桌面版缩小，需要单独检查断行与视觉重心。"},
@@ -278,21 +277,21 @@
       {title:"定义一个真正值得做的工具",ability:"说清目标",ids:[1,2,3],goal:"从一句朴素需求出发，明确核验对象、数量、输入方式、使用门槛和可访问性。",takeaway:"不会编程不妨碍你提出产品。第一步不是描述技术，而是讲清楚谁遇到了什么问题、希望得到什么结果。"},
       {title:"让网站支持粘贴与文档上传",ability:"具体反馈",ids:[4,9,14],goal:"把最初的文本输入框改成更符合真实使用习惯的粘贴、清空和文档导入流程。",takeaway:"需求可以在看到第一版后继续补充。指出具体操作位置，比笼统地说“使用不方便”有效得多。"},
       {title:"识别不规范和连续粘贴的参考文献",ability:"测试改进",ids:[8,13],goal:"解决同一行多条文献、混合编号与无编号文献被错误合并的问题。",takeaway:"给AI一个能够稳定复现错误的完整样本，是推动修复最有效的方式。"},
-      {title:"让中文、网页和灰色文献也能核验",ability:"专业纠偏",ids:[5,6,7,11,18],goal:"突破只依赖英文DOI数据库的局限，让中文论文、网页新闻、机构报告和技术博客也进入证据链。",takeaway:"用户知道哪些文献真实、哪些渠道能查到，这种领域知识帮助AI重新设计检索方法，而不是只修某一条记录。"},
-      {title:"把网站做得更好看、更适合手机",ability:"具体反馈",ids:[10,12,19],goal:"调整标题、换行、用词、邮箱、计数器和移动端视觉，让工具从“能用”走向“愿意用”。",takeaway:"审美和体验判断同样是专业能力。AI可以改样式，但必须由人指出哪里不协调以及希望达到什么感觉。"},
-      {title:"用零成本方案部署并形成成果",ability:"部署交付",ids:[15,16,17],goal:"解释免费运行机制、缩短网址、保留旧入口，并把产品整理成可申报的正式成果。",takeaway:"对话里的代码不等于成果。能被别人访问、理解和使用，才算完成交付。"},
-      {title:"把网站改造成微信小程序",ability:"说清目标",ids:[20,21,22,23],goal:"在保留核心功能的同时，为个人主体的小程序重新设计名称、简介、图标与技术架构。",takeaway:"当目标平台变化时，不需要自己先掌握新技术。说清平台、主体和传播目标，AI可以帮助重新规划实现路径。"},
-      {title:"从零配置云开发、登录与数据库",ability:"部署交付",ids:[24,25,26,27,28,29,30],goal:"在完全陌生的微信开发者工具和CloudBase控制台中，逐步开通环境、确认身份方案并创建数据集合。",takeaway:"面对不会操作的界面，可以持续截图、追问和确认。人负责完成扫码与授权，AI负责解释下一步。"},
-      {title:"排查“核验服务无法连接”",ability:"测试改进",ids:[31,32,33,34,35,36],goal:"从用户界面的笼统失败提示，追查到云函数部署、依赖、错误码和日志层面的真实原因。",takeaway:"反馈“失败了”只是起点。错误码、截图、控制台日志和复现步骤，能让AI从猜测进入诊断。"},
-      {title:"重写真实性与准确性的判断标准",ability:"专业纠偏",ids:[37,38,39],goal:"用图书馆学与参考文献规范知识，重新定义系统应该怎样判断“真实”“准确”和“需要修正”。",takeaway:"这是人的专业能力最关键的一刻。AI能写算法，但什么字段决定真实性、什么差异只影响准确性，必须由领域专家校准。"},
-      {title:"发布第一个可用的小程序版本",ability:"部署交付",ids:[40,41,42,43],goal:"完成版本上传、调整真机排版，并修复网站中已经解决却没有同步到小程序的核验问题。",takeaway:"同一功能跨平台实现时，修复不会自动同步。每个平台都需要重新测试和验收。"},
-      {title:"用大批真实文献击穿定向修复",ability:"测试改进",ids:[44,45,46],goal:"一次提交多种类型的大批真实文献，检验系统是否只是记住了旧样本。",takeaway:"真正严格的测试不是反复使用已经成功的例子，而是不断换新数据，主动寻找系统会失败的地方。"},
-      {title:"修复文档上传、条数和前20条限制",ability:"测试改进",ids:[47,48,49,50],goal:"解决fetch不可用、上传后按钮禁用、超过20条无法处理，以及裸数字和无编号文献识别错误。",takeaway:"一个错误修复后要继续测试相邻流程。上传成功、识别成功、按钮可点和前20条可核验，是四个不同的验收点。"},
-      {title:"从“修一条”转向可泛化的搜索策略",ability:"专业纠偏",ids:[51,52,53],goal:"停止为单篇文献增加特殊规则，确立搜索引擎发现候选、权威来源继续确认的通用核验路径。",takeaway:"当AI总在做定向修补时，人要明确提出“举一反三”的要求，并用新的未知样本检验是否真正泛化。"},
-      {title:"在3秒免费额度内让云函数跑通",ability:"部署交付",ids:[54,55,56,57],goal:"在不升级付费套餐的前提下处理登录、版本覆盖和3秒超时，最终让云函数稳定返回结果。",takeaway:"“一分钱不花”不是口号，而是贯穿技术取舍的约束。限制会迫使AI寻找更轻量的架构。"},
-      {title:"处理跨域、稳定性和正式发布",ability:"部署交付",ids:[58,59,60,61],goal:"评估网站复用小程序后端的跨域方案，放弃付费路径，并区分网络波动与文献真实性。",takeaway:"好的协作也包括及时放弃不合适的方案。不是每个技术设想都值得继续堆配置。"},
-      {title:"统一示例、Logo与项目版本",ability:"具体反馈",ids:[62,63,64,65],goal:"让网站和小程序使用统一品牌，设计更有迷惑性的虚假示例，并解决新版项目导入问题。",takeaway:"产品发布前仍要持续审视细节。默认示例、品牌一致性和版本管理都会影响别人对工具的理解。"},
-      {title:"把全过程变成AI素养学习材料",ability:"说清目标",ids:[66],goal:"不只展示最终产品，还把从零开始的协作过程公开给学生，帮助他们建立使用AI完成复杂任务的意识和信心。",takeaway:"最终成果不只是一个工具，还包括一套可迁移的协作方法：提出问题、具体反馈、专业判断、持续测试和完成交付。"}
+      {title:"让中文、网页和灰色文献也能核验",ability:"专业纠偏",ids:[5,6,7,11,17],goal:"突破只依赖英文DOI数据库的局限，让中文论文、网页新闻、机构报告和技术博客也进入证据链。",takeaway:"用户知道哪些文献真实、哪些渠道能查到，这种领域知识帮助AI重新设计检索方法，而不是只修某一条记录。"},
+      {title:"把网站做得更好看、更适合手机",ability:"具体反馈",ids:[10,12,18],goal:"调整标题、换行、用词、邮箱、计数器和移动端视觉，让工具从“能用”走向“愿意用”。",takeaway:"审美和体验判断同样是专业能力。AI可以改样式，但必须由人指出哪里不协调以及希望达到什么感觉。"},
+      {title:"用零成本方案完成网站部署",ability:"部署交付",ids:[15,16],goal:"解释免费运行机制、缩短网址并保留旧入口，让产品真正成为任何人都能打开使用的在线工具。",takeaway:"对话里的代码不等于成果。能被别人访问、理解和使用，才算完成交付。"},
+      {title:"把网站改造成微信小程序",ability:"说清目标",ids:[19,20,21,22],goal:"在保留核心功能的同时，为个人主体的小程序重新设计名称、简介、图标与技术架构。",takeaway:"当目标平台变化时，不需要自己先掌握新技术。说清平台、主体和传播目标，AI可以帮助重新规划实现路径。"},
+      {title:"从零配置云开发、登录与数据库",ability:"部署交付",ids:[23,24,25,26,27,28,29],goal:"在完全陌生的微信开发者工具和CloudBase控制台中，逐步开通环境、确认身份方案并创建数据集合。",takeaway:"面对不会操作的界面，可以持续截图、追问和确认。人负责完成扫码与授权，AI负责解释下一步。"},
+      {title:"排查“核验服务无法连接”",ability:"测试改进",ids:[30,31,32,33,34,35],goal:"从用户界面的笼统失败提示，追查到云函数部署、依赖、错误码和日志层面的真实原因。",takeaway:"反馈“失败了”只是起点。错误码、截图、控制台日志和复现步骤，能让AI从猜测进入诊断。"},
+      {title:"重写真实性与准确性的判断标准",ability:"专业纠偏",ids:[36,37,38],goal:"用图书馆学与参考文献规范知识，重新定义系统应该怎样判断“真实”“准确”和“需要修正”。",takeaway:"这是人的专业能力最关键的一刻。AI能写算法，但什么字段决定真实性、什么差异只影响准确性，必须由领域专家校准。"},
+      {title:"发布第一个可用的小程序版本",ability:"部署交付",ids:[39,40,41,42],goal:"完成版本上传、调整真机排版，并修复网站中已经解决却没有同步到小程序的核验问题。",takeaway:"同一功能跨平台实现时，修复不会自动同步。每个平台都需要重新测试和验收。"},
+      {title:"用大批真实文献击穿定向修复",ability:"测试改进",ids:[43,44,45],goal:"一次提交多种类型的大批真实文献，检验系统是否只是记住了旧样本。",takeaway:"真正严格的测试不是反复使用已经成功的例子，而是不断换新数据，主动寻找系统会失败的地方。"},
+      {title:"修复文档上传、条数和前20条限制",ability:"测试改进",ids:[46,47,48,49],goal:"解决fetch不可用、上传后按钮禁用、超过20条无法处理，以及裸数字和无编号文献识别错误。",takeaway:"一个错误修复后要继续测试相邻流程。上传成功、识别成功、按钮可点和前20条可核验，是四个不同的验收点。"},
+      {title:"从“修一条”转向可泛化的搜索策略",ability:"专业纠偏",ids:[50,51,52],goal:"停止为单篇文献增加特殊规则，确立搜索引擎发现候选、权威来源继续确认的通用核验路径。",takeaway:"当AI总在做定向修补时，人要明确提出“举一反三”的要求，并用新的未知样本检验是否真正泛化。"},
+      {title:"在3秒免费额度内让云函数跑通",ability:"部署交付",ids:[53,54,55,56],goal:"在不升级付费套餐的前提下处理登录、版本覆盖和3秒超时，最终让云函数稳定返回结果。",takeaway:"“一分钱不花”不是口号，而是贯穿技术取舍的约束。限制会迫使AI寻找更轻量的架构。"},
+      {title:"处理跨域、稳定性和正式发布",ability:"部署交付",ids:[57,58,59,60],goal:"评估网站复用小程序后端的跨域方案，放弃付费路径，并区分网络波动与文献真实性。",takeaway:"好的协作也包括及时放弃不合适的方案。不是每个技术设想都值得继续堆配置。"},
+      {title:"统一示例、Logo与项目版本",ability:"具体反馈",ids:[61,62,63,64],goal:"让网站和小程序使用统一品牌，设计更有迷惑性的虚假示例，并解决新版项目导入问题。",takeaway:"产品发布前仍要持续审视细节。默认示例、品牌一致性和版本管理都会影响别人对工具的理解。"},
+      {title:"把全过程变成AI素养学习材料",ability:"说清目标",ids:[65],goal:"不只展示最终产品，还把从零开始的协作过程公开给学生，帮助他们建立使用AI完成复杂任务的意识和信心。",takeaway:"最终成果不只是一个工具，还包括一套可迁移的协作方法：提出问题、具体反馈、专业判断、持续测试和完成交付。"}
     ];
     const learningOrder=["全部","说清目标","具体反馈","专业纠偏","测试改进","部署交付"];
     const tasks=taskDefinitions.map((task,i)=>({...task,id:i+1,records:task.ids.map(id=>({...records[id-1],id}))}));
@@ -306,7 +305,7 @@
     }
     function filtered(){const q=state.q.trim().toLowerCase();return tasks.filter(t=>(state.cat==="全部"||t.ability===state.cat)&&(!state.problems||t.records.some(r=>r.kind==="bug"))&&(!q||[t.title,t.goal,t.takeaway,t.ability,...t.records.flatMap(r=>[r.title,r.user,r.ai,r.out])].join(" ").toLowerCase().includes(q)))}
     function render(){
-      const list=filtered();$("#resultCount").textContent=`显示 ${list.length} / ${tasks.length} 个小任务 · 共66轮关键交互`;$("#empty").style.display=list.length?"none":"block";
+      const list=filtered();$("#resultCount").textContent=`显示 ${list.length} / ${tasks.length} 个小任务 · 共65轮关键交互`;$("#empty").style.display=list.length?"none":"block";
       timeline.innerHTML=list.map(task=>`<article class="entry${state.expanded?" open":""}" data-id="${task.id}">
         <button class="entry-head" type="button" aria-expanded="${state.expanded}"><span class="entry-id">任务 ${String(task.id).padStart(2,"0")}</span><span class="entry-title">${mark(task.title,state.q)} <span class="chev">⌄</span></span><span class="entry-tags"><span class="tag decision">${esc(task.ability)}</span><span class="tag">${task.records.length}轮对话</span></span></button>
         <div class="entry-body"><div class="task-context"><b>这个任务要解决什么：</b>${mark(task.goal,state.q)}</div><div class="chat-thread">${task.records.map(r=>`<div class="chat-round"><div class="turn user"><div class="bubble"><span class="turn-meta">你 · 原始消息</span><p>${mark(r.user,state.q)}</p></div><div class="avatar">我</div></div><div class="turn ai"><div class="avatar">AI</div><div class="bubble"><span class="turn-meta">AI · 根据原对话整理</span><p>${mark(r.ai,state.q)}</p></div></div></div>`).join("")}</div><div class="task-outcome"><b>这一任务体现的协作方法：</b>${mark(task.takeaway,state.q)}</div></div></article>`).join("");
