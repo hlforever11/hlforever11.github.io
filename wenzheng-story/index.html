@@ -30,7 +30,8 @@
     .hero{padding:88px 0 58px;display:grid;grid-template-columns:1.25fr .75fr;gap:62px;align-items:end}
     .eyebrow{display:flex;align-items:center;gap:12px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
     .eyebrow:before{content:"";width:42px;height:1px;background:currentColor}
-    h1{font-family:STSong,"Songti SC","Noto Serif CJK SC",serif;font-size:clamp(42px,6.3vw,79px);line-height:1.12;letter-spacing:-.045em;margin:24px 0 24px;font-weight:800}
+    h1{font-family:STSong,"Songti SC","Noto Serif CJK SC",serif;font-size:clamp(42px,5.2vw,68px);line-height:1.18;letter-spacing:-.045em;margin:24px 0 24px;font-weight:800}
+    h1 .hero-line{display:inline-block;white-space:nowrap}
     h1 em{font-style:normal;color:var(--accent)}
     .lead{max-width:760px;color:#4e596f;font-size:clamp(17px,2vw,21px);margin:0}
     .hero-note{padding:28px;border:1px solid var(--line);border-radius:22px;background:rgba(255,253,249,.76);box-shadow:var(--shadow)}
@@ -47,7 +48,7 @@
     h2{font:800 clamp(30px,4vw,48px)/1.2 STSong,"Songti SC",serif;margin:10px 0 0;letter-spacing:-.03em}
     .section-head p{margin:10px 0 0;color:var(--muted);font-size:16px}
     .disclosure{border-left:4px solid var(--accent);background:var(--accent-soft);padding:18px 22px;border-radius:0 14px 14px 0;color:#5b403e;font-size:14px}
-    .journey{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .journey{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
     .stage{position:relative;min-height:220px;padding:26px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 10px 30px rgba(34,45,65,.045)}
     .stage .no{font:800 12px/1 system-ui;color:var(--accent);letter-spacing:.14em}.stage h3{font:800 21px/1.4 STSong,"Songti SC",serif;margin:18px 0 10px}
     .stage p{font-size:14px;color:var(--muted);margin:0}.stage .arrow{position:absolute;right:18px;bottom:16px;color:#b3aa9c;font-size:24px}
@@ -80,9 +81,9 @@
     .cta h3{font:800 28px STSong,"Songti SC",serif;margin:0 0 8px}.cta p{margin:0;opacity:.75}.cta .btn{background:white;color:var(--navy);border-color:white;flex:0 0 auto}
     footer{margin-top:72px;padding:34px 0 42px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
     .footer-inner{display:flex;justify-content:space-between;align-items:center;gap:20px}.footer-inner a{text-decoration:none;color:var(--ink)}
-    #busuanzi_container_site_pv{display:none}.backtop{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:rgba(255,253,249,.92);color:var(--navy);cursor:pointer;box-shadow:var(--shadow);display:none}
+    #busuanzi_raw_counter{display:none}.backtop{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:rgba(255,253,249,.92);color:var(--navy);cursor:pointer;box-shadow:var(--shadow);display:none}
     @media(max-width:900px){nav{display:none}.hero{grid-template-columns:1fr;padding-top:56px;gap:30px}.metrics{grid-template-columns:1fr 1fr}.metric:nth-child(2){border-right:0}.metric:nth-child(-n+2){border-bottom:1px solid var(--line)}.section-head{grid-template-columns:1fr}.journey{grid-template-columns:1fr 1fr}.lessons{grid-template-columns:1fr 1fr}}
-    @media(max-width:620px){.shell{width:min(100% - 24px,1180px)}.topbar-inner{height:60px}.brand small{display:none}.hero{padding-top:42px}.hero-note{padding:22px}h1{font-size:42px}.metrics{margin-bottom:48px}.metric{padding:20px 17px}.metric strong{font-size:25px}section{padding:50px 0}.journey,.principles,.lessons{grid-template-columns:1fr}.stage{min-height:0}.tools{top:60px}.searchrow{grid-template-columns:1fr 1fr}.search{grid-column:1/-1}.entry-head{grid-template-columns:44px 1fr;padding:17px 15px;gap:9px}.entry-tags{grid-column:2;justify-content:flex-start}.entry-body,.entry.open .entry-body{grid-template-columns:1fr;padding:15px}.timeline{padding-left:26px}.timeline:before{left:7px}.entry:before{left:-25px}.cta{align-items:flex-start;flex-direction:column;padding:28px}.footer-inner{align-items:flex-start;flex-direction:column}.backtop{right:14px;bottom:14px}}
+    @media(max-width:620px){.shell{width:min(100% - 24px,1180px)}.topbar-inner{height:60px}.brand small{display:none}.hero{padding-top:42px}.hero-note{padding:22px}h1{font-size:clamp(31px,9.2vw,36px);letter-spacing:-.055em}.lead{font-size:16px}.metrics{margin-bottom:48px}.metric{padding:20px 17px}.metric strong{font-size:25px}section{padding:50px 0}.journey,.principles,.lessons{grid-template-columns:1fr}.stage{min-height:0}.tools{top:60px}.searchrow{grid-template-columns:1fr 1fr}.search{grid-column:1/-1}.entry-head{grid-template-columns:44px 1fr;padding:17px 15px;gap:9px}.entry-tags{grid-column:2;justify-content:flex-start}.entry-body,.entry.open .entry-body{grid-template-columns:1fr;padding:15px}.timeline{padding-left:26px}.timeline:before{left:7px}.entry:before{left:-25px}.cta{align-items:flex-start;flex-direction:column;padding:28px}.footer-inner{align-items:flex-start;flex-direction:column}.backtop{right:14px;bottom:14px}}
     @media print{.topbar,.tools,.backtop,.hero-links,.cta{display:none!important}.entry{break-inside:avoid}.entry-body{display:grid!important}.hero{padding-top:25px}body{background:white}.shell{width:100%}}
   </style>
 </head>
@@ -90,7 +91,7 @@
   <header class="topbar">
     <div class="shell topbar-inner">
       <a class="brand" href="#top"><img src="../reference-checker/logo.svg" alt="文证标志"><span>文证 · 协作实录<small>HUMAN × AI BUILD LOG</small></span></a>
-      <nav><a href="#overview">项目全景</a><a href="#record">对话记录</a><a href="#lessons">给学生的启示</a><a href="../reference-checker/">打开文证</a></nav>
+      <nav><a href="#overview">协作方法</a><a href="#record">精选案例</a><a href="#lessons">给学生的启示</a><a href="../reference-checker/">打开文证</a></nav>
     </div>
   </header>
 
@@ -99,45 +100,46 @@
       <div class="hero">
         <div>
           <div class="eyebrow">Evidence before confidence · Build in public</div>
-          <h1>一项几乎不能完成的任务，<br>怎样被<em>一轮轮做成</em></h1>
-          <p class="lead">这是“文证”参考文献核验平台从想法到网站、再到微信小程序的真实协作过程。它不展示一个神奇提示词，而是展示需求如何被澄清、错误如何被发现、标准如何被重写，以及人如何始终掌握判断权。</p>
+          <h1><span class="hero-line">和 AI 正确协作，</span><br><em class="hero-line">把不会做的事做成</em></h1>
+          <p class="lead">这不是一份编程教程，而是一份给AI初学者的协作示范：你不必先会写代码，也可以从一个真实问题出发，学会说清目标、提出具体要求、检验AI的结果，再用自己的专业知识和判断力推动它不断改进，直到做出真正能用的产品。</p>
         </div>
         <aside class="hero-note">
-          <b>给学生的阅读方法</b>
-          <p>先看“项目全景”理解路线，再按分类筛选对话。重点观察每次失败之后，用户提供了什么证据，AI又怎样把个案转化为通用规则。</p>
-          <div class="hero-links"><a class="btn" href="#record">进入协作实录 ↓</a><a class="btn alt" href="../reference-checker/">体验成品 ↗</a></div>
+          <b>第一次与 AI 协作，从这里开始</b>
+          <p>先读18个精选案例。重点不是AI写了多少代码，而是人怎样提出任务、怎样发现问题、怎样用具体证据纠正AI，以及怎样要求它把修改真正落地。</p>
+          <div class="hero-links"><a class="btn" href="#record">看18个精选案例 ↓</a><a class="btn alt" href="../reference-checker/">体验最终成品 ↗</a></div>
         </aside>
       </div>
 
       <div class="metrics" aria-label="项目数据">
-        <div class="metric"><strong>80+</strong><span>轮需求、测试与反馈</span></div>
-        <div class="metric"><strong>2 个</strong><span>可运行产品：网站 + 小程序</span></div>
-        <div class="metric"><strong>39 项</strong><span>最新自动化回归测试</span></div>
-        <div class="metric"><strong>0 元起步</strong><span>GitHub Pages 与免费云额度</span></div>
+        <div class="metric"><strong>5 种</strong><span>每个人都能掌握的AI协作能力</span></div>
+        <div class="metric"><strong>18 个</strong><span>适合初学者阅读的精选案例</span></div>
+        <div class="metric"><strong>66 轮</strong><span>可继续展开查看的完整记录</span></div>
+        <div class="metric"><strong>2 个</strong><span>最终上线的网站与微信小程序</span></div>
       </div>
     </div>
 
     <section id="overview">
       <div class="shell">
         <div class="section-head">
-          <div><div class="kicker">Project map</div><h2>从“能不能做”<br>到“怎样做可靠”</h2></div>
-          <div><p>项目最初只是一个朴素问题：能否自动挑出 AI 生成的虚假参考文献？真正的难点随后浮现——中文资源覆盖、非标准著录拆分、不同文献类型、网络波动、真实性与准确性的区分、免费部署限制，以及网站与小程序的能力差异。</p></div>
+          <div><div class="kicker">How to collaborate</div><h2>和 AI 协作，<br>不是问完就等答案</h2></div>
+          <div><p>真正有效的AI协作更像共同完成一个项目。人负责提出值得解决的问题、说明目标和限制、检验结果、提供专业判断，并决定什么才算完成；AI负责快速实现、解释技术、寻找方案和反复修改。下面五步并不要求你会编程，它们适用于写作、研究、教学设计、数据处理和几乎所有复杂任务。</p></div>
         </div>
-        <div class="disclosure"><b>记录说明：</b>用户的关键表述尽量保留原话；AI一侧由于并非每轮都保存了完整逐字回复，统一标为“AI执行摘要”。重复点击、账号口令和云环境标识已合并或脱敏，截图中的关键信息则转写为文字。这是一份忠实的教学整理，不是伪造的逐字聊天截图。</div>
+        <div class="disclosure"><b>先记住一句话：</b>你可以不会做，但不能不知道自己想要什么，也不能放弃对结果的判断。AI能补足方法和技术，却不能替你定义问题、识别好坏和承担最终决策。</div>
         <div class="journey" style="margin-top:28px">
-          <article class="stage"><span class="no">01 · DEFINE</span><h3>提出真实问题</h3><p>验证最多20条中英文参考文献，识别虚假条目并纠正年份、卷期、页码等错误。</p><span class="arrow">→</span></article>
-          <article class="stage"><span class="no">02 · BREAK</span><h3>用反例击穿系统</h3><p>不断提交中文论文、网页新闻、报告、图书、灰色文献和不规范格式，找出“看似能用”的假象。</p><span class="arrow">→</span></article>
-          <article class="stage"><span class="no">03 · REFRAME</span><h3>重写判断标准</h3><p>把真实性与著录准确性分开：核心身份字段决定“是否存在”，格式和卷期错误只影响“是否准确”。</p><span class="arrow">→</span></article>
-          <article class="stage"><span class="no">04 · SHIP</span><h3>跨平台上线</h3><p>GitHub Pages 网站、微信原生小程序、云函数、文档上传、历史记录与持续回归测试逐步落地。</p><span class="arrow">✓</span></article>
+          <article class="stage"><span class="no">01 · 想清目标</span><h3>从真实问题出发</h3><p>先说清楚想解决谁的什么问题、最终希望得到什么，而不是一上来研究技术路线。</p><span class="arrow">→</span></article>
+          <article class="stage"><span class="no">02 · 提出要求</span><h3>把想法变得具体</h3><p>补充使用场景、数量、格式、成本和体验限制。需求不必一次完美，可以边做边澄清。</p><span class="arrow">→</span></article>
+          <article class="stage"><span class="no">03 · 检验结果</span><h3>用例子具体反馈</h3><p>不要只说“还是不行”。给出失败样本、截图和正确结果，让AI知道错在哪里。</p><span class="arrow">→</span></article>
+          <article class="stage"><span class="no">04 · 专业纠偏</span><h3>告诉 AI 什么才算对</h3><p>用自己的领域知识修正判断标准，并要求AI从个案中总结通用规则。</p><span class="arrow">→</span></article>
+          <article class="stage"><span class="no">05 · 完成交付</span><h3>让成果真正可用</h3><p>继续追问部署、测试、成本和边界，直到别人打开就能使用，而不只是在对话里“写好了”。</p><span class="arrow">✓</span></article>
         </div>
 
         <div class="section-head" style="margin-top:76px">
-          <div><div class="kicker">Core decisions</div><h2>四个改变项目<br>走向的判断</h2></div>
+          <div><div class="kicker">Beginner's guide</div><h2>初学者最需要<br>建立的四个意识</h2></div>
           <div class="principles">
-            <article class="principle"><b>真实性 ≠ 著录零误差</b><p>标题、作者、来源、DOI/链接等共同确认作品身份；“05/5”或文献类型标识差异应提示修正，不应判为虚假。</p></article>
-            <article class="principle"><b>搜索优先，多源互证</b><p>普通搜索引擎能发现大量中文与长尾文献，再结合 DOI、Crossref、OpenAlex、原始网页和机构来源提高置信度。</p></article>
-            <article class="principle"><b>失败不是“虚假”</b><p>网络超时、站点防护或数据库未收录只能说明暂时缺证，必须与“存在矛盾证据”区分开。</p></article>
-            <article class="principle"><b>修复必须能举一反三</b><p>每个个案都要沉淀为解析、归一化、容错、回退或回归测试规则，而不是只给某一篇文献开白名单。</p></article>
+            <article class="principle"><b>不懂技术，也可以发起任务</b><p>你不必先学会编程再做网站。先把真实需求说清楚，让AI提出方案、生成第一版，再在可见结果上继续修改。</p></article>
+            <article class="principle"><b>提要求，要具体到可以行动</b><p>“不好看”“有问题”很难推动改进；指出哪段文字、哪条文献、哪个按钮和预期结果，AI才能准确执行。</p></article>
+            <article class="principle"><b>专业能力不会因AI而失去价值</b><p>正因为AI实现得很快，人的领域知识、证据意识、审美和判断标准反而更重要。它们决定产品方向。</p></article>
+            <article class="principle"><b>不要满足于一次成功</b><p>要求AI测试新样本、解释失败原因、举一反三并真正部署。偶然跑通不是完成，别人稳定可用才是。</p></article>
           </div>
         </div>
       </div>
@@ -146,20 +148,21 @@
     <section class="explorer" id="record">
       <div class="shell">
         <div class="section-head" style="margin-bottom:10px">
-          <div><div class="kicker">Conversation explorer</div><h2>完整协作时间线</h2></div>
-          <div><p>按大类、子主题或关键词检索。点击卡片查看用户原话、AI执行摘要和这一轮留下的工程启示；“只看问题”适合集中学习调试过程。</p></div>
+          <div><div class="kicker">Learning by examples</div><h2>18个案例，<br>看懂怎样与AI协作</h2></div>
+          <div><p>默认只展示最适合初学者的18轮。先按五种协作能力阅读，再点击卡片查看用户怎样表达、AI怎样执行以及这一轮带来的启示。想研究完整项目时，再切换到“完整66轮”。</p></div>
         </div>
         <div class="tools">
           <div class="searchrow">
             <input id="search" class="search" type="search" placeholder="搜索：中文文献、UNESCO、文档上传、云函数、历史记录……" aria-label="搜索协作记录">
-            <select id="subFilter" aria-label="按子主题筛选"><option value="all">全部子主题</option></select>
+            <select id="modeFilter" aria-label="选择记录范围"><option value="featured">精选18轮（推荐）</option><option value="all">完整66轮</option></select>
             <button id="problemToggle" class="toggle" type="button" aria-pressed="false">只看问题</button>
           </div>
           <div id="chips" class="chips" aria-label="大类筛选"></div>
         </div>
         <div class="resultbar"><span id="resultCount"></span><button class="chip" id="expandAll" type="button">展开当前结果</button></div>
+        <div class="disclosure" style="margin-bottom:22px"><b>怎样读每张卡片：</b>先看“用户关键原话”是怎样提出需求或反馈问题的，再看“AI执行摘要”，最后看这一轮沉淀出的协作方法。完整逐字回复未全部留存，因此AI部分明确采用摘要；重复操作和敏感标识已合并或脱敏。</div>
         <div id="timeline" class="timeline"></div>
-        <div id="empty" class="empty">没有找到匹配记录，请换一个关键词或分类。</div>
+        <div id="empty" class="empty">当前范围内没有匹配记录。可以换一个关键词，或切换到“完整66轮”。</div>
       </div>
     </section>
 
@@ -188,7 +191,7 @@
   <footer>
     <div class="shell footer-inner">
       <div>“文证”人机协作开发实录 · 教学分享版</div>
-      <div>联系：<a href="mailto:linhu@scu.edu.cn">linhu@scu.edu.cn</a> · <span id="busuanzi_container_site_pv">访问 <span id="busuanzi_site_pv">—</span> 次</span></div>
+      <div>联系：<a href="mailto:linhu@scu.edu.cn">linhu@scu.edu.cn</a> · 本页访问 <span id="pageVisitCount">0</span> 次<span id="busuanzi_raw_counter" aria-hidden="true"><span id="busuanzi_page_pv">0</span></span></div>
     </div>
   </footer>
   <button id="backtop" class="backtop" type="button" aria-label="返回顶部">↑</button>
@@ -263,31 +266,42 @@
       {cat:"产品构想",sub:"教学传播",kind:"milestone",title:"把全过程做成学生可读的网站",user:`请将这个完整的对话记录做成一个网站，提供给学生参考，让他们知道我是如何与AI协作完成一项几乎不能完成的任务。按网站设计、微信小程序设计及功能调试、Bug修复等分类，并部署到我的 GitHub；下方保留邮箱和访问计数器。`,ai:`将80多轮协作整理为可搜索、可筛选的教学时间线，保留用户关键原话，以“AI执行摘要”还原动作与结果，并公开说明脱敏和整理规则。`,out:"项目最终不仅产出工具，也产出一份关于人机协作方法的开放教材。"}
     ];
 
-    const catOrder=["全部","产品构想","网站设计","核验算法","功能调试","小程序开发","云开发部署","部署发布","交互视觉"];
-    const state={cat:"全部",sub:"all",q:"",problems:false,expanded:false};
-    const $=s=>document.querySelector(s); const timeline=$("#timeline"), chips=$("#chips"), subFilter=$("#subFilter");
+    const featuredIds=new Set([1,2,4,5,6,8,11,19,20,32,38,39,44,51,52,56,57,66]);
+    const learningOrder=["全部","说清目标","具体反馈","专业纠偏","测试改进","部署交付"];
+    const learningOf=r=>{
+      if(["云开发部署","部署发布"].includes(r.cat))return "部署交付";
+      if(r.cat==="核验算法")return "专业纠偏";
+      if(r.cat==="功能调试")return "测试改进";
+      if(r.cat==="交互视觉")return "具体反馈";
+      return "说清目标";
+    };
+    const learningRecords=records.map((r,i)=>({...r,id:i+1,learning:learningOf(r)}));
+    const state={cat:"全部",mode:"featured",q:"",problems:false,expanded:false};
+    const $=s=>document.querySelector(s); const timeline=$("#timeline"), chips=$("#chips"), modeFilter=$("#modeFilter");
     const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
     const mark=(s,q)=>{const safe=esc(s);if(!q)return safe;const terms=q.trim().split(/\s+/).filter(Boolean).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));if(!terms.length)return safe;return safe.replace(new RegExp(`(${terms.join("|")})`,`gi`),"<mark>$1</mark>")};
+    const modeRecords=()=>state.mode==="featured"?learningRecords.filter(r=>featuredIds.has(r.id)):learningRecords;
     function buildFilters(){
-      catOrder.forEach(cat=>{const n=cat==="全部"?records.length:records.filter(r=>r.cat===cat).length;const b=document.createElement("button");b.className="chip"+(cat===state.cat?" active":"");b.textContent=`${cat} ${n}`;b.onclick=()=>{state.cat=cat;state.sub="all";subFilter.value="all";buildFilters();render()};chips.appendChild(b)});
-      const subs=[...new Set(records.filter(r=>state.cat==="全部"||r.cat===state.cat).map(r=>r.sub))].sort((a,b)=>a.localeCompare(b,"zh-CN"));
-      subFilter.innerHTML='<option value="all">全部子主题</option>'+subs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");subFilter.value=state.sub;
+      chips.innerHTML="";
+      const base=modeRecords();
+      learningOrder.forEach(cat=>{const n=cat==="全部"?base.length:base.filter(r=>r.learning===cat).length;const b=document.createElement("button");b.className="chip"+(cat===state.cat?" active":"");b.textContent=`${cat} ${n}`;b.onclick=()=>{state.cat=cat;buildFilters();render()};chips.appendChild(b)});
     }
-    function filtered(){const q=state.q.trim().toLowerCase();return records.filter(r=>(state.cat==="全部"||r.cat===state.cat)&&(state.sub==="all"||r.sub===state.sub)&&(!state.problems||r.kind==="bug")&&(!q||[r.title,r.user,r.ai,r.out,r.cat,r.sub].join(" ").toLowerCase().includes(q)))}
+    function filtered(){const q=state.q.trim().toLowerCase();return modeRecords().filter(r=>(state.cat==="全部"||r.learning===state.cat)&&(!state.problems||r.kind==="bug")&&(!q||[r.title,r.user,r.ai,r.out,r.cat,r.sub,r.learning].join(" ").toLowerCase().includes(q)))}
     function render(){
-      const list=filtered();$("#resultCount").textContent=`显示 ${list.length} / ${records.length} 轮记录`;$("#empty").style.display=list.length?"none":"block";
-      timeline.innerHTML=list.map((r,i)=>{const idx=records.indexOf(r)+1;const kindLabel={bug:"问题 / Bug",milestone:"阶段成果",decision:"关键决策",deploy:"部署操作"}[r.kind]||"协作记录";return `<article class="entry${state.expanded?" open":""}" data-id="${idx}">
-        <button class="entry-head" type="button" aria-expanded="${state.expanded}"><span class="entry-id">#${String(idx).padStart(2,"0")}</span><span class="entry-title">${mark(r.title,state.q)} <span class="chev">⌄</span></span><span class="entry-tags"><span class="tag ${r.kind}">${kindLabel}</span><span class="tag">${esc(r.cat)}</span><span class="tag">${esc(r.sub)}</span></span></button>
+      const list=filtered(),base=modeRecords(),modeName=state.mode==="featured"?"精选案例":"完整记录";$("#resultCount").textContent=`${modeName}：显示 ${list.length} / ${base.length} 轮`;$("#empty").style.display=list.length?"none":"block";
+      timeline.innerHTML=list.map(r=>{const idx=r.id;const kindLabel={bug:"发现问题",milestone:"阶段成果",decision:"提出要求",deploy:"部署操作"}[r.kind]||"协作记录";return `<article class="entry${state.expanded?" open":""}" data-id="${idx}">
+        <button class="entry-head" type="button" aria-expanded="${state.expanded}"><span class="entry-id">#${String(idx).padStart(2,"0")}</span><span class="entry-title">${mark(r.title,state.q)} <span class="chev">⌄</span></span><span class="entry-tags"><span class="tag ${r.kind}">${kindLabel}</span><span class="tag">${esc(r.learning)}</span></span></button>
         <div class="entry-body"><div class="speech"><span class="label">用户关键原话</span><p>${mark(r.user,state.q)}</p></div><div class="action"><span class="label">AI 执行摘要</span><p>${mark(r.ai,state.q)}</p></div><div class="outcome"><b>这一轮留下了什么：</b> ${mark(r.out,state.q)}</div></div></article>`}).join("");
       timeline.querySelectorAll(".entry-head").forEach(b=>b.onclick=()=>{const e=b.closest(".entry");e.classList.toggle("open");b.setAttribute("aria-expanded",e.classList.contains("open"))});
     }
     $("#search").addEventListener("input",e=>{state.q=e.target.value;render()});
-    subFilter.addEventListener("change",e=>{state.sub=e.target.value;render()});
+    modeFilter.addEventListener("change",e=>{state.mode=e.target.value;state.cat="全部";buildFilters();render()});
     $("#problemToggle").onclick=e=>{state.problems=!state.problems;e.currentTarget.classList.toggle("on",state.problems);e.currentTarget.setAttribute("aria-pressed",state.problems);render()};
     $("#expandAll").onclick=e=>{state.expanded=!state.expanded;e.currentTarget.textContent=state.expanded?"收起当前结果":"展开当前结果";render()};
     buildFilters();render();
     const back=$("#backtop");addEventListener("scroll",()=>back.style.display=scrollY>900?"block":"none",{passive:true});back.onclick=()=>scrollTo({top:0,behavior:"smooth"});
-    const revealCounter=()=>{const n=$("#busuanzi_site_pv");if(n&&/\d/.test(n.textContent))$("#busuanzi_container_site_pv").style.display="inline"};setInterval(revealCounter,800);setTimeout(revealCounter,1800);
+    const COUNTER_BASE=0;
+    const revealCounter=()=>{const n=$("#busuanzi_page_pv"),shown=$("#pageVisitCount");if(!n||!shown)return;const raw=parseInt((n.textContent||"").replace(/\D/g,""),10);if(Number.isFinite(raw))shown.textContent=String(Math.max(0,raw-COUNTER_BASE))};setInterval(revealCounter,800);setTimeout(revealCounter,1800);
   </script>
   <script defer src="https://cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js"></script>
 </body>
