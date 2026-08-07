@@ -33,7 +33,8 @@
     h1{font-family:STSong,"Songti SC","Noto Serif CJK SC",serif;font-size:clamp(42px,5.2vw,68px);line-height:1.18;letter-spacing:-.045em;margin:24px 0 24px;font-weight:800}
     h1 .hero-line{display:inline-block;white-space:nowrap}
     h1 em{font-style:normal;color:var(--accent)}
-    .lead{max-width:760px;color:#4e596f;font-size:clamp(17px,2vw,21px);margin:0}
+    .hero-slogan{max-width:790px;margin:0 0 16px;color:var(--navy);font-size:clamp(18px,2vw,23px);font-weight:800;line-height:1.65}
+    .lead{max-width:760px;color:#4e596f;font-size:16px;margin:0}
     .hero-note{padding:28px;border:1px solid var(--line);border-radius:22px;background:rgba(255,253,249,.76);box-shadow:var(--shadow)}
     .hero-note b{display:block;font-family:STSong,"Songti SC",serif;font-size:23px;margin-bottom:8px}
     .hero-note p{margin:0;color:var(--muted);font-size:14px}.hero-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
@@ -55,7 +56,7 @@
     .principles{display:grid;grid-template-columns:1fr 1fr;gap:16px}.principle{padding:25px;border-radius:18px;border:1px solid var(--line);background:rgba(255,253,249,.78)}
     .principle b{font:800 20px STSong,"Songti SC",serif}.principle p{margin:8px 0 0;color:var(--muted);font-size:14px}
     .explorer{padding-top:82px}.tools{position:sticky;top:68px;z-index:12;padding:18px 0;background:linear-gradient(var(--paper) 74%,rgba(251,248,242,0));margin-bottom:12px}
-    .searchrow{display:grid;grid-template-columns:1fr auto auto;gap:10px}.search{width:100%;border:1px solid var(--line);border-radius:13px;background:white;padding:14px 16px;font:inherit;color:var(--ink);outline:none}
+    .searchrow{display:grid;grid-template-columns:1fr auto;gap:10px}.search{width:100%;border:1px solid var(--line);border-radius:13px;background:white;padding:14px 16px;font:inherit;color:var(--ink);outline:none}
     .search:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(32,56,94,.08)}
     select,.toggle{border:1px solid var(--line);border-radius:13px;background:white;padding:0 15px;color:var(--ink);font:inherit}
     .toggle{cursor:pointer;font-weight:700}.toggle.on{color:white;background:var(--navy);border-color:var(--navy)}
@@ -69,10 +70,17 @@
     .entry-id{font:800 12px/1.2 system-ui;color:var(--accent);letter-spacing:.08em}.entry-title{font-weight:800;line-height:1.5}.entry-tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
     .tag{border-radius:999px;background:#f0ece5;color:#667083;padding:4px 9px;font-size:11px;white-space:nowrap}.tag.bug{background:#f7dfda;color:#9f4034}.tag.milestone{background:#dfeee7;color:#2f765c}.tag.decision{background:#ece6f6;color:#68518f}.tag.deploy{background:#e1e9f4;color:#31527e}
     .chev{display:inline-block;margin-left:5px;transition:.2s}.entry.open .chev{transform:rotate(180deg)}
-    .entry-body{display:none;border-top:1px solid var(--line);padding:22px;grid-template-columns:1fr 1fr;gap:16px}.entry.open .entry-body{display:grid}
-    .speech,.action{padding:18px;border-radius:13px}.speech{background:#f5f1ea}.action{background:#f1f4f8}
-    .label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--accent);margin-bottom:8px}.action .label{color:var(--navy)}
-    .speech p,.action p{margin:0;font-size:14px;white-space:pre-line}.outcome{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:14px;color:var(--muted);font-size:13px}
+    .entry-body{display:none;border-top:1px solid var(--line);padding:0}.entry.open .entry-body{display:block}
+    .task-context{padding:18px 24px;background:#f5f1ea;color:#5b6475;font-size:14px;border-bottom:1px solid var(--line)}
+    .chat-thread{padding:24px;background:#fff;display:flex;flex-direction:column;gap:24px}
+    .chat-round{display:flex;flex-direction:column;gap:15px;padding-bottom:24px;border-bottom:1px solid #ebe7df}.chat-round:last-child{padding-bottom:0;border-bottom:0}
+    .turn{display:flex;gap:11px;align-items:flex-start}.turn.user{justify-content:flex-end}
+    .avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 30px;font-size:11px;font-weight:800}
+    .turn.ai .avatar{background:#111;color:#fff}.turn.user .avatar{background:var(--accent);color:#fff;order:2}
+    .bubble{max-width:min(82%,760px);font-size:14px;line-height:1.75}.bubble p{margin:0;white-space:pre-line}
+    .turn.user .bubble{background:#f0f0f0;padding:13px 16px;border-radius:18px 18px 4px 18px}
+    .turn.ai .bubble{padding:4px 5px}.turn-meta{display:block;margin-bottom:5px;color:#8a8f99;font-size:10px;font-weight:700;letter-spacing:.08em}
+    .task-outcome{padding:17px 24px;background:#eef3f1;color:#456256;font-size:13px;border-top:1px solid #dbe7e1}
     mark{background:#ffe59a;color:inherit;border-radius:2px}.empty{display:none;padding:50px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:18px}
     .lessons{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.lesson{padding:27px;border-radius:18px;color:white;background:var(--navy)}
     .lesson:nth-child(2){background:#9b4b3f}.lesson:nth-child(3){background:#4d6158}.lesson:nth-child(4){background:#5e5673}.lesson:nth-child(5){background:#755939}.lesson:nth-child(6){background:#334b65}
@@ -83,7 +91,7 @@
     .footer-inner{display:flex;justify-content:space-between;align-items:center;gap:20px}.footer-inner a{text-decoration:none;color:var(--ink)}
     #busuanzi_raw_counter{display:none}.backtop{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:rgba(255,253,249,.92);color:var(--navy);cursor:pointer;box-shadow:var(--shadow);display:none}
     @media(max-width:900px){nav{display:none}.hero{grid-template-columns:1fr;padding-top:56px;gap:30px}.metrics{grid-template-columns:1fr 1fr}.metric:nth-child(2){border-right:0}.metric:nth-child(-n+2){border-bottom:1px solid var(--line)}.section-head{grid-template-columns:1fr}.journey{grid-template-columns:1fr 1fr}.lessons{grid-template-columns:1fr 1fr}}
-    @media(max-width:620px){.shell{width:min(100% - 24px,1180px)}.topbar-inner{height:60px}.brand small{display:none}.hero{padding-top:42px}.hero-note{padding:22px}h1{font-size:clamp(31px,9.2vw,36px);letter-spacing:-.055em}.lead{font-size:16px}.metrics{margin-bottom:48px}.metric{padding:20px 17px}.metric strong{font-size:25px}section{padding:50px 0}.journey,.principles,.lessons{grid-template-columns:1fr}.stage{min-height:0}.tools{top:60px}.searchrow{grid-template-columns:1fr 1fr}.search{grid-column:1/-1}.entry-head{grid-template-columns:44px 1fr;padding:17px 15px;gap:9px}.entry-tags{grid-column:2;justify-content:flex-start}.entry-body,.entry.open .entry-body{grid-template-columns:1fr;padding:15px}.timeline{padding-left:26px}.timeline:before{left:7px}.entry:before{left:-25px}.cta{align-items:flex-start;flex-direction:column;padding:28px}.footer-inner{align-items:flex-start;flex-direction:column}.backtop{right:14px;bottom:14px}}
+    @media(max-width:620px){.shell{width:min(100% - 24px,1180px)}.topbar-inner{height:60px}.brand small{display:none}.hero{padding-top:42px}.hero-note{padding:22px}h1{font-size:clamp(31px,9.2vw,36px);letter-spacing:-.055em}.hero-slogan{font-size:17px}.lead{font-size:15px}.metrics{margin-bottom:48px}.metric{padding:20px 17px}.metric strong{font-size:25px}section{padding:50px 0}.journey,.principles,.lessons{grid-template-columns:1fr}.stage{min-height:0}.tools{top:60px}.searchrow{grid-template-columns:1fr}.entry-head{grid-template-columns:44px 1fr;padding:17px 15px;gap:9px}.entry-tags{grid-column:2;justify-content:flex-start}.chat-thread{padding:16px 13px}.bubble{max-width:88%;font-size:13px}.task-context,.task-outcome{padding:15px}.timeline{padding-left:26px}.timeline:before{left:7px}.entry:before{left:-25px}.cta{align-items:flex-start;flex-direction:column;padding:28px}.footer-inner{align-items:flex-start;flex-direction:column}.backtop{right:14px;bottom:14px}}
     @media print{.topbar,.tools,.backtop,.hero-links,.cta{display:none!important}.entry{break-inside:avoid}.entry-body{display:grid!important}.hero{padding-top:25px}body{background:white}.shell{width:100%}}
   </style>
 </head>
@@ -91,7 +99,7 @@
   <header class="topbar">
     <div class="shell topbar-inner">
       <a class="brand" href="#top"><img src="../reference-checker/logo.svg" alt="文证标志"><span>文证 · 协作实录<small>HUMAN × AI BUILD LOG</small></span></a>
-      <nav><a href="#overview">协作方法</a><a href="#record">精选案例</a><a href="#lessons">给学生的启示</a><a href="../reference-checker/">打开文证</a></nav>
+      <nav><a href="#overview">协作方法</a><a href="#record">真实任务</a><a href="#lessons">给学生的启示</a><a href="../reference-checker/">打开文证</a></nav>
     </div>
   </header>
 
@@ -101,19 +109,20 @@
         <div>
           <div class="eyebrow">Evidence before confidence · Build in public</div>
           <h1><span class="hero-line">和 AI 正确协作，</span><br><em class="hero-line">把不会做的事做成</em></h1>
-          <p class="lead">这不是一份编程教程，而是一份给AI初学者的协作示范：你不必先会写代码，也可以从一个真实问题出发，学会说清目标、提出具体要求、检验AI的结果，再用自己的专业知识和判断力推动它不断改进，直到做出真正能用的产品。</p>
+          <p class="hero-slogan">从零开始，不写一行代码，不花一分钱，只靠与 AI 对话，上线一个真实可用的网站和微信小程序。</p>
+          <p class="lead">这里尽量保留真实的对话顺序和原始表达。你会看到一个完全不会编程的人，怎样提出要求、测试结果、指出错误，再用自己的专业知识和判断力推动AI不断修改，直到产品真正上线。</p>
         </div>
         <aside class="hero-note">
           <b>第一次与 AI 协作，从这里开始</b>
-          <p>先读18个精选案例。重点不是AI写了多少代码，而是人怎样提出任务、怎样发现问题、怎样用具体证据纠正AI，以及怎样要求它把修改真正落地。</p>
-          <div class="hero-links"><a class="btn" href="#record">看18个精选案例 ↓</a><a class="btn alt" href="../reference-checker/">体验最终成品 ↗</a></div>
+          <p>全过程被整理为18个连续小任务。每个任务都按聊天界面呈现多轮交互，让你看到需求不是一次说完的，成果也不是AI一次生成的。</p>
+          <div class="hero-links"><a class="btn" href="#record">进入18个真实任务 ↓</a><a class="btn alt" href="../reference-checker/">体验最终成品 ↗</a></div>
         </aside>
       </div>
 
       <div class="metrics" aria-label="项目数据">
         <div class="metric"><strong>5 种</strong><span>每个人都能掌握的AI协作能力</span></div>
-        <div class="metric"><strong>18 个</strong><span>适合初学者阅读的精选案例</span></div>
-        <div class="metric"><strong>66 轮</strong><span>可继续展开查看的完整记录</span></div>
+        <div class="metric"><strong>18 项</strong><span>从完整对话中提炼的真实小任务</span></div>
+        <div class="metric"><strong>66 轮</strong><span>保留在任务中的关键交互记录</span></div>
         <div class="metric"><strong>2 个</strong><span>最终上线的网站与微信小程序</span></div>
       </div>
     </div>
@@ -148,21 +157,20 @@
     <section class="explorer" id="record">
       <div class="shell">
         <div class="section-head" style="margin-bottom:10px">
-          <div><div class="kicker">Learning by examples</div><h2>18个案例，<br>看懂怎样与AI协作</h2></div>
-          <div><p>默认只展示最适合初学者的18轮。先按五种协作能力阅读，再点击卡片查看用户怎样表达、AI怎样执行以及这一轮带来的启示。想研究完整项目时，再切换到“完整66轮”。</p></div>
+          <div><div class="kicker">The original workflow</div><h2>18个小任务，<br>还原真实协作过程</h2></div>
+          <div><p>这18项不是虚构案例，而是从完整对话中提炼出的连续任务。每项任务包含若干轮真实需求、失败反馈和修改过程。点击任务后，按接近原始聊天界面的方式阅读，观察一个模糊想法怎样逐渐变成可运行产品。</p></div>
         </div>
         <div class="tools">
           <div class="searchrow">
             <input id="search" class="search" type="search" placeholder="搜索：如何提需求、怎样反馈、专业判断、测试、部署……" aria-label="搜索协作记录">
-            <select id="modeFilter" aria-label="选择记录范围"><option value="featured">精选18轮（推荐）</option><option value="all">完整66轮</option></select>
-            <button id="problemToggle" class="toggle" type="button" aria-pressed="false">只看问题</button>
+            <button id="problemToggle" class="toggle" type="button" aria-pressed="false">只看遇到问题的任务</button>
           </div>
           <div id="chips" class="chips" aria-label="协作能力筛选"></div>
         </div>
         <div class="resultbar"><span id="resultCount"></span><button class="chip" id="expandAll" type="button">展开当前结果</button></div>
-        <div class="disclosure" style="margin-bottom:22px"><b>怎样读每张卡片：</b>先看“用户关键原话”是怎样提出需求或反馈问题的，再看“AI执行摘要”，最后看这一轮沉淀出的协作方法。完整逐字回复未全部留存，因此AI部分明确采用摘要；重复操作和敏感标识已合并或脱敏。</div>
+        <div class="disclosure" style="margin-bottom:22px"><b>记录说明：</b>用户一侧尽量保留原始表述与对话顺序。部分AI逐字回复没有完整留存，因此统一标注为“AI回应（根据原对话整理）”，不把事后摘要伪装成原话。重复点击、账号口令和云环境标识已合并或脱敏。</div>
         <div id="timeline" class="timeline"></div>
-        <div id="empty" class="empty">当前范围内没有匹配记录。可以换一个关键词，或切换到“完整66轮”。</div>
+        <div id="empty" class="empty">没有找到匹配的小任务，请换一个关键词或协作能力。</div>
       </div>
     </section>
 
@@ -266,36 +274,45 @@
       {cat:"产品构想",sub:"教学传播",kind:"milestone",title:"把全过程做成学生可读的网站",user:`请将这个完整的对话记录做成一个网站，提供给学生参考，让他们知道我是如何与AI协作完成一项几乎不能完成的任务。按网站设计、微信小程序设计及功能调试、Bug修复等分类，并部署到我的 GitHub；下方保留邮箱和访问计数器。`,ai:`将80多轮协作整理为可搜索、可筛选的教学时间线，保留用户关键原话，以“AI执行摘要”还原动作与结果，并公开说明脱敏和整理规则。`,out:"项目最终不仅产出工具，也产出一份关于人机协作方法的开放教材。"}
     ];
 
-    const featuredIds=new Set([1,2,4,5,6,8,11,19,20,32,38,39,44,51,52,56,57,66]);
+    const taskDefinitions=[
+      {title:"定义一个真正值得做的工具",ability:"说清目标",ids:[1,2,3],goal:"从一句朴素需求出发，明确核验对象、数量、输入方式、使用门槛和可访问性。",takeaway:"不会编程不妨碍你提出产品。第一步不是描述技术，而是讲清楚谁遇到了什么问题、希望得到什么结果。"},
+      {title:"让网站支持粘贴与文档上传",ability:"具体反馈",ids:[4,9,14],goal:"把最初的文本输入框改成更符合真实使用习惯的粘贴、清空和文档导入流程。",takeaway:"需求可以在看到第一版后继续补充。指出具体操作位置，比笼统地说“使用不方便”有效得多。"},
+      {title:"识别不规范和连续粘贴的参考文献",ability:"测试改进",ids:[8,13],goal:"解决同一行多条文献、混合编号与无编号文献被错误合并的问题。",takeaway:"给AI一个能够稳定复现错误的完整样本，是推动修复最有效的方式。"},
+      {title:"让中文、网页和灰色文献也能核验",ability:"专业纠偏",ids:[5,6,7,11,18],goal:"突破只依赖英文DOI数据库的局限，让中文论文、网页新闻、机构报告和技术博客也进入证据链。",takeaway:"用户知道哪些文献真实、哪些渠道能查到，这种领域知识帮助AI重新设计检索方法，而不是只修某一条记录。"},
+      {title:"把网站做得更好看、更适合手机",ability:"具体反馈",ids:[10,12,19],goal:"调整标题、换行、用词、邮箱、计数器和移动端视觉，让工具从“能用”走向“愿意用”。",takeaway:"审美和体验判断同样是专业能力。AI可以改样式，但必须由人指出哪里不协调以及希望达到什么感觉。"},
+      {title:"用零成本方案部署并形成成果",ability:"部署交付",ids:[15,16,17],goal:"解释免费运行机制、缩短网址、保留旧入口，并把产品整理成可申报的正式成果。",takeaway:"对话里的代码不等于成果。能被别人访问、理解和使用，才算完成交付。"},
+      {title:"把网站改造成微信小程序",ability:"说清目标",ids:[20,21,22,23],goal:"在保留核心功能的同时，为个人主体的小程序重新设计名称、简介、图标与技术架构。",takeaway:"当目标平台变化时，不需要自己先掌握新技术。说清平台、主体和传播目标，AI可以帮助重新规划实现路径。"},
+      {title:"从零配置云开发、登录与数据库",ability:"部署交付",ids:[24,25,26,27,28,29,30],goal:"在完全陌生的微信开发者工具和CloudBase控制台中，逐步开通环境、确认身份方案并创建数据集合。",takeaway:"面对不会操作的界面，可以持续截图、追问和确认。人负责完成扫码与授权，AI负责解释下一步。"},
+      {title:"排查“核验服务无法连接”",ability:"测试改进",ids:[31,32,33,34,35,36],goal:"从用户界面的笼统失败提示，追查到云函数部署、依赖、错误码和日志层面的真实原因。",takeaway:"反馈“失败了”只是起点。错误码、截图、控制台日志和复现步骤，能让AI从猜测进入诊断。"},
+      {title:"重写真实性与准确性的判断标准",ability:"专业纠偏",ids:[37,38,39],goal:"用图书馆学与参考文献规范知识，重新定义系统应该怎样判断“真实”“准确”和“需要修正”。",takeaway:"这是人的专业能力最关键的一刻。AI能写算法，但什么字段决定真实性、什么差异只影响准确性，必须由领域专家校准。"},
+      {title:"发布第一个可用的小程序版本",ability:"部署交付",ids:[40,41,42,43],goal:"完成版本上传、调整真机排版，并修复网站中已经解决却没有同步到小程序的核验问题。",takeaway:"同一功能跨平台实现时，修复不会自动同步。每个平台都需要重新测试和验收。"},
+      {title:"用大批真实文献击穿定向修复",ability:"测试改进",ids:[44,45,46],goal:"一次提交多种类型的大批真实文献，检验系统是否只是记住了旧样本。",takeaway:"真正严格的测试不是反复使用已经成功的例子，而是不断换新数据，主动寻找系统会失败的地方。"},
+      {title:"修复文档上传、条数和前20条限制",ability:"测试改进",ids:[47,48,49,50],goal:"解决fetch不可用、上传后按钮禁用、超过20条无法处理，以及裸数字和无编号文献识别错误。",takeaway:"一个错误修复后要继续测试相邻流程。上传成功、识别成功、按钮可点和前20条可核验，是四个不同的验收点。"},
+      {title:"从“修一条”转向可泛化的搜索策略",ability:"专业纠偏",ids:[51,52,53],goal:"停止为单篇文献增加特殊规则，确立搜索引擎发现候选、权威来源继续确认的通用核验路径。",takeaway:"当AI总在做定向修补时，人要明确提出“举一反三”的要求，并用新的未知样本检验是否真正泛化。"},
+      {title:"在3秒免费额度内让云函数跑通",ability:"部署交付",ids:[54,55,56,57],goal:"在不升级付费套餐的前提下处理登录、版本覆盖和3秒超时，最终让云函数稳定返回结果。",takeaway:"“一分钱不花”不是口号，而是贯穿技术取舍的约束。限制会迫使AI寻找更轻量的架构。"},
+      {title:"处理跨域、稳定性和正式发布",ability:"部署交付",ids:[58,59,60,61],goal:"评估网站复用小程序后端的跨域方案，放弃付费路径，并区分网络波动与文献真实性。",takeaway:"好的协作也包括及时放弃不合适的方案。不是每个技术设想都值得继续堆配置。"},
+      {title:"统一示例、Logo与项目版本",ability:"具体反馈",ids:[62,63,64,65],goal:"让网站和小程序使用统一品牌，设计更有迷惑性的虚假示例，并解决新版项目导入问题。",takeaway:"产品发布前仍要持续审视细节。默认示例、品牌一致性和版本管理都会影响别人对工具的理解。"},
+      {title:"把全过程变成AI素养学习材料",ability:"说清目标",ids:[66],goal:"不只展示最终产品，还把从零开始的协作过程公开给学生，帮助他们建立使用AI完成复杂任务的意识和信心。",takeaway:"最终成果不只是一个工具，还包括一套可迁移的协作方法：提出问题、具体反馈、专业判断、持续测试和完成交付。"}
+    ];
     const learningOrder=["全部","说清目标","具体反馈","专业纠偏","测试改进","部署交付"];
-    const learningOf=r=>{
-      if(["云开发部署","部署发布"].includes(r.cat))return "部署交付";
-      if(r.cat==="核验算法")return "专业纠偏";
-      if(r.cat==="功能调试")return "测试改进";
-      if(r.cat==="交互视觉")return "具体反馈";
-      return "说清目标";
-    };
-    const learningRecords=records.map((r,i)=>({...r,id:i+1,learning:learningOf(r)}));
-    const state={cat:"全部",mode:"featured",q:"",problems:false,expanded:false};
-    const $=s=>document.querySelector(s); const timeline=$("#timeline"), chips=$("#chips"), modeFilter=$("#modeFilter");
+    const tasks=taskDefinitions.map((task,i)=>({...task,id:i+1,records:task.ids.map(id=>({...records[id-1],id}))}));
+    const state={cat:"全部",q:"",problems:false,expanded:false};
+    const $=s=>document.querySelector(s); const timeline=$("#timeline"), chips=$("#chips");
     const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
     const mark=(s,q)=>{const safe=esc(s);if(!q)return safe;const terms=q.trim().split(/\s+/).filter(Boolean).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));if(!terms.length)return safe;return safe.replace(new RegExp(`(${terms.join("|")})`,`gi`),"<mark>$1</mark>")};
-    const modeRecords=()=>state.mode==="featured"?learningRecords.filter(r=>featuredIds.has(r.id)):learningRecords;
     function buildFilters(){
       chips.innerHTML="";
-      const base=modeRecords();
-      learningOrder.forEach(cat=>{const n=cat==="全部"?base.length:base.filter(r=>r.learning===cat).length;const b=document.createElement("button");b.className="chip"+(cat===state.cat?" active":"");b.textContent=`${cat} ${n}`;b.onclick=()=>{state.cat=cat;buildFilters();render()};chips.appendChild(b)});
+      learningOrder.forEach(cat=>{const n=cat==="全部"?tasks.length:tasks.filter(t=>t.ability===cat).length;const b=document.createElement("button");b.className="chip"+(cat===state.cat?" active":"");b.textContent=`${cat} ${n}`;b.onclick=()=>{state.cat=cat;buildFilters();render()};chips.appendChild(b)});
     }
-    function filtered(){const q=state.q.trim().toLowerCase();return modeRecords().filter(r=>(state.cat==="全部"||r.learning===state.cat)&&(!state.problems||r.kind==="bug")&&(!q||[r.title,r.user,r.ai,r.out,r.cat,r.sub,r.learning].join(" ").toLowerCase().includes(q)))}
+    function filtered(){const q=state.q.trim().toLowerCase();return tasks.filter(t=>(state.cat==="全部"||t.ability===state.cat)&&(!state.problems||t.records.some(r=>r.kind==="bug"))&&(!q||[t.title,t.goal,t.takeaway,t.ability,...t.records.flatMap(r=>[r.title,r.user,r.ai,r.out])].join(" ").toLowerCase().includes(q)))}
     function render(){
-      const list=filtered(),base=modeRecords(),modeName=state.mode==="featured"?"精选案例":"完整记录";$("#resultCount").textContent=`${modeName}：显示 ${list.length} / ${base.length} 轮`;$("#empty").style.display=list.length?"none":"block";
-      timeline.innerHTML=list.map(r=>{const idx=r.id;const kindLabel={bug:"发现问题",milestone:"阶段成果",decision:"提出要求",deploy:"部署操作"}[r.kind]||"协作记录";return `<article class="entry${state.expanded?" open":""}" data-id="${idx}">
-        <button class="entry-head" type="button" aria-expanded="${state.expanded}"><span class="entry-id">#${String(idx).padStart(2,"0")}</span><span class="entry-title">${mark(r.title,state.q)} <span class="chev">⌄</span></span><span class="entry-tags"><span class="tag ${r.kind}">${kindLabel}</span><span class="tag">${esc(r.learning)}</span></span></button>
-        <div class="entry-body"><div class="speech"><span class="label">用户关键原话</span><p>${mark(r.user,state.q)}</p></div><div class="action"><span class="label">AI 执行摘要</span><p>${mark(r.ai,state.q)}</p></div><div class="outcome"><b>这一轮留下了什么：</b> ${mark(r.out,state.q)}</div></div></article>`}).join("");
+      const list=filtered();$("#resultCount").textContent=`显示 ${list.length} / ${tasks.length} 个小任务 · 共66轮关键交互`;$("#empty").style.display=list.length?"none":"block";
+      timeline.innerHTML=list.map(task=>`<article class="entry${state.expanded?" open":""}" data-id="${task.id}">
+        <button class="entry-head" type="button" aria-expanded="${state.expanded}"><span class="entry-id">任务 ${String(task.id).padStart(2,"0")}</span><span class="entry-title">${mark(task.title,state.q)} <span class="chev">⌄</span></span><span class="entry-tags"><span class="tag decision">${esc(task.ability)}</span><span class="tag">${task.records.length}轮对话</span></span></button>
+        <div class="entry-body"><div class="task-context"><b>这个任务要解决什么：</b>${mark(task.goal,state.q)}</div><div class="chat-thread">${task.records.map(r=>`<div class="chat-round"><div class="turn user"><div class="bubble"><span class="turn-meta">你 · 原始消息</span><p>${mark(r.user,state.q)}</p></div><div class="avatar">我</div></div><div class="turn ai"><div class="avatar">AI</div><div class="bubble"><span class="turn-meta">AI · 根据原对话整理</span><p>${mark(r.ai,state.q)}</p></div></div></div>`).join("")}</div><div class="task-outcome"><b>这一任务体现的协作方法：</b>${mark(task.takeaway,state.q)}</div></div></article>`).join("");
       timeline.querySelectorAll(".entry-head").forEach(b=>b.onclick=()=>{const e=b.closest(".entry");e.classList.toggle("open");b.setAttribute("aria-expanded",e.classList.contains("open"))});
     }
     $("#search").addEventListener("input",e=>{state.q=e.target.value;render()});
-    modeFilter.addEventListener("change",e=>{state.mode=e.target.value;state.cat="全部";buildFilters();render()});
     $("#problemToggle").onclick=e=>{state.problems=!state.problems;e.currentTarget.classList.toggle("on",state.problems);e.currentTarget.setAttribute("aria-pressed",state.problems);render()};
     $("#expandAll").onclick=e=>{state.expanded=!state.expanded;e.currentTarget.textContent=state.expanded?"收起当前结果":"展开当前结果";render()};
     buildFilters();render();
