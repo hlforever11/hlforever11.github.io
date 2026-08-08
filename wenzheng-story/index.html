@@ -55,7 +55,9 @@
     .stage p{font-size:14px;color:var(--muted);margin:0}.stage .arrow{position:absolute;right:18px;bottom:16px;color:#b3aa9c;font-size:24px}
     .principles{display:grid;grid-template-columns:1fr 1fr;gap:16px}.principle{padding:25px;border-radius:18px;border:1px solid var(--line);background:rgba(255,253,249,.78)}
     .principle b{font:800 20px STSong,"Songti SC",serif}.principle p{margin:8px 0 0;color:var(--muted);font-size:14px}
-    .explorer{padding-top:82px}.tools{position:sticky;top:68px;z-index:12;padding:18px 0;background:linear-gradient(var(--paper) 74%,rgba(251,248,242,0));margin-bottom:12px}
+    .explorer{padding-top:82px}.view-switch{display:inline-flex;gap:5px;padding:5px;margin:4px 0 12px;border:1px solid var(--line);border-radius:15px;background:rgba(255,253,249,.82);box-shadow:0 8px 24px rgba(34,45,65,.04)}
+    .viewbtn{border:0;border-radius:10px;background:transparent;padding:10px 16px;color:#596376;font:700 14px/1.3 inherit;cursor:pointer}.viewbtn.active{background:var(--navy);color:white;box-shadow:0 5px 14px rgba(32,56,94,.18)}
+    .tools{position:sticky;top:68px;z-index:12;padding:18px 0;background:linear-gradient(var(--paper) 74%,rgba(251,248,242,0));margin-bottom:12px}
     .searchrow{display:grid;grid-template-columns:1fr auto;gap:10px}.search{width:100%;border:1px solid var(--line);border-radius:13px;background:white;padding:14px 16px;font:inherit;color:var(--ink);outline:none}
     .search:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(32,56,94,.08)}
     select,.toggle{border:1px solid var(--line);border-radius:13px;background:white;padding:0 15px;color:var(--ink);font:inherit}
@@ -81,6 +83,9 @@
     .turn.user .bubble{background:#f0f0f0;padding:13px 16px;border-radius:18px 18px 4px 18px}
     .turn.ai .bubble{padding:4px 5px}.turn-meta{display:block;margin-bottom:5px;color:#8a8f99;font-size:10px;font-weight:700;letter-spacing:.08em}
     .task-outcome{padding:17px 24px;background:#eef3f1;color:#456256;font-size:13px;border-top:1px solid #dbe7e1}
+    .raw-timeline{padding-left:34px}.raw-entry{position:relative;margin-bottom:18px;border:1px solid var(--line);border-radius:17px;background:#fff;overflow:hidden;box-shadow:0 8px 25px rgba(34,45,65,.035)}
+    .raw-entry:before{content:"";position:absolute;width:11px;height:11px;border-radius:50%;background:var(--card);border:3px solid var(--navy);left:-32px;top:24px;z-index:2}.raw-seq{padding:14px 22px 11px;border-bottom:1px solid #ebe7df;color:var(--muted);font:800 11px/1.2 system-ui;letter-spacing:.1em;background:#f7f4ee}.raw-entry .chat-thread{gap:16px}.raw-entry .chat-round{padding:0;border:0}
+    [hidden]{display:none!important}
     mark{background:#ffe59a;color:inherit;border-radius:2px}.empty{display:none;padding:50px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:18px}
     .lessons{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.lesson{padding:27px;border-radius:18px;color:white;background:var(--navy)}
     .lesson:nth-child(2){background:#9b4b3f}.lesson:nth-child(3){background:#4d6158}.lesson:nth-child(4){background:#5e5673}.lesson:nth-child(5){background:#755939}.lesson:nth-child(6){background:#334b65}
@@ -91,7 +96,7 @@
     .footer-inner{display:flex;justify-content:space-between;align-items:center;gap:20px}.footer-inner a{text-decoration:none;color:var(--ink)}
     #busuanzi_raw_counter{display:none}.backtop{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:rgba(255,253,249,.92);color:var(--navy);cursor:pointer;box-shadow:var(--shadow);display:none}
     @media(max-width:900px){nav{display:none}.hero{grid-template-columns:1fr;padding-top:56px;gap:30px}.metrics{grid-template-columns:1fr 1fr}.metric:nth-child(2){border-right:0}.metric:nth-child(-n+2){border-bottom:1px solid var(--line)}.section-head{grid-template-columns:1fr}.journey{grid-template-columns:1fr 1fr}.lessons{grid-template-columns:1fr 1fr}}
-    @media(max-width:620px){.shell{width:min(100% - 24px,1180px)}.topbar-inner{height:60px}.brand small{display:none}.hero{padding-top:42px}.hero-note{padding:22px}h1{font-size:clamp(31px,9.2vw,36px);letter-spacing:-.055em}.hero-slogan{font-size:17px}.lead{font-size:15px}.metrics{margin-bottom:48px}.metric{padding:20px 17px}.metric strong{font-size:25px}section{padding:50px 0}.journey,.principles,.lessons{grid-template-columns:1fr}.stage{min-height:0}.tools{top:60px}.searchrow{grid-template-columns:1fr}.entry-head{grid-template-columns:44px 1fr;padding:17px 15px;gap:9px}.entry-tags{grid-column:2;justify-content:flex-start}.chat-thread{padding:16px 13px}.bubble{max-width:88%;font-size:13px}.task-context,.task-outcome{padding:15px}.timeline{padding-left:26px}.timeline:before{left:7px}.entry:before{left:-25px}.cta{align-items:flex-start;flex-direction:column;padding:28px}.footer-inner{align-items:flex-start;flex-direction:column}.backtop{right:14px;bottom:14px}}
+    @media(max-width:620px){.shell{width:min(100% - 24px,1180px)}.topbar-inner{height:60px}.brand small{display:none}.hero{padding-top:42px}.hero-note{padding:22px}h1{font-size:clamp(31px,9.2vw,36px);letter-spacing:-.055em}.hero-slogan{font-size:17px}.lead{font-size:15px}.metrics{margin-bottom:48px}.metric{padding:20px 17px}.metric strong{font-size:25px}section{padding:50px 0}.journey,.principles,.lessons{grid-template-columns:1fr}.stage{min-height:0}.tools{top:60px}.view-switch{display:grid;grid-template-columns:1fr 1fr;width:100%}.viewbtn{padding:10px 8px;font-size:13px}.searchrow{grid-template-columns:1fr}.entry-head{grid-template-columns:44px 1fr;padding:17px 15px;gap:9px}.entry-tags{grid-column:2;justify-content:flex-start}.chat-thread{padding:16px 13px}.bubble{max-width:88%;font-size:13px}.task-context,.task-outcome{padding:15px}.timeline,.raw-timeline{padding-left:26px}.timeline:before{left:7px}.entry:before,.raw-entry:before{left:-25px}.raw-seq{padding-left:15px}.cta{align-items:flex-start;flex-direction:column;padding:28px}.footer-inner{align-items:flex-start;flex-direction:column}.backtop{right:14px;bottom:14px}}
     @media print{.topbar,.tools,.backtop,.hero-links,.cta{display:none!important}.entry{break-inside:avoid}.entry-body{display:grid!important}.hero{padding-top:25px}body{background:white}.shell{width:100%}}
   </style>
 </head>
@@ -157,8 +162,12 @@
     <section class="explorer" id="record">
       <div class="shell">
         <div class="section-head" style="margin-bottom:10px">
-          <div><div class="kicker">The original workflow</div><h2>18个小任务，<br>还原真实协作过程</h2></div>
-          <div><p>这18项不是虚构案例，而是从完整对话中提炼出的连续任务。每项任务包含若干轮真实需求、失败反馈和修改过程。点击任务后，按接近原始聊天界面的方式阅读，观察一个模糊想法怎样逐渐变成可运行产品。</p></div>
+          <div><div class="kicker">The original workflow</div><h2 id="recordTitle">18个小任务，<br>还原真实协作过程</h2></div>
+          <div><p id="recordIntro">这18项不是虚构案例，而是从完整对话中提炼出的连续任务。每项任务包含若干轮真实需求、失败反馈和修改过程。点击任务后，按接近原始聊天界面的方式阅读，观察一个模糊想法怎样逐渐变成可运行产品。</p></div>
+        </div>
+        <div class="view-switch" role="tablist" aria-label="选择协作记录阅读方式">
+          <button id="taskViewBtn" class="viewbtn active" type="button" role="tab" aria-selected="true">18个提炼任务</button>
+          <button id="rawViewBtn" class="viewbtn" type="button" role="tab" aria-selected="false">原始时间线（已脱敏）</button>
         </div>
         <div class="tools">
           <div class="searchrow">
@@ -168,7 +177,8 @@
           <div id="chips" class="chips" aria-label="协作能力筛选"></div>
         </div>
         <div class="resultbar"><span id="resultCount"></span><button class="chip" id="expandAll" type="button">展开当前结果</button></div>
-        <div class="disclosure" style="margin-bottom:22px"><b>记录说明：</b>用户一侧尽量保留原始表述与对话顺序。部分AI逐字回复没有完整留存，因此统一标注为“AI回应（根据原对话整理）”，不把事后摘要伪装成原话。重复点击、账号口令和云环境标识已合并或脱敏。</div>
+        <div id="taskDisclosure" class="disclosure" style="margin-bottom:22px"><b>记录说明：</b>用户一侧尽量保留原始表述与对话顺序。部分AI逐字回复没有完整留存，因此统一标注为“AI回应（根据原对话整理）”，不把事后摘要伪装成原话。重复点击、账号口令和云环境标识已合并或脱敏。</div>
+        <div id="rawDisclosure" class="disclosure" style="margin-bottom:22px" hidden><b>原始时间线说明：</b>这是公开资料中能够可靠恢复、最接近原始对话的版本。内容不按主题分类，不提炼任务，也不添加教学结论，保持现存65条关键交互的发生顺序。用户侧以保留下来的原始消息为主，过长样本可能节选；早期AI逐字回复未完整保存，因此明确标为“答复摘要（非逐字原文）”。AppID、环境ID、账号与截图中的身份信息等已脱敏，另有应用户要求删除的内容不再呈现。</div>
         <div id="timeline" class="timeline"></div>
         <div id="empty" class="empty">没有找到匹配的小任务，请换一个关键词或协作能力。</div>
       </div>
@@ -295,7 +305,9 @@
     ];
     const learningOrder=["全部","说清目标","具体反馈","专业纠偏","测试改进","部署交付"];
     const tasks=taskDefinitions.map((task,i)=>({...task,id:i+1,records:task.ids.map(id=>({...records[id-1],id}))}));
-    const state={cat:"全部",q:"",problems:false,expanded:false};
+    const rawRecords=records.map((record,i)=>({...record,id:i+1}));
+    const initialView=new URLSearchParams(location.search).get("view")==="raw"?"raw":"tasks";
+    const state={view:initialView,cat:"全部",q:"",problems:false,expanded:false};
     const $=s=>document.querySelector(s); const timeline=$("#timeline"), chips=$("#chips");
     const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
     const mark=(s,q)=>{const safe=esc(s);if(!q)return safe;const terms=q.trim().split(/\s+/).filter(Boolean).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));if(!terms.length)return safe;return safe.replace(new RegExp(`(${terms.join("|")})`,`gi`),"<mark>$1</mark>")};
@@ -303,17 +315,33 @@
       chips.innerHTML="";
       learningOrder.forEach(cat=>{const n=cat==="全部"?tasks.length:tasks.filter(t=>t.ability===cat).length;const b=document.createElement("button");b.className="chip"+(cat===state.cat?" active":"");b.textContent=`${cat} ${n}`;b.onclick=()=>{state.cat=cat;buildFilters();render()};chips.appendChild(b)});
     }
-    function filtered(){const q=state.q.trim().toLowerCase();return tasks.filter(t=>(state.cat==="全部"||t.ability===state.cat)&&(!state.problems||t.records.some(r=>r.kind==="bug"))&&(!q||[t.title,t.goal,t.takeaway,t.ability,...t.records.flatMap(r=>[r.title,r.user,r.ai,r.out])].join(" ").toLowerCase().includes(q)))}
+    function filteredTasks(){const q=state.q.trim().toLowerCase();return tasks.filter(t=>(state.cat==="全部"||t.ability===state.cat)&&(!state.problems||t.records.some(r=>r.kind==="bug"))&&(!q||[t.title,t.goal,t.takeaway,t.ability,...t.records.flatMap(r=>[r.title,r.user,r.ai,r.out])].join(" ").toLowerCase().includes(q)))}
+    function filteredRaw(){const q=state.q.trim().toLowerCase();return rawRecords.filter(r=>!q||[r.user,r.ai].join(" ").toLowerCase().includes(q))}
     function render(){
-      const list=filtered();$("#resultCount").textContent=`显示 ${list.length} / ${tasks.length} 个小任务 · 共65轮关键交互`;$("#empty").style.display=list.length?"none":"block";
-      timeline.innerHTML=list.map(task=>`<article class="entry${state.expanded?" open":""}" data-id="${task.id}">
-        <button class="entry-head" type="button" aria-expanded="${state.expanded}"><span class="entry-id">任务 ${String(task.id).padStart(2,"0")}</span><span class="entry-title">${mark(task.title,state.q)} <span class="chev">⌄</span></span><span class="entry-tags"><span class="tag decision">${esc(task.ability)}</span><span class="tag">${task.records.length}轮对话</span></span></button>
-        <div class="entry-body"><div class="task-context"><b>这个任务要解决什么：</b>${mark(task.goal,state.q)}</div><div class="chat-thread">${task.records.map(r=>`<div class="chat-round"><div class="turn user"><div class="bubble"><span class="turn-meta">你 · 原始消息</span><p>${mark(r.user,state.q)}</p></div><div class="avatar">我</div></div><div class="turn ai"><div class="avatar">AI</div><div class="bubble"><span class="turn-meta">AI · 根据原对话整理</span><p>${mark(r.ai,state.q)}</p></div></div></div>`).join("")}</div><div class="task-outcome"><b>这一任务体现的协作方法：</b>${mark(task.takeaway,state.q)}</div></div></article>`).join("");
-      timeline.querySelectorAll(".entry-head").forEach(b=>b.onclick=()=>{const e=b.closest(".entry");e.classList.toggle("open");b.setAttribute("aria-expanded",e.classList.contains("open"))});
+      const isRaw=state.view==="raw";
+      $("#taskViewBtn").classList.toggle("active",!isRaw);$("#taskViewBtn").setAttribute("aria-selected",String(!isRaw));
+      $("#rawViewBtn").classList.toggle("active",isRaw);$("#rawViewBtn").setAttribute("aria-selected",String(isRaw));
+      $("#problemToggle").hidden=isRaw;chips.hidden=isRaw;$("#expandAll").hidden=isRaw;$("#taskDisclosure").hidden=isRaw;$("#rawDisclosure").hidden=!isRaw;
+      $("#recordTitle").innerHTML=isRaw?"原始时间线，<br>按发生顺序连续阅读":"18个小任务，<br>还原真实协作过程";
+      $("#recordIntro").textContent=isRaw?"不按网站设计、小程序开发、功能调试等主题分类，也不提炼协作方法。学生可以从第一条开始，直接观察需求、反馈、失败与修正怎样一步步发生。":"这18项不是虚构案例，而是从完整对话中提炼出的连续任务。每项任务包含若干轮真实需求、失败反馈和修改过程。点击任务后，按接近原始聊天界面的方式阅读，观察一个模糊想法怎样逐渐变成可运行产品。";
+      $("#search").placeholder=isRaw?"在原始时间线中搜索关键词……":"搜索：如何提需求、怎样反馈、专业纠偏、测试、部署……";
+      timeline.classList.toggle("raw-timeline",isRaw);
+      if(isRaw){
+        const list=filteredRaw();$("#resultCount").textContent=`显示 ${list.length} / ${rawRecords.length} 条按时间顺序排列的关键交互`;$("#empty").textContent="没有找到匹配的原始记录，请换一个关键词。";$("#empty").style.display=list.length?"none":"block";
+        timeline.innerHTML=list.map(r=>`<article class="raw-entry" data-id="${r.id}"><div class="raw-seq">记录 ${String(r.id).padStart(2,"0")} · 按原始顺序</div><div class="chat-thread"><div class="chat-round"><div class="turn user"><div class="bubble"><span class="turn-meta">你 · 原始消息（必要脱敏）</span><p>${mark(r.user,state.q)}</p></div><div class="avatar">我</div></div><div class="turn ai"><div class="avatar">AI</div><div class="bubble"><span class="turn-meta">AI · 答复摘要（非逐字原文）</span><p>${mark(r.ai,state.q)}</p></div></div></div></div></article>`).join("");
+      }else{
+        const list=filteredTasks();$("#resultCount").textContent=`显示 ${list.length} / ${tasks.length} 个小任务 · 共65轮关键交互`;$("#empty").textContent="没有找到匹配的小任务，请换一个关键词或协作能力。";$("#empty").style.display=list.length?"none":"block";
+        timeline.innerHTML=list.map(task=>`<article class="entry${state.expanded?" open":""}" data-id="${task.id}">
+          <button class="entry-head" type="button" aria-expanded="${state.expanded}"><span class="entry-id">任务 ${String(task.id).padStart(2,"0")}</span><span class="entry-title">${mark(task.title,state.q)} <span class="chev">⌄</span></span><span class="entry-tags"><span class="tag decision">${esc(task.ability)}</span><span class="tag">${task.records.length}轮对话</span></span></button>
+          <div class="entry-body"><div class="task-context"><b>这个任务要解决什么：</b>${mark(task.goal,state.q)}</div><div class="chat-thread">${task.records.map(r=>`<div class="chat-round"><div class="turn user"><div class="bubble"><span class="turn-meta">你 · 原始消息</span><p>${mark(r.user,state.q)}</p></div><div class="avatar">我</div></div><div class="turn ai"><div class="avatar">AI</div><div class="bubble"><span class="turn-meta">AI · 根据原对话整理</span><p>${mark(r.ai,state.q)}</p></div></div></div>`).join("")}</div><div class="task-outcome"><b>这一任务体现的协作方法：</b>${mark(task.takeaway,state.q)}</div></div></article>`).join("");
+        timeline.querySelectorAll(".entry-head").forEach(b=>b.onclick=()=>{const e=b.closest(".entry");e.classList.toggle("open");b.setAttribute("aria-expanded",e.classList.contains("open"))});
+      }
     }
+    function changeView(view){state.view=view;state.q="";$("#search").value="";const url=new URL(location.href);if(view==="raw")url.searchParams.set("view","raw");else url.searchParams.delete("view");history.replaceState(null,"",url);render()}
     $("#search").addEventListener("input",e=>{state.q=e.target.value;render()});
     $("#problemToggle").onclick=e=>{state.problems=!state.problems;e.currentTarget.classList.toggle("on",state.problems);e.currentTarget.setAttribute("aria-pressed",state.problems);render()};
     $("#expandAll").onclick=e=>{state.expanded=!state.expanded;e.currentTarget.textContent=state.expanded?"收起当前结果":"展开当前结果";render()};
+    $("#taskViewBtn").onclick=()=>changeView("tasks");$("#rawViewBtn").onclick=()=>changeView("raw");
     buildFilters();render();
     const back=$("#backtop");addEventListener("scroll",()=>back.style.display=scrollY>900?"block":"none",{passive:true});back.onclick=()=>scrollTo({top:0,behavior:"smooth"});
     const COUNTER_BASE=3;
