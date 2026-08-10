@@ -783,6 +783,16 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
+.counter-frame {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .site-footer a:hover {
   color: var(--red-dark);
 }
