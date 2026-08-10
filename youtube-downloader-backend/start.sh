@@ -10,5 +10,8 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 sleep 1
-exec /opt/venv/bin/python -m uvicorn app:app +  --host 0.0.0.0 +  --port "${PORT:-10000}" +  --proxy-headers +  --forwarded-allow-ips="*"
-
+exec /opt/venv/bin/python -m uvicorn app:app \
+  --host 0.0.0.0 \
+  --port "${PORT:-10000}" \
+  --proxy-headers \
+  --forwarded-allow-ips="*"
