@@ -2,23 +2,28 @@
   "use strict";
 
   const MAX_MEMORY_DOWNLOAD = 250 * 1024 * 1024;
+  const INSTANCE_BATCH_SIZE = 5;
+  const INSTANCE_LIST_TIMEOUT = 3500;
+  const INSTANCE_REQUEST_TIMEOUT = 6500;
+  const LAST_WORKING_INSTANCE_KEY = "yt-helper-working-piped-instance";
+  const PIPED_INSTANCE_LIST_URL =
+    "https://raw.githubusercontent.com/TeamPiped/documentation/main/content/docs/public-instances/index.md";
   const PIPED_INSTANCES = [
-    "https://api.piped.private.coffee",
+    "https://pipedapi.kavin.rocks",
+    "https://pipedapi.leptons.xyz",
+    "https://pipedapi.nosebs.ru",
+    "https://pipedapi-libre.kavin.rocks",
+    "https://piped-api.privacy.com.de",
     "https://pipedapi.adminforge.de",
     "https://api.piped.yt",
-    "https://piped-api.privacy.com.de",
     "https://pipedapi.drgns.space",
     "https://pipedapi.owo.si",
     "https://pipedapi.ducks.party",
     "https://piped-api.codespace.cz",
-    "https://pipedapi.kavin.rocks",
-  ];
-  const INVIDIOUS_INSTANCES = [
-    "https://inv.nadeko.net",
-    "https://invidious.nerdvpn.de",
-    "https://yt.chocolatemoo53.com",
-    "https://invidious.tiekoetter.com",
-    "https://invidious.f5.si",
+    "https://pipedapi.reallyaweso.me",
+    "https://api.piped.private.coffee",
+    "https://pipedapi.darkness.services",
+    "https://pipedapi.orangenet.cc",
   ];
 
   const elements = {
@@ -40,6 +45,8 @@
     formatList: document.querySelector("#format-list"),
     formatNotice: document.querySelector("#format-notice"),
     toast: document.querySelector("#toast"),
+    visitCounter: document.querySelector("#site-counter"),
+    visitValue: document.querySelector("#busuanzi_site_pv"),
   };
 
   const state = {
@@ -47,6 +54,30 @@
     kind: "video",
     toastTimer: null,
   };
+
+  function setupVisitCounter() {
+    if (!elements.visitCounter || !elements.visitValue) return;
+
+    const reveal = () => {
+      const raw = String(elements.visitValue.textContent || "").replace(/[,，\s]/g, "");
+      if (!/^\d+$/.test(raw)) return false;
+      elements.visitValue.textContent = Number(raw).toLocaleString("zh-CN");
+      elements.visitCounter.classList.add("is-ready");
+      elements.visitCounter.setAttribute("aria-label", `本站累计访问 ${raw} 次`);
+      return true;
+    };
+
+    if (reveal()) return;
+    const observer = new MutationObserver(() => {
+      if (reveal()) observer.disconnect();
+    });
+    observer.observe(elements.visitValue, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+    window.setTimeout(() => observer.disconnect(), 10_000);
+  }
 
   function extractVideoId(value) {
     const input = value.trim();
@@ -70,7 +101,7 @@
 
   async function queryInstance(instance, videoId) {
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 7000);
+    const timeout = window.setTimeout(() => controller.abort(), INSTANCE_REQUEST_TIMEOUT);
 
     try {
       const response = await fetch(`${instance}/streams/${videoId}`, {
@@ -82,88 +113,9 @@
       if (!data?.title || !Array.isArray(data.videoStreams)) {
         throw new Error("响应数据不完整");
       }
-      return data;
+      return { ...data, _instance: instance };
     } catch (error) {
       throw error;
-    } finally {
-      window.clearTimeout(timeout);
-    }
-  }
-
-  function absoluteUrl(value, base) {
-    try {
-      return new URL(value, base).href;
-    } catch {
-      return "";
-    }
-  }
-
-  function invidiousHeight(stream) {
-    const resolution = String(stream.resolution || "").match(/x(\d+)/i)?.[1];
-    const quality = String(stream.qualityLabel || stream.quality || "").match(/(\d+)p/i)?.[1];
-    return Number(resolution || quality || 0);
-  }
-
-  function normalizeInvidiousStream(stream, instance, videoOnly) {
-    const mimeType = String(stream.type || "").split(";")[0] || "application/octet-stream";
-    return {
-      bitrate: Number(stream.bitrate || 0),
-      codec: stream.encoding || "",
-      format: stream.container || "",
-      fps: Number(stream.fps || 0),
-      height: invidiousHeight(stream),
-      mimeType,
-      quality: stream.qualityLabel || stream.quality || stream.audioQuality || "未知",
-      url: absoluteUrl(stream.url, instance),
-      videoOnly,
-      width: Number(String(stream.resolution || "").split("x")[0] || 0),
-    };
-  }
-
-  async function queryInvidious(instance, videoId) {
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 7000);
-
-    try {
-      const response = await fetch(`${instance}/api/v1/videos/${videoId}?local=true`, {
-        headers: { Accept: "application/json" },
-        signal: controller.signal,
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      if (!data?.title) throw new Error("响应数据不完整");
-      if (data.liveNow) throw new Error("暂不支持正在直播的视频，请在直播结束后再试。");
-
-      const combined = (data.formatStreams || []).map((stream) =>
-        normalizeInvidiousStream(stream, instance, false),
-      );
-      const adaptive = data.adaptiveFormats || [];
-      const adaptiveVideo = adaptive
-        .filter((stream) => String(stream.type || "").startsWith("video/"))
-        .map((stream) => normalizeInvidiousStream(stream, instance, true));
-      const audioStreams = adaptive
-        .filter((stream) => String(stream.type || "").startsWith("audio/"))
-        .map((stream) => normalizeInvidiousStream(stream, instance, false));
-      const videoStreams = uniqueStreams([...combined, ...adaptiveVideo]).sort(
-        (a, b) => b.height - a.height || b.fps - a.fps,
-      );
-      const cleanAudio = uniqueStreams(audioStreams).sort((a, b) => b.bitrate - a.bitrate);
-
-      if (!videoStreams.length && !cleanAudio.length) throw new Error("没有可用格式");
-      const thumbnails = Array.isArray(data.videoThumbnails) ? data.videoThumbnails : [];
-      const thumbnail = [...thumbnails].sort(
-        (a, b) => Number(b.width || 0) - Number(a.width || 0),
-      )[0];
-
-      return {
-        audioStreams: cleanAudio,
-        duration: Number(data.lengthSeconds || 0),
-        thumbnailUrl: absoluteUrl(thumbnail?.url || "", instance),
-        title: data.title,
-        uploader: data.author || "",
-        videoId,
-        videoStreams,
-      };
     } finally {
       window.clearTimeout(timeout);
     }
@@ -188,6 +140,11 @@
     const seen = new Set();
     return streams
       .filter((stream) => stream?.url)
+      .filter(
+        (stream) =>
+          !/\bHLS\b/i.test(String(stream.quality || "")) &&
+          !/\.m3u8(?:$|\?)/i.test(String(stream.url || "")),
+      )
       .filter((stream) => {
         const key = [stream.mimeType, stream.quality, stream.height, stream.fps, stream.videoOnly].join("|");
         if (seen.has(key)) return false;
@@ -206,22 +163,63 @@
     return maxHeight * 10 + audios.length * 900 + combined * 180 + standard * 60;
   }
 
-  async function resolveVideo(videoId) {
-    for (let index = 0; index < INVIDIOUS_INSTANCES.length; index += 3) {
-      const batch = INVIDIOUS_INSTANCES.slice(index, index + 3);
+  function uniqueInstances(instances) {
+    const seen = new Set();
+    return instances.filter((instance) => {
       try {
-        return await Promise.any(
-          batch.map((instance) => queryInvidious(instance, videoId)),
-        );
+        const url = new URL(instance);
+        if (url.protocol !== "https:") return false;
+        const normalized = url.origin;
+        if (seen.has(normalized)) return false;
+        seen.add(normalized);
+        return true;
       } catch {
-        // Continue with the next group, then fall back to Piped.
+        return false;
       }
+    }).map((instance) => new URL(instance).origin);
+  }
+
+  async function currentPipedInstances() {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), INSTANCE_LIST_TIMEOUT);
+    let discovered = [];
+
+    try {
+      const response = await fetch(PIPED_INSTANCE_LIST_URL, {
+        headers: { Accept: "text/plain" },
+        signal: controller.signal,
+      });
+      if (response.ok) {
+        const markdown = await response.text();
+        discovered = [...markdown.matchAll(/\|\s*(https:\/\/[^\s|]+)\s*\|/g)].map(
+          (match) => match[1],
+        );
+      }
+    } catch {
+      // The bundled official list remains available when GitHub Raw is blocked.
+    } finally {
+      window.clearTimeout(timer);
     }
 
-    let bestData = null;
+    const instances = uniqueInstances([...discovered, ...PIPED_INSTANCES]);
+    let lastWorking = "";
+    try {
+      lastWorking = window.sessionStorage.getItem(LAST_WORKING_INSTANCE_KEY) || "";
+    } catch {
+      // Storage may be unavailable in strict privacy modes.
+    }
+    if (!lastWorking || !instances.includes(lastWorking)) return instances;
+    return [lastWorking, ...instances.filter((instance) => instance !== lastWorking)];
+  }
 
-    for (let index = 0; index < PIPED_INSTANCES.length; index += 3) {
-      const batch = PIPED_INSTANCES.slice(index, index + 3);
+  async function resolveVideo(videoId) {
+    const instances = await currentPipedInstances();
+    let bestData = null;
+    let attempted = 0;
+
+    for (let index = 0; index < instances.length; index += INSTANCE_BATCH_SIZE) {
+      const batch = instances.slice(index, index + INSTANCE_BATCH_SIZE);
+      attempted += batch.length;
       const settled = await Promise.allSettled(
         batch.map((instance) => queryInstance(instance, videoId)),
       );
@@ -242,7 +240,12 @@
         (max, stream) => Math.max(max, Number(stream.height || 0)),
         0,
       );
-      if (bestHeight >= 720 && bestAudios.length) break;
+      const hasStandardCombined = bestVideos.some(
+        (stream) =>
+          !stream.videoOnly &&
+          !String(stream.quality || "").toUpperCase().includes("LBRY"),
+      );
+      if (bestHeight >= 360 && bestAudios.length && hasStandardCombined) break;
     }
 
     if (bestData) {
@@ -253,6 +256,13 @@
         (a, b) => b.bitrate - a.bitrate,
       );
       if (videoStreams.length || audioStreams.length) {
+        if (bestData._instance) {
+          try {
+            window.sessionStorage.setItem(LAST_WORKING_INSTANCE_KEY, bestData._instance);
+          } catch {
+            // The resolver still works when storage is unavailable.
+          }
+        }
         return {
           audioStreams,
           duration: Number(bestData.duration || 0),
@@ -264,7 +274,9 @@
         };
       }
     }
-    throw new Error("暂时无法解析该视频。可能是视频受限、已删除，或解析服务正忙，请稍后重试。");
+    throw new Error(
+      `已尝试 ${attempted} 个公开解析节点，均未返回可用媒体。请确认视频为公开的普通视频，然后重试；若仍失败，说明公开节点暂时受限。`,
+    );
   }
 
   function setLoading(loading) {
@@ -437,27 +449,51 @@
     }, 80);
   }
 
-  function directOpen(url) {
+  function directOpen(url, sameTab = false) {
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.target = "_blank";
+    anchor.target = sameTab ? "_self" : "_blank";
     anchor.rel = "noopener noreferrer";
     document.body.append(anchor);
     anchor.click();
     anchor.remove();
   }
 
-  async function saveWithPicker(response, filename, mimeType, button) {
-    const picker = await window.showSaveFilePicker({
+  function pickerOptions(filename, mimeType) {
+    return {
       suggestedName: filename,
       types: [
         {
           description: "媒体文件",
-          accept: { [mimeType || "application/octet-stream"]: [`.${filename.split(".").pop()}`] },
+          accept: {
+            [mimeType || "application/octet-stream"]: [`.${filename.split(".").pop()}`],
+          },
         },
       ],
-    });
-    const writable = await picker.createWritable();
+    };
+  }
+
+  function openPendingDownload(filename) {
+    const popup = window.open("", "_blank");
+    if (!popup) return null;
+
+    try {
+      popup.opener = null;
+      popup.document.title = "正在准备下载";
+      popup.document.body.style.cssText =
+        "margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f4ef;color:#161513;font:15px system-ui,sans-serif";
+      const message = popup.document.createElement("p");
+      message.style.cssText = "max-width:560px;padding:28px;line-height:1.8;text-align:center";
+      message.textContent = `正在准备“${filename}”。若文件随后在本页打开，请使用浏览器的“另存为”。`;
+      popup.document.body.append(message);
+    } catch {
+      // The tab can still be navigated even if its placeholder cannot be styled.
+    }
+    return popup;
+  }
+
+  async function saveWithPicker(response, fileHandle, mimeType, button) {
+    const writable = await fileHandle.createWritable();
     const reader = response.body.getReader();
     const total = Number(response.headers.get("content-length") || 0);
     let received = 0;
@@ -514,29 +550,58 @@
     const extension = streamExtension(stream, kind);
     const suffix = kind === "audio" ? "audio" : qualityLabel(stream, kind).replace(/\s+/g, "-");
     const filename = `${safeFilename(state.data?.title)}-${suffix}.${extension}`;
+    const mimeType = stream.mimeType || "application/octet-stream";
+    const canPickFile = "showSaveFilePicker" in window && window.isSecureContext;
+    let pickerPromise = null;
+    let pendingWindow = null;
 
     button.disabled = true;
     button.textContent = "连接中";
 
+    if (canPickFile) {
+      try {
+        pickerPromise = window.showSaveFilePicker(pickerOptions(filename, mimeType));
+      } catch {
+        pickerPromise = null;
+      }
+    }
+
+    if (!pickerPromise) {
+      pendingWindow = openPendingDownload(filename);
+      if (!pendingWindow) {
+        directOpen(stream.url, true);
+        button.disabled = false;
+        button.textContent = originalLabel;
+        return;
+      }
+    }
+
     try {
+      const fileHandle = pickerPromise ? await pickerPromise : null;
       const response = await fetch(stream.url);
       if (!response.ok || !response.body) throw new Error("STREAM_UNAVAILABLE");
       const contentLength = Number(response.headers.get("content-length") || 0);
-      const mimeType = stream.mimeType || response.headers.get("content-type") || "application/octet-stream";
+      const responseType = mimeType || response.headers.get("content-type") || "application/octet-stream";
 
-      if ("showSaveFilePicker" in window && window.isSecureContext) {
-        await saveWithPicker(response, filename, mimeType, button);
+      if (fileHandle) {
+        await saveWithPicker(response, fileHandle, responseType, button);
       } else if (!contentLength || contentLength <= MAX_MEMORY_DOWNLOAD) {
-        await saveWithBlob(response, filename, mimeType, button);
+        await saveWithBlob(response, filename, responseType, button);
       } else {
         throw new Error("FILE_TOO_LARGE_FOR_MEMORY");
       }
+      if (pendingWindow && !pendingWindow.closed) pendingWindow.close();
       showToast("文件已保存。若没有看到文件，请检查浏览器的下载列表。");
     } catch (error) {
       if (error?.name === "AbortError") {
+        if (pendingWindow && !pendingWindow.closed) pendingWindow.close();
         showToast("已取消保存。文件没有写入设备。");
       } else {
-        directOpen(stream.url);
+        if (pendingWindow && !pendingWindow.closed) {
+          pendingWindow.location.replace(stream.url);
+        } else {
+          directOpen(stream.url, true);
+        }
         showToast("浏览器已打开媒体文件。请使用“另存为”完成保存。");
       }
     } finally {
@@ -566,7 +631,7 @@
 
     setLoading(true);
     elements.resultCard.hidden = true;
-    showMessage("正在读取视频信息，通常需要几秒钟。", "info");
+    showMessage("正在轮询可用解析节点，首次使用可能需要 10–20 秒。", "info");
 
     try {
       const data = await resolveVideo(videoId);
@@ -617,4 +682,6 @@
       renderFormats();
     });
   });
+
+  setupVisitCounter();
 })();
