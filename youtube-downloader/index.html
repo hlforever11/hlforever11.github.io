@@ -68,7 +68,10 @@
               aria-describedby="url-hint"
               required
             />
-            <button class="paste-button" id="paste-button" type="button">粘贴</button>
+            <div class="url-actions">
+              <button class="clear-button" id="clear-button" type="button" hidden>清除</button>
+              <button class="paste-button" id="paste-button" type="button">粘贴</button>
+            </div>
           </div>
 
           <div class="form-meta">
@@ -180,10 +183,11 @@
             class="site-counter"
             id="site-counter"
             aria-live="polite"
-            title="本站累计页面访问量"
+            title="本页面独立累计访问量"
           >
             <span aria-hidden="true">·</span>
-            <span>累计访问 <span class="site-counter-value" id="busuanzi_site_pv">—</span> 次</span>
+            <span>累计访问 <span class="site-counter-value" id="page-visit-count">—</span> 次</span>
+            <span id="busuanzi_page_pv" hidden>—</span>
           </span>
         </div>
       </div>
