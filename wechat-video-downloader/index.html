@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="description" content="粘贴微信视频号分享链接，解析并下载公开视频。" />
+  <meta name="theme-color" content="#f5f7f8" />
+  <title>微信视频号下载</title>
+  <style>
+    :root{
+      --bg:#f5f7f8;--card:rgba(255,255,255,.9);--text:#16181c;--muted:#7b838d;
+      --line:#e6e9ed;--accent:#07c160;--accent2:#06ad56;--danger:#d93025;
+      --shadow:0 18px 60px rgba(24,31,39,.08);--radius:26px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 50% -10%,rgba(7,193,96,.08),transparent 35%),linear-gradient(180deg,#fbfcfd 0%,#f5f7f8 42%,#f3f5f6 100%)}
+    .page{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:88px 20px 34px}
+    .hero{width:min(760px,100%);text-align:center}
+    .mark{width:56px;height:56px;margin:0 auto 22px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(145deg,#16d36f,#07b85c);box-shadow:0 14px 34px rgba(7,193,96,.22)}
+    .mark svg{width:31px;height:31px;fill:white}
+    h1{margin:0;font-size:clamp(34px,6vw,52px);font-weight:680;letter-spacing:-.04em}
+    .sub{margin:16px 0 0;font-size:17px;color:var(--muted);line-height:1.7}
+    .panel{width:min(760px,100%);margin-top:46px;padding:18px;background:var(--card);border:1px solid rgba(255,255,255,.78);border-radius:30px;box-shadow:var(--shadow);backdrop-filter:blur(20px)}
+    textarea{width:100%;min-height:132px;resize:vertical;border:1px solid var(--line);border-radius:21px;background:#fff;color:var(--text);font:inherit;font-size:16px;line-height:1.65;padding:18px 19px;outline:none;transition:.2s}
+    textarea::placeholder{color:#a0a7af}
+    textarea:focus{border-color:rgba(7,193,96,.55);box-shadow:0 0 0 4px rgba(7,193,96,.09)}
+    .actions{display:flex;gap:10px;margin-top:12px}
+    button,.btn{appearance:none;border:0;text-decoration:none;cursor:pointer;height:52px;border-radius:17px;padding:0 22px;font:inherit;font-size:15px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s,background .15s,opacity .15s}
+    button:active,.btn:active{transform:scale(.985)}
+    .primary{flex:1;color:#fff;background:var(--accent)}
+    .primary:hover{background:var(--accent2)}
+    .primary:disabled{cursor:not-allowed;opacity:.38}
+    .ghost{background:#eef1f3;color:#4f5863}
+    .ghost:hover{background:#e7ebee}
+    .status{display:none;margin-top:16px;border-radius:18px;padding:14px 16px;font-size:14px;line-height:1.6}
+    .status.show{display:block}
+    .status.loading{background:#f2f7f4;color:#4c6458}
+    .status.error{background:#fff3f2;color:var(--danger);border:1px solid #f8d8d5}
+    .spinner{width:15px;height:15px;border:2px solid rgba(7,193,96,.2);border-top-color:var(--accent);border-radius:50%;display:inline-block;vertical-align:-3px;margin-right:7px;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .result{display:none;width:min(760px,100%);margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 12px 42px rgba(23,31,38,.06);overflow:hidden}
+    .result.show{display:block}
+    .media{display:grid;grid-template-columns:190px 1fr;gap:20px;padding:20px}
+    .cover{width:190px;height:238px;background:#edf0f2;border-radius:19px;object-fit:cover;display:none}
+    .cover.show{display:block}
+    .meta{min-width:0;display:flex;flex-direction:column;justify-content:center}
+    .title{font-size:18px;font-weight:650;line-height:1.55;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+    .author{margin-top:10px;color:var(--muted);font-size:14px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+    .chip{background:#f2f4f5;color:#68717b;border-radius:999px;font-size:12px;padding:7px 10px}
+    .downloadbar{padding:18px 20px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr auto auto;gap:10px}
+    .download{background:var(--accent);color:#fff}
+    .download:hover{background:var(--accent2)}
+    .tip{width:min(760px,100%);margin-top:20px;color:#8c949d;font-size:12px;line-height:1.8;text-align:center}
+    .privacy{margin-top:10px;font-size:11px;color:#a0a7ae}
+    footer{margin-top:auto;padding-top:70px;color:#9aa1a9;font-size:11px;text-align:center;line-height:1.8}
+    .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:rgba(25,29,33,.9);color:#fff;padding:10px 15px;border-radius:999px;font-size:13px;transition:.2s;z-index:10}
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+    @media(max-width:620px){
+      .page{padding-top:58px}.panel{margin-top:34px;padding:13px}.actions{flex-direction:column}.ghost{width:100%}
+      .media{grid-template-columns:1fr;padding:16px}.cover{width:100%;height:auto;aspect-ratio:16/11}.downloadbar{grid-template-columns:1fr}.downloadbar .btn{width:100%}
+      .sub{font-size:15px}.mark{width:51px;height:51px;border-radius:16px}
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M8.6 4.4c-4 0-7.2 2.7-7.2 6 0 1.9 1 3.5 2.7 4.6l-.7 2.3 2.8-1.3c.8.2 1.6.4 2.4.4 4 0 7.2-2.7 7.2-6s-3.2-6-7.2-6Zm-2.5 4a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Zm5 0a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Zm11.5 6.1c0-2.8-2.6-5-5.8-5h-.1c.1.4.1.7.1 1.1 0 3.9-3.7 7-8.2 7h-.4c1 1.2 2.7 2 4.6 2 .7 0 1.4-.1 2-.3l2.3 1.1-.6-1.9c1.3-.9 2.1-2.3 2.1-4Zm-7.8-1.6a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8Zm4.2 0a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8Z"/></svg>
+      </div>
+      <h1>微信视频号下载</h1>
+      <p class="sub">粘贴视频号分享链接，解析后保存公开视频。</p>
+    </section>
+
+    <section class="panel" aria-label="视频解析">
+      <textarea id="input" placeholder="粘贴视频号分享链接或整段分享文字，例如：https://weixin.qq.com/sph/..." spellcheck="false"></textarea>
+      <div class="actions">
+        <button id="parseBtn" class="primary" disabled>开始解析</button>
+        <button id="clearBtn" class="ghost" type="button">清空</button>
+      </div>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <section id="result" class="result" aria-live="polite">
+      <div class="media">
+        <img id="cover" class="cover" alt="视频封面" referrerpolicy="no-referrer" />
+        <div class="meta">
+          <div id="title" class="title">视频号视频</div>
+          <div id="author" class="author"></div>
+          <div class="chips">
+            <span class="chip">公开视频</span>
+            <span id="codec" class="chip">H.264</span>
+            <span id="counts" class="chip" style="display:none"></span>
+          </div>
+        </div>
+      </div>
+      <div class="downloadbar">
+        <a id="downloadBtn" class="btn download" href="#" target="_blank" rel="noopener noreferrer">下载 / 打开原视频</a>
+        <button id="copyBtn" class="ghost" type="button">复制视频直链</button>
+        <button id="newBtn" class="ghost" type="button">解析另一个</button>
+      </div>
+    </section>
+
+    <div class="tip">
+      如果点击下载后浏览器直接播放视频，可在播放页面使用“保存视频”或“视频另存为”。
+      <div class="privacy">解析时，视频号分享链接会发送至第三方公共解析服务；本站不保存链接和视频。</div>
+    </div>
+
+    <footer>仅支持公开可访问的视频。解析能力可能随微信接口调整而变化。</footer>
+  </main>
+  <div id="toast" class="toast">已复制</div>
+
+<script>
+(() => {
+  const API = 'https://sph.litao.workers.dev/api/fetch_video_profile';
+  const input = document.getElementById('input');
+  const parseBtn = document.getElementById('parseBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const status = document.getElementById('status');
+  const result = document.getElementById('result');
+  const cover = document.getElementById('cover');
+  const title = document.getElementById('title');
+  const author = document.getElementById('author');
+  const codec = document.getElementById('codec');
+  const counts = document.getElementById('counts');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const newBtn = document.getElementById('newBtn');
+  const toast = document.getElementById('toast');
+  let currentVideoUrl = '';
+
+  function extractUrl(text){
+    const urls = (text || '').match(/https?:\/\/[^\s<>"'，。；、）)】]+/g) || [];
+    return urls.find(u => {
+      try {
+        const h = new URL(u).hostname.toLowerCase();
+        return h === 'weixin.qq.com' || h === 'channels.weixin.qq.com' || h.endsWith('.weixin.qq.com');
+      } catch(e){ return false; }
+    }) || '';
+  }
+
+  function setStatus(kind, html){
+    status.className = 'status show ' + kind;
+    status.innerHTML = html;
+  }
+
+  function hideStatus(){ status.className = 'status'; status.textContent = ''; }
+  function resetResult(){ result.classList.remove('show'); currentVideoUrl=''; cover.classList.remove('show'); cover.removeAttribute('src'); }
+
+  input.addEventListener('input', () => { parseBtn.disabled = !extractUrl(input.value); });
+  clearBtn.addEventListener('click', () => { input.value=''; parseBtn.disabled=true; hideStatus(); resetResult(); input.focus(); });
+  newBtn.addEventListener('click', () => { resetResult(); hideStatus(); input.value=''; parseBtn.disabled=true; input.focus(); window.scrollTo({top:0,behavior:'smooth'}); });
+
+  async function parse(){
+    const url = extractUrl(input.value);
+    if(!url){ setStatus('error','没有识别到有效的视频号分享链接。'); return; }
+    resetResult();
+    parseBtn.disabled = true;
+    setStatus('loading','<span class="spinner"></span>正在解析视频，请稍候…');
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 25000);
+    try{
+      const res = await fetch(API, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify({url}),
+        signal:controller.signal
+      });
+      const text = await res.text();
+      let json;
+      try{ json = JSON.parse(text); }catch(e){ throw new Error('解析服务返回了无法识别的数据。'); }
+      if(!res.ok) throw new Error(json?.message || json?.errMsg || ('解析服务错误（HTTP '+res.status+'）'));
+      if(json?.errCode !== 0 || !json?.data) throw new Error(json?.errMsg || json?.message || '这个链接暂时无法解析，请确认视频仍为公开状态。');
+
+      const data = json.data || {};
+      const feed = data.feedInfo || {};
+      const authorInfo = data.authorInfo || {};
+      const h264 = feed.h264VideoInfo || {};
+      const h265 = feed.h265VideoInfo || {};
+      const videoUrl = feed.videoUrl || h264.videoUrl || h265.videoUrl || '';
+      if(!videoUrl) throw new Error('已经取得视频信息，但没有找到可下载的视频直链。');
+
+      currentVideoUrl = videoUrl;
+      const desc = (feed.description || '').trim();
+      title.textContent = desc ? desc.split('\n')[0].slice(0,100) : '微信视频号视频';
+      author.textContent = authorInfo.nickname ? ('视频号：' + authorInfo.nickname) : '';
+      author.style.display = authorInfo.nickname ? 'block' : 'none';
+      const coverUrl = feed.coverUrl || h264.coverUrl || h265.coverUrl || '';
+      if(coverUrl){ cover.src = coverUrl; cover.classList.add('show'); }
+      codec.textContent = feed.videoUrl || h264.videoUrl ? 'H.264 / MP4' : 'H.265 / MP4';
+
+      const bits = [];
+      if(feed.likeCountFmt) bits.push('赞 '+feed.likeCountFmt);
+      if(feed.commentCountFmt) bits.push('评论 '+feed.commentCountFmt);
+      if(bits.length){ counts.textContent = bits.join(' · '); counts.style.display='inline-block'; }
+      else counts.style.display='none';
+
+      downloadBtn.href = videoUrl;
+      hideStatus();
+      result.classList.add('show');
+      result.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }catch(err){
+      let msg = err?.name === 'AbortError' ? '解析超时，请稍后再试。' : (err?.message || '解析失败，请稍后再试。');
+      if(/Failed to fetch|NetworkError/i.test(msg)){
+        msg = '无法连接公共解析服务。可能是解析服务临时不可用，或浏览器阻止了跨域请求。';
+      }
+      setStatus('error', msg + '<br><a href="https://sph.litao.workers.dev/" target="_blank" rel="noopener" style="color:inherit;font-weight:600">打开备用解析页</a>');
+    }finally{
+      clearTimeout(timer);
+      parseBtn.disabled = !extractUrl(input.value);
+    }
+  }
+
+  parseBtn.addEventListener('click', parse);
+  input.addEventListener('keydown', e => { if((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !parseBtn.disabled) parse(); });
+  copyBtn.addEventListener('click', async () => {
+    if(!currentVideoUrl) return;
+    try{ await navigator.clipboard.writeText(currentVideoUrl); showToast('视频直链已复制'); }
+    catch(e){ prompt('复制下面的视频直链：', currentVideoUrl); }
+  });
+
+  function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1500); }
+})();
+</script>
+</body>
+</html>
