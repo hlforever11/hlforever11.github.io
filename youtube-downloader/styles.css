@@ -686,10 +686,48 @@ a {
   margin: 0;
 }
 
-.site-footer div {
+.footer-copy {
+  display: grid;
+  gap: 7px;
+}
+
+.footer-links,
+.footer-meta,
+.site-counter {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.footer-links {
   white-space: nowrap;
+}
+
+.footer-meta {
+  min-height: 18px;
+  color: #817c75;
+  font-size: 10px;
+  letter-spacing: 0.025em;
+}
+
+.author-email {
+  text-decoration: none;
+  opacity: 0.8;
+}
+
+.site-counter {
+  display: none;
+  opacity: 0.78;
+  white-space: nowrap;
+}
+
+.site-counter.is-ready {
+  display: inline-flex;
+}
+
+.site-counter-value {
+  color: #5f5a54;
+  font-variant-numeric: tabular-nums;
 }
 
 .site-footer a:hover {
