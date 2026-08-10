@@ -19,10 +19,14 @@ from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
 
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 VIDEO_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 ALLOWED_HEIGHTS = (1080, 720, 480, 360)
 POT_PROVIDER_URL = os.getenv("POT_PROVIDER_URL", "http://127.0.0.1:4416")
+YOUTUBE_PLAYER_CLIENTS = os.getenv(
+    "YOUTUBE_PLAYER_CLIENTS",
+    "mweb,web_embedded,android_vr",
+)
 MAX_DURATION_SECONDS = int(os.getenv("MAX_DURATION_SECONDS", "1800"))
 MAX_FILE_BYTES = int(os.getenv("MAX_FILE_BYTES", str(250 * 1024 * 1024)))
 MAX_JOB_SECONDS = int(os.getenv("MAX_JOB_SECONDS", "420"))
@@ -121,8 +125,12 @@ def yt_dlp_base() -> list[str]:
         "node",
         "--remote-components",
         "ejs:github",
+        "--impersonate",
+        "chrome",
         "--extractor-args",
         f"youtubepot-bgutilhttp:base_url={POT_PROVIDER_URL}",
+        "--extractor-args",
+        f"youtube:player_client={YOUTUBE_PLAYER_CLIENTS}",
         "--socket-timeout",
         "25",
         "--retries",
@@ -247,6 +255,7 @@ async def health() -> dict:
         "yt_dlp": bool(shutil.which("yt-dlp")),
         "ffmpeg": bool(shutil.which("ffmpeg")),
         "node": bool(shutil.which("node")),
+        "player_clients": YOUTUBE_PLAYER_CLIENTS,
     }
 
 
