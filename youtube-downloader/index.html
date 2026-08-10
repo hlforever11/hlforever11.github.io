@@ -142,7 +142,7 @@
         <div class="format-notice" id="format-notice" hidden></div>
         <div class="format-list" id="format-list" role="tabpanel" aria-live="polite"></div>
         <p class="download-tip">
-          下载过程在当前浏览器中完成。若浏览器无法直接保存，会打开媒体文件供你另存。
+          下载过程在当前浏览器中完成。若无法直接保存，会在新页面打开媒体文件供你另存。
         </p>
       </section>
 
@@ -172,8 +172,22 @@
     </main>
 
     <footer class="site-footer">
-      <p>仅用于保存本人创作、已获授权、公共领域或明确允许下载的内容。</p>
-      <div>
+      <div class="footer-copy">
+        <p>仅用于保存本人创作、已获授权、公共领域或明确允许下载的内容。</p>
+        <div class="footer-meta">
+          <a class="author-email" href="mailto:linhu@scu.edu.cn" aria-label="网站邮箱">linhu@scu.edu.cn</a>
+          <span
+            class="site-counter"
+            id="site-counter"
+            aria-live="polite"
+            title="本站累计页面访问量"
+          >
+            <span aria-hidden="true">·</span>
+            <span>累计访问 <span class="site-counter-value" id="busuanzi_site_pv">—</span> 次</span>
+          </span>
+        </div>
+      </div>
+      <div class="footer-links">
         <a href="https://www.youtube.com/static?template=terms" target="_blank" rel="noreferrer">使用条款</a>
         <span aria-hidden="true">·</span>
         <a
@@ -186,6 +200,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
     <noscript>请启用 JavaScript 后使用视频解析与下载功能。</noscript>
+    <script defer src="https://cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js"></script>
     <script src="./app.js" defer></script>
   </body>
 </html>
