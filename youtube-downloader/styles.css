@@ -270,6 +270,7 @@ a {
   color: #aaa39b;
 }
 
+.clear-button,
 .paste-button,
 .text-button {
   border: 0;
@@ -278,11 +279,30 @@ a {
   font-weight: 700;
 }
 
+.url-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.clear-button,
 .paste-button {
   padding: 13px 15px;
   border-radius: 12px;
-  background: #f1eeea;
   font-size: 13px;
+}
+
+.clear-button {
+  color: var(--muted);
+}
+
+.clear-button:hover {
+  background: rgba(22, 21, 19, 0.055);
+  color: var(--ink);
+}
+
+.paste-button {
+  background: #f1eeea;
 }
 
 .paste-button:hover {
@@ -433,6 +453,39 @@ a {
 .message.is-info {
   background: rgba(22, 21, 19, 0.06);
   color: var(--muted);
+}
+
+.message-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 11px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(168, 28, 24, 0.14);
+}
+
+.message-action-copy {
+  flex: 1 1 240px;
+  color: #7f3936;
+}
+
+.message-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 13px;
+  border-radius: 10px;
+  background: var(--red);
+  color: white;
+  font-weight: 760;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.message-action:hover {
+  background: var(--red-dark);
 }
 
 .result-card {
@@ -869,8 +922,9 @@ a {
   }
 
   .url-field {
-    grid-template-columns: auto 1fr;
-    padding-right: 14px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+    padding-right: 8px;
   }
 
   .paste-button {
