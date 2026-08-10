@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "视频号下载",
+    "navigationBarBackgroundColor": "#F5F7F8",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F5F7F8",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}
