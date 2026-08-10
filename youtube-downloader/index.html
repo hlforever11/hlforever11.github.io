@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="解析公开的 YouTube 视频链接，选择可用清晰度并保存视频或音频。"
+    />
+    <meta name="theme-color" content="#f7f4ef" />
+    <title>YouTube 视频下载助手</title>
+    <link rel="preconnect" href="https://i.ytimg.com" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-glow page-glow--one" aria-hidden="true"></div>
+    <div class="page-glow page-glow--two" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="YouTube 视频下载助手首页">
+        <span class="brand-mark" aria-hidden="true">
+          <span class="brand-play"></span>
+        </span>
+        <span>视频下载助手</span>
+      </a>
+      <div class="privacy-note">
+        <span class="privacy-dot" aria-hidden="true"></span>
+        不登录 · 不保存记录
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="hero" aria-labelledby="page-title">
+        <p class="eyebrow">SIMPLE · PRIVATE · FREE</p>
+        <h1 id="page-title">
+          粘贴链接，<br />
+          <span>把视频保存下来。</span>
+        </h1>
+        <p class="hero-copy">
+          支持公开的 YouTube 视频、Shorts 和短链接。无需安装软件，也无需注册账号。
+        </p>
+      </section>
+
+      <section class="tool-card" aria-labelledby="tool-title">
+        <div class="tool-heading">
+          <div>
+            <p class="section-kicker">STEP 01</p>
+            <h2 id="tool-title">粘贴 YouTube 链接</h2>
+          </div>
+          <span class="step-pill">解析 → 选择 → 下载</span>
+        </div>
+
+        <form id="download-form" novalidate>
+          <label class="visually-hidden" for="video-url">YouTube 视频链接</label>
+          <div class="url-field" id="url-field">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22">
+              <path d="M10.6 13.4a4 4 0 0 0 5.7.1l2.5-2.5a4 4 0 1 0-5.7-5.6L11.7 6.8" />
+              <path d="M13.4 10.6a4 4 0 0 0-5.7-.1L5.2 13a4 4 0 1 0 5.7 5.6l1.4-1.4" />
+            </svg>
+            <input
+              id="video-url"
+              name="url"
+              type="url"
+              inputmode="url"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="https://www.youtube.com/watch?v=..."
+              aria-describedby="url-hint"
+              required
+            />
+            <button class="paste-button" id="paste-button" type="button">粘贴</button>
+          </div>
+
+          <div class="form-meta">
+            <p id="url-hint">支持 youtube.com、youtu.be 和 Shorts 链接</p>
+          </div>
+
+          <label class="rights-check">
+            <input id="rights-confirm" type="checkbox" />
+            <span class="check-box" aria-hidden="true">
+              <svg viewBox="0 0 16 16"><path d="m3 8 3 3 7-7" /></svg>
+            </span>
+            <span>我确认该内容由我创作、已获授权，或允许下载使用</span>
+          </label>
+
+          <button class="primary-button" id="parse-button" type="submit">
+            <span class="button-label">解析视频</span>
+            <span class="button-arrow" aria-hidden="true">↗</span>
+            <span class="button-spinner" aria-hidden="true"></span>
+          </button>
+        </form>
+
+        <div class="message" id="message" role="status" aria-live="polite" hidden></div>
+      </section>
+
+      <section class="result-card" id="result-card" aria-labelledby="result-title" hidden>
+        <div class="result-topline">
+          <div>
+            <p class="section-kicker">STEP 02</p>
+            <h2 id="result-title">选择下载格式</h2>
+          </div>
+          <button class="text-button" id="new-link-button" type="button">换一个链接</button>
+        </div>
+
+        <article class="video-summary">
+          <div class="thumbnail-wrap">
+            <img id="video-thumbnail" alt="" />
+            <span class="duration-badge" id="video-duration"></span>
+          </div>
+          <div class="video-copy">
+            <p class="video-source">YOUTUBE VIDEO</p>
+            <h3 id="video-title"></h3>
+            <p id="video-uploader"></p>
+          </div>
+        </article>
+
+        <div class="format-tabs" role="tablist" aria-label="下载类型">
+          <button
+            class="format-tab is-active"
+            id="video-tab"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="format-list"
+            data-kind="video"
+          >
+            视频
+          </button>
+          <button
+            class="format-tab"
+            id="audio-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="format-list"
+            data-kind="audio"
+          >
+            音频
+          </button>
+        </div>
+
+        <div class="format-notice" id="format-notice" hidden></div>
+        <div class="format-list" id="format-list" role="tabpanel" aria-live="polite"></div>
+        <p class="download-tip">
+          下载过程在当前浏览器中完成。若浏览器无法直接保存，会打开媒体文件供你另存。
+        </p>
+      </section>
+
+      <section class="trust-row" aria-label="服务说明">
+        <article>
+          <span class="trust-index">01</span>
+          <div>
+            <h2>不收集链接</h2>
+            <p>不建立账号，不保存解析与下载历史。</p>
+          </div>
+        </article>
+        <article>
+          <span class="trust-index">02</span>
+          <div>
+            <h2>不上传视频</h2>
+            <p>文件从媒体服务直接传输到你的设备。</p>
+          </div>
+        </article>
+        <article>
+          <span class="trust-index">03</span>
+          <div>
+            <h2>明确使用边界</h2>
+            <p>不支持会员、私密、付费、DRM 或地区限制内容。</p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>仅用于保存本人创作、已获授权、公共领域或明确允许下载的内容。</p>
+      <div>
+        <a href="https://www.youtube.com/static?template=terms" target="_blank" rel="noreferrer">使用条款</a>
+        <span aria-hidden="true">·</span>
+        <a
+          href="https://github.com/hlforever11/hlforever11.github.io/tree/main/youtube-downloader"
+          target="_blank"
+          rel="noreferrer"
+        >源代码</a>
+      </div>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <noscript>请启用 JavaScript 后使用视频解析与下载功能。</noscript>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
