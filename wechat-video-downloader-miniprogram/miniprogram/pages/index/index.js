@@ -43,6 +43,8 @@ Page({
       input: '',
       canParse: false,
       parsing: false,
+      downloading: false,
+      downloadText: '正在下载…',
       statusText: '',
       video: null
     })
@@ -80,7 +82,7 @@ Page({
         wx.pageScrollTo({ scrollTop: 520, duration: 260 })
       }, 80)
     } catch (err) {
-      const msg = (err && err.message) || '解析失败，请稍后再试。'
+      const msg = (err && (err.errMsg || err.message)) || '解析失败，请稍后再试。'
       this.setStatus('error', msg)
     } finally {
       this.setData({ parsing: false })
@@ -94,27 +96,15 @@ Page({
     this.setData({ downloading: true, downloadText: '正在下载…' })
 
     try {
-      const task = wx.downloadFile({
-        url: video.videoUrl,
-        timeout: 120000
-      })
-
-      task.onProgressUpdate((res) => {
-        const progress = Number(res.progress || 0)
-        this.setData({ downloadText: `正在下载 ${progress}%` })
-      })
-
       const downloadRes = await new Promise((resolve, reject) => {
-        task.onHeadersReceived(() => {})
-        task.then ? task.then(resolve).catch(reject) : null
-        // 兼容不支持 Promise 的基础库：重新挂载完成回调不可行，因此由兜底任务处理
-        const fallback = wx.downloadFile({
+        const task = wx.downloadFile({
           url: video.videoUrl,
           timeout: 120000,
           success: resolve,
           fail: reject
         })
-        fallback.onProgressUpdate((res) => {
+
+        task.onProgressUpdate((res) => {
           const progress = Number(res.progress || 0)
           this.setData({ downloadText: `正在下载 ${progress}%` })
         })
@@ -124,7 +114,14 @@ Page({
         throw new Error(`下载失败（HTTP ${downloadRes.statusCode || '未知'}）`)
       }
 
-      await wx.saveVideoToPhotosAlbum({ filePath: downloadRes.tempFilePath })
+      await new Promise((resolve, reject) => {
+        wx.saveVideoToPhotosAlbum({
+          filePath: downloadRes.tempFilePath,
+          success: resolve,
+          fail: reject
+        })
+      })
+
       wx.showToast({ title: '已保存到相册', icon: 'success' })
     } catch (err) {
       const msg = (err && (err.errMsg || err.message)) || '保存失败'
@@ -135,7 +132,7 @@ Page({
           content: `请在小程序后台把 ${video.downloadHost || '视频源域名'} 添加到 downloadFile 合法域名后再试。`,
           showCancel: false
         })
-      } else if (/auth deny|authorize|permission/i.test(msg)) {
+      } else if (/auth deny|authorize|permission|privacy/i.test(msg)) {
         wx.showModal({
           title: '需要相册权限',
           content: '请在微信设置中允许本小程序保存视频到相册。',
