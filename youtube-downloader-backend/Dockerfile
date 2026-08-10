@@ -5,6 +5,7 @@ ARG POT_PROVIDER_VERSION=1.3.1
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
       build-essential \
+      ca-certificates \
       git \
       libcairo2-dev \
       libgif-dev \
@@ -60,4 +61,3 @@ RUN chmod +x /app/start.sh
 EXPOSE 10000
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["/app/start.sh"]
-
