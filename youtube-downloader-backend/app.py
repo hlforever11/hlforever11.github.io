@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import json
 import mimetypes
 import os
 import re
 import shutil
+import sys
 import tempfile
 import time
 from collections import defaultdict, deque
@@ -19,10 +21,10 @@ from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
 
 
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.1.0"
 VIDEO_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 ALLOWED_HEIGHTS = (1080, 720, 480, 360)
-POT_PROVIDER_URL = os.getenv("POT_PROVIDER_URL", "http://127.0.0.1:4416")
+POT_PROVIDER_URL = os.getenv("POT_PROVIDER_URL", "").strip()
 YOUTUBE_PLAYER_CLIENTS = os.getenv(
     "YOUTUBE_PLAYER_CLIENTS",
     "mweb,web_embedded,android_vr",
@@ -116,8 +118,10 @@ def enforce_rate_limit(
 
 
 def yt_dlp_base() -> list[str]:
-    return [
-        "yt-dlp",
+    arguments = [
+        sys.executable,
+        "-m",
+        "yt_dlp",
         "--no-playlist",
         "--quiet",
         "--no-warnings",
@@ -127,17 +131,27 @@ def yt_dlp_base() -> list[str]:
         "ejs:github",
         "--impersonate",
         "chrome",
-        "--extractor-args",
-        f"youtubepot-bgutilhttp:base_url={POT_PROVIDER_URL}",
-        "--extractor-args",
-        f"youtube:player_client={YOUTUBE_PLAYER_CLIENTS}",
-        "--socket-timeout",
-        "25",
-        "--retries",
-        "3",
-        "--fragment-retries",
-        "3",
     ]
+    if POT_PROVIDER_URL:
+        arguments.extend(
+            [
+                "--extractor-args",
+                f"youtubepot-bgutilhttp:base_url={POT_PROVIDER_URL}",
+            ]
+        )
+    arguments.extend(
+        [
+            "--extractor-args",
+            f"youtube:player_client={YOUTUBE_PLAYER_CLIENTS}",
+            "--socket-timeout",
+            "25",
+            "--retries",
+            "3",
+            "--fragment-retries",
+            "3",
+        ]
+    )
+    return arguments
 
 
 def friendly_error(stderr: str) -> str:
@@ -252,10 +266,11 @@ async def health() -> dict:
     return {
         "status": "ok",
         "version": APP_VERSION,
-        "yt_dlp": bool(shutil.which("yt-dlp")),
+        "yt_dlp": importlib.util.find_spec("yt_dlp") is not None,
         "ffmpeg": bool(shutil.which("ffmpeg")),
         "node": bool(shutil.which("node")),
         "player_clients": YOUTUBE_PLAYER_CLIENTS,
+        "pot_provider": bool(POT_PROVIDER_URL),
     }
 
 
