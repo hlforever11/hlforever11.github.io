@@ -1,4 +1,9 @@
 App({
+  globalData: {
+    cloudAvailable: false,
+    envId: 'cloud1-d6gtx1retbc8754fa'
+  },
+
   onLaunch() {
     if (!wx.cloud) {
       wx.showModal({
@@ -10,7 +15,9 @@ App({
     }
 
     wx.cloud.init({
+      env: this.globalData.envId,
       traceUser: true
     })
+    this.globalData.cloudAvailable = true
   }
 })
