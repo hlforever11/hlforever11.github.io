@@ -5,7 +5,8 @@
   const INSTANCE_BATCH_SIZE = 5;
   const INSTANCE_LIST_TIMEOUT = 3500;
   const INSTANCE_REQUEST_TIMEOUT = 6500;
-  const VISIT_COUNTER_BASELINE = 0;
+  // This page's independent counter was reset after the initial verification visits.
+  const VISIT_COUNTER_BASELINE = 5;
   const LAST_WORKING_INSTANCE_KEY = "yt-helper-working-piped-instance";
   const PIPED_INSTANCE_LIST_URL =
     "https://raw.githubusercontent.com/TeamPiped/documentation/main/content/docs/public-instances/index.md";
