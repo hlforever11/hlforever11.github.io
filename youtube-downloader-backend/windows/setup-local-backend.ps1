@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param()
 
 $ErrorActionPreference = "Stop"
@@ -39,57 +39,57 @@ function Install-WingetPackage(
     [string]$DisplayName,
     [string]$PackageId
 ) {
-    Write-Host "正在安装 $DisplayName ..." -ForegroundColor Yellow
+    Write-Host "Installing $DisplayName ..." -ForegroundColor Yellow
     & winget.exe install --id $PackageId --exact --source winget `
         --accept-source-agreements --accept-package-agreements
     if ($LASTEXITCODE -ne 0) {
-        throw "$DisplayName 安装失败（winget 退出码 $LASTEXITCODE）。"
+        throw "$DisplayName installation failed (winget exit code $LASTEXITCODE)."
     }
     Refresh-ProcessPath
 }
 
 if (-not (Test-Path $AppFile) -or -not (Test-Path $RequirementsFile)) {
-    throw "安装文件不完整。请先解压整个 ZIP，再双击此脚本。"
+    throw "Setup files are incomplete. Extract the entire ZIP before running this script."
 }
 
-Write-Host "YouTube 下载助手 · 本机后端安装" -ForegroundColor Green
-Write-Host "此脚本会安装 Python、Node.js、FFmpeg 和 Tailscale（仅安装缺少的项目）。"
+Write-Host "YouTube Downloader - Local Backend Setup" -ForegroundColor Green
+Write-Host "This setup installs missing components: Python, Node.js, FFmpeg, and Tailscale."
 
 if ($null -eq (Get-Command "winget.exe" -ErrorAction SilentlyContinue)) {
-    throw "这台电脑未找到 winget。请先在 Microsoft Store 安装或更新“应用安装程序”，然后重试。"
+    throw "winget was not found. Install or update App Installer from Microsoft Store, then run this setup again."
 }
 
-Write-Step "1/5 检查运行环境"
+Write-Step "1/5 Check required software"
 if (
     $null -eq (Get-Command "py.exe" -ErrorAction SilentlyContinue) -and
     $null -eq (Get-Command "python.exe" -ErrorAction SilentlyContinue)
 ) {
     Install-WingetPackage "Python 3.12" "Python.Python.3.12"
 } else {
-    Write-Host "Python 已安装。"
+    Write-Host "Python is already installed."
 }
 
 if ($null -eq (Get-Command "node.exe" -ErrorAction SilentlyContinue)) {
     Install-WingetPackage "Node.js LTS" "OpenJS.NodeJS.LTS"
 } else {
-    Write-Host "Node.js 已安装。"
+    Write-Host "Node.js is already installed."
 }
 
 if ($null -eq (Get-Command "ffmpeg.exe" -ErrorAction SilentlyContinue)) {
     Install-WingetPackage "FFmpeg" "Gyan.FFmpeg"
 } else {
-    Write-Host "FFmpeg 已安装。"
+    Write-Host "FFmpeg is already installed."
 }
 
 if ($null -eq (Find-Tailscale)) {
     Install-WingetPackage "Tailscale" "Tailscale.Tailscale"
 } else {
-    Write-Host "Tailscale 已安装。"
+    Write-Host "Tailscale is already installed."
 }
 
 Refresh-ProcessPath
 
-Write-Step "2/5 创建独立 Python 环境"
+Write-Step "2/5 Create an isolated Python environment"
 if (-not (Test-Path $VenvPython)) {
     $PyLauncher = Get-Command "py.exe" -ErrorAction SilentlyContinue
     if ($null -ne $PyLauncher) {
@@ -99,72 +99,72 @@ if (-not (Test-Path $VenvPython)) {
         & $PythonCommand.Source -m venv $VenvFolder
     }
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path $VenvPython)) {
-        throw "无法创建 Python 独立环境。"
+        throw "Could not create the Python virtual environment."
     }
 }
 
 & $VenvPython -m pip install --disable-pip-version-check --upgrade pip
 if ($LASTEXITCODE -ne 0) {
-    throw "pip 更新失败。"
+    throw "pip update failed."
 }
 & $VenvPython -m pip install --disable-pip-version-check -r $RequirementsFile
 if ($LASTEXITCODE -ne 0) {
-    throw "后端 Python 套件安装失败。"
+    throw "Backend Python package installation failed."
 }
 
-Write-Step "3/5 登录 Tailscale"
+Write-Step "3/5 Sign in to Tailscale"
 $Tailscale = Find-Tailscale
 if ($null -eq $Tailscale) {
-    throw "Tailscale 安装完成后仍未找到 tailscale.exe。请重启电脑后再运行此脚本。"
+    throw "tailscale.exe was not found after installation. Restart Windows and run this setup again."
 }
 
 & $Tailscale status *> $null
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "浏览器将打开 Tailscale 登录页。请使用任意支持的账号登录。" -ForegroundColor Yellow
+    Write-Host "A browser will open for Tailscale sign-in." -ForegroundColor Yellow
     & $Tailscale up
     if ($LASTEXITCODE -ne 0) {
-        throw "Tailscale 登录未完成。登录后重新运行本脚本即可。"
+        throw "Tailscale sign-in did not finish. Sign in, then run this setup again."
     }
 } else {
-    Write-Host "Tailscale 已登录。"
+    Write-Host "Tailscale is signed in."
 }
 
-Write-Step "4/5 创建桌面手动启动和停止快捷方式"
+Write-Step "4/5 Create manual Start and Stop desktop shortcuts"
 $StartupFolder = [Environment]::GetFolderPath("Startup")
 $PreviousStartupShortcut = Join-Path $StartupFolder "YouTubeDownloaderBackend.lnk"
 if (Test-Path $PreviousStartupShortcut) {
     Remove-Item $PreviousStartupShortcut -Force
-    Write-Host "已删除旧版开机启动项。"
+    Write-Host "Removed the previous automatic startup shortcut."
 }
 
 $DesktopFolder = [Environment]::GetFolderPath("Desktop")
 $Shell = New-Object -ComObject WScript.Shell
 
-$StartShortcutPath = Join-Path $DesktopFolder "启动 YouTube 下载助手.lnk"
+$StartShortcutPath = Join-Path $DesktopFolder "Start YouTube Downloader.lnk"
 $StartShortcut = $Shell.CreateShortcut($StartShortcutPath)
 $StartShortcut.TargetPath = Join-Path $WindowsFolder "start-local-backend.cmd"
 $StartShortcut.WorkingDirectory = $WindowsFolder
-$StartShortcut.Description = "按需启动下载后端并打开网站"
+$StartShortcut.Description = "Start the local backend and open the website"
 $StartShortcut.Save()
 
-$StopShortcutPath = Join-Path $DesktopFolder "停止 YouTube 下载服务.lnk"
+$StopShortcutPath = Join-Path $DesktopFolder "Stop YouTube Downloader.lnk"
 $StopShortcut = $Shell.CreateShortcut($StopShortcutPath)
 $StopShortcut.TargetPath = Join-Path $WindowsFolder "stop-local-backend.cmd"
 $StopShortcut.WorkingDirectory = $WindowsFolder
-$StopShortcut.Description = "停止 YouTube 下载助手本机后端"
+$StopShortcut.Description = "Stop the local YouTube downloader backend"
 $StopShortcut.Save()
 
-Write-Host "已创建桌面快捷方式：启动 YouTube 下载助手"
-Write-Host "已创建桌面快捷方式：停止 YouTube 下载服务"
-Write-Host "登录 Windows 后，后端不会自动启动。" -ForegroundColor Green
+Write-Host "Created desktop shortcut: Start YouTube Downloader"
+Write-Host "Created desktop shortcut: Stop YouTube Downloader"
+Write-Host "The backend will not start automatically when you sign in to Windows." -ForegroundColor Green
 
-Write-Step "5/5 启动服务并申请 HTTPS 地址"
+Write-Step "5/5 Start the service and create its HTTPS address"
 & (Join-Path $WindowsFolder "start-local-backend.ps1") -NoOpenSite
 if ($LASTEXITCODE -ne 0) {
-    throw "本机服务启动未完成。"
+    throw "The local backend did not start."
 }
 
 Write-Host ""
-Write-Host "安装完成。" -ForegroundColor Green
-Write-Host "请把 windows\public-url.txt 中的 https://...ts.net 地址发给我。" -ForegroundColor Green
-Write-Host "以后需要使用时，双击桌面的“启动 YouTube 下载助手”；用完可双击“停止 YouTube 下载服务”。" -ForegroundColor Yellow
+Write-Host "Setup completed." -ForegroundColor Green
+Write-Host "Open windows\public-url.txt and send me its https://...ts.net address." -ForegroundColor Green
+Write-Host "Use the Start YouTube Downloader desktop shortcut when needed, and Stop YouTube Downloader when finished." -ForegroundColor Yellow

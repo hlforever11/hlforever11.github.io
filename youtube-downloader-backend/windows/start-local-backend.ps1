@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
     [switch]$Startup,
     [switch]$NoOpenSite
@@ -40,7 +40,7 @@ function Test-BackendHealth {
 
 if (-not (Test-Path $Python)) {
     if ($Startup) { exit 1 }
-    throw "尚未安装本机后端。请先双击 setup-local-backend.cmd。"
+    throw "The local backend is not installed. Run setup-local-backend.cmd first."
 }
 
 $MachinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
@@ -88,18 +88,18 @@ if (-not (Test-BackendHealth)) {
     }
     if (-not $Ready) {
         if ($Startup) { exit 1 }
-        throw "后端没有成功启动。请把 windows\backend-error.log 发给我。"
+        throw "The backend did not start. Send me windows\backend-error.log."
     }
 }
 
 if (-not $Startup) {
-    Write-Host "本机后端已运行：$HealthUrl" -ForegroundColor Green
+    Write-Host "Local backend is running: $HealthUrl" -ForegroundColor Green
 }
 
 $Tailscale = Find-Tailscale
 if ($null -eq $Tailscale) {
     if ($Startup) { exit 1 }
-    throw "未找到 Tailscale。请先运行 setup-local-backend.cmd。"
+    throw "Tailscale was not found. Run setup-local-backend.cmd first."
 }
 
 $FunnelArguments = @("funnel", "--bg", "--https=443", "http://127.0.0.1:10000")
@@ -109,9 +109,9 @@ $FunnelExitCode = $LASTEXITCODE
 if ($FunnelExitCode -ne 0 -and -not $Startup) {
     $ApprovalMatch = [regex]::Match($FunnelOutput, "https://login\.tailscale\.com/[^\s]+")
     if ($ApprovalMatch.Success) {
-        Write-Host "需要在浏览器确认一次公开访问权限。" -ForegroundColor Yellow
+        Write-Host "One browser confirmation is required to enable public access." -ForegroundColor Yellow
         Start-Process $ApprovalMatch.Value
-        Read-Host "浏览器中启用 Funnel 后，回到这里按 Enter"
+        Read-Host "Enable Funnel in the browser, return here, and press Enter"
         $FunnelOutput = (& $Tailscale $FunnelArguments 2>&1 | Out-String)
         $FunnelExitCode = $LASTEXITCODE
     }
@@ -120,7 +120,7 @@ if ($FunnelExitCode -ne 0 -and -not $Startup) {
 if ($FunnelExitCode -ne 0) {
     if ($Startup) { exit 1 }
     Write-Host $FunnelOutput
-    throw "Tailscale Funnel 未能启用。请把上面的信息截图发给我。"
+    throw "Tailscale Funnel could not be enabled. Send me a screenshot of the message above."
 }
 
 $StatusOutput = (& $Tailscale funnel status 2>&1 | Out-String)
@@ -132,8 +132,8 @@ if (-not $UrlMatch.Success) {
 if ($UrlMatch.Success) {
     Set-Content -Path $PublicUrlFile -Value $UrlMatch.Value.TrimEnd('/') -Encoding ascii
     if (-not $Startup) {
-        Write-Host "公网 HTTPS 地址：$($UrlMatch.Value.TrimEnd('/'))" -ForegroundColor Green
-        Write-Host "地址也已保存到 windows\public-url.txt。"
+        Write-Host "Public HTTPS address: $($UrlMatch.Value.TrimEnd('/'))" -ForegroundColor Green
+        Write-Host "The address was also saved to windows\public-url.txt."
     }
 
     if (-not $Startup -and -not $NoOpenSite) {
@@ -141,5 +141,5 @@ if ($UrlMatch.Success) {
     }
 } elseif (-not $Startup) {
     Write-Host $StatusOutput
-    throw "Funnel 已启动，但没有识别到公网地址。请把上面的状态截图发给我。"
+    throw "Funnel started, but its public address was not detected. Send me a screenshot of the status above."
 }

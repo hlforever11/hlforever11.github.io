@@ -12,8 +12,8 @@
 
 ## 日常使用
 
-- 需要使用时，双击桌面的“启动 YouTube 下载助手”。它会启动后端并自动打开网站。
-- 使用结束后，可双击桌面的“停止 YouTube 下载服务”。
+- 需要使用时，双击桌面的 `Start YouTube Downloader`。它会启动后端并自动打开网站。
+- 使用结束后，可双击桌面的 `Stop YouTube Downloader`。
 - 也可以直接运行 `windows\start-local-backend.cmd` 和 `windows\stop-local-backend.cmd`。
 - 错误日志：`windows\backend-error.log`。
 
