@@ -1,31 +1,9 @@
 (() => {
   "use strict";
 
-  const MAX_MEMORY_DOWNLOAD = 250 * 1024 * 1024;
-  const INSTANCE_BATCH_SIZE = 5;
-  const INSTANCE_LIST_TIMEOUT = 3500;
-  const INSTANCE_REQUEST_TIMEOUT = 6500;
+  const BACKEND_API_URL = "https://hlforever11-youtube-downloader-api.onrender.com";
+  const RESOLVE_TIMEOUT = 150_000;
   const COUNTER_RESET_OFFSET = 1;
-  const LAST_WORKING_INSTANCE_KEY = "yt-helper-working-piped-instance";
-  const PIPED_INSTANCE_LIST_URL =
-    "https://raw.githubusercontent.com/TeamPiped/documentation/main/content/docs/public-instances/index.md";
-  const PIPED_INSTANCES = [
-    "https://pipedapi.kavin.rocks",
-    "https://pipedapi.leptons.xyz",
-    "https://pipedapi.nosebs.ru",
-    "https://pipedapi-libre.kavin.rocks",
-    "https://piped-api.privacy.com.de",
-    "https://pipedapi.adminforge.de",
-    "https://api.piped.yt",
-    "https://pipedapi.drgns.space",
-    "https://pipedapi.owo.si",
-    "https://pipedapi.ducks.party",
-    "https://piped-api.codespace.cz",
-    "https://pipedapi.reallyaweso.me",
-    "https://api.piped.private.coffee",
-    "https://pipedapi.darkness.services",
-    "https://pipedapi.orangenet.cc",
-  ];
 
   const elements = {
     form: document.querySelector("#download-form"),
@@ -103,191 +81,98 @@
       }
       if (!["youtube.com", "m.youtube.com", "music.youtube.com"].includes(host)) return null;
       const parts = url.pathname.split("/").filter(Boolean);
-      const id = url.searchParams.get("v") || (["shorts", "embed", "live"].includes(parts[0]) ? parts[1] : "");
+      const id =
+        url.searchParams.get("v") ||
+        (["shorts", "embed", "live"].includes(parts[0]) ? parts[1] : "");
       return /^[\w-]{11}$/.test(id || "") ? id : null;
     } catch {
       return null;
     }
   }
 
-  async function queryInstance(instance, videoId) {
+  async function responseError(response) {
+    try {
+      const body = await response.json();
+      if (typeof body?.detail === "string") return body.detail;
+    } catch {
+      // Use a status-based message when the server did not return JSON.
+    }
+    if (response.status === 429) return "服务器正在处理其他文件或请求过于频繁，请稍后重试。";
+    if (response.status === 502 || response.status === 503) {
+      return "下载服务器暂时无法连接 YouTube，请稍后重试。";
+    }
+    return `服务器返回错误（HTTP ${response.status}）。`;
+  }
+
+  function makeDownloadUrl(videoId, preset) {
+    const url = new URL(`${BACKEND_API_URL}/api/download`);
+    url.searchParams.set("video_id", videoId);
+    url.searchParams.set("preset", preset);
+    return url.toString();
+  }
+
+  function normalizeFormats(payload) {
+    const formats = Array.isArray(payload.formats) ? payload.formats : [];
+    const mapFormat = (format) => ({
+      detail: String(format.detail || ""),
+      extension: String(format.extension || (format.kind === "audio" ? "mp3" : "mp4")),
+      height: Number(format.height || 0),
+      kind: format.kind === "audio" ? "audio" : "video",
+      preset: String(format.preset || ""),
+      quality: String(format.label || (format.kind === "audio" ? "MP3" : "视频")),
+      url: makeDownloadUrl(payload.videoId, format.preset),
+      videoOnly: false,
+    });
+
+    return {
+      audioStreams: formats.filter((format) => format.kind === "audio").map(mapFormat),
+      duration: Number(payload.duration || 0),
+      thumbnailUrl: String(payload.thumbnailUrl || ""),
+      title: String(payload.title || "未命名视频"),
+      uploader: String(payload.uploader || "频道信息未知"),
+      videoId: String(payload.videoId || ""),
+      videoStreams: formats
+        .filter((format) => format.kind === "video")
+        .map(mapFormat)
+        .sort((a, b) => b.height - a.height),
+    };
+  }
+
+  async function resolveVideo(videoId) {
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), INSTANCE_REQUEST_TIMEOUT);
+    const timeout = window.setTimeout(() => controller.abort(), RESOLVE_TIMEOUT);
 
     try {
-      const response = await fetch(`${instance}/streams/${videoId}`, {
-        headers: { Accept: "application/json" },
+      const response = await fetch(`${BACKEND_API_URL}/api/resolve`, {
+        method: "POST",
+        mode: "cors",
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: `https://www.youtube.com/watch?v=${videoId}` }),
         signal: controller.signal,
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      if (!data?.title || !Array.isArray(data.videoStreams)) {
-        throw new Error("响应数据不完整");
+      if (!response.ok) throw new Error(await responseError(response));
+
+      const payload = await response.json();
+      if (!payload?.videoId || !payload?.title || !Array.isArray(payload.formats)) {
+        throw new Error("下载服务器返回的数据不完整，请稍后重试。");
       }
-      return { ...data, _instance: instance };
+      const normalized = normalizeFormats(payload);
+      if (!normalized.videoStreams.length && !normalized.audioStreams.length) {
+        throw new Error("该视频没有可用的下载格式。");
+      }
+      return normalized;
     } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new Error("下载服务器唤醒或解析超时，请稍后重试。");
+      }
+      if (error instanceof TypeError) {
+        throw new Error("无法连接下载服务器。若服务刚部署，请等待约一分钟后重试。");
+      }
       throw error;
     } finally {
       window.clearTimeout(timeout);
     }
-  }
-
-  function normalizeStream(stream) {
-    return {
-      bitrate: Number(stream.bitrate || 0),
-      codec: stream.codec || "",
-      format: stream.format || "",
-      fps: Number(stream.fps || 0),
-      height: Number(stream.height || 0),
-      mimeType: stream.mimeType || "application/octet-stream",
-      quality: stream.quality || "未知",
-      url: stream.url || "",
-      videoOnly: Boolean(stream.videoOnly),
-      width: Number(stream.width || 0),
-    };
-  }
-
-  function uniqueStreams(streams) {
-    const seen = new Set();
-    return streams
-      .filter((stream) => stream?.url)
-      .filter(
-        (stream) =>
-          !/\bHLS\b/i.test(String(stream.quality || "")) &&
-          !/\.m3u8(?:$|\?)/i.test(String(stream.url || "")),
-      )
-      .filter((stream) => {
-        const key = [stream.mimeType, stream.quality, stream.height, stream.fps, stream.videoOnly].join("|");
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .map(normalizeStream);
-  }
-
-  function sourceScore(data) {
-    const videos = Array.isArray(data.videoStreams) ? data.videoStreams : [];
-    const audios = Array.isArray(data.audioStreams) ? data.audioStreams : [];
-    const maxHeight = videos.reduce((max, stream) => Math.max(max, Number(stream.height || 0)), 0);
-    const combined = videos.filter((stream) => !stream.videoOnly).length;
-    const standard = videos.filter((stream) => !String(stream.quality || "").toUpperCase().includes("LBRY")).length;
-    return maxHeight * 10 + audios.length * 900 + combined * 180 + standard * 60;
-  }
-
-  function uniqueInstances(instances) {
-    const seen = new Set();
-    return instances.filter((instance) => {
-      try {
-        const url = new URL(instance);
-        if (url.protocol !== "https:") return false;
-        const normalized = url.origin;
-        if (seen.has(normalized)) return false;
-        seen.add(normalized);
-        return true;
-      } catch {
-        return false;
-      }
-    }).map((instance) => new URL(instance).origin);
-  }
-
-  async function currentPipedInstances() {
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => controller.abort(), INSTANCE_LIST_TIMEOUT);
-    let discovered = [];
-
-    try {
-      const response = await fetch(PIPED_INSTANCE_LIST_URL, {
-        headers: { Accept: "text/plain" },
-        signal: controller.signal,
-      });
-      if (response.ok) {
-        const markdown = await response.text();
-        discovered = [...markdown.matchAll(/\|\s*(https:\/\/[^\s|]+)\s*\|/g)].map(
-          (match) => match[1],
-        );
-      }
-    } catch {
-      // The bundled official list remains available when GitHub Raw is blocked.
-    } finally {
-      window.clearTimeout(timer);
-    }
-
-    const instances = uniqueInstances([...discovered, ...PIPED_INSTANCES]);
-    let lastWorking = "";
-    try {
-      lastWorking = window.sessionStorage.getItem(LAST_WORKING_INSTANCE_KEY) || "";
-    } catch {
-      // Storage may be unavailable in strict privacy modes.
-    }
-    if (!lastWorking || !instances.includes(lastWorking)) return instances;
-    return [lastWorking, ...instances.filter((instance) => instance !== lastWorking)];
-  }
-
-  async function resolveVideo(videoId) {
-    const instances = await currentPipedInstances();
-    let bestData = null;
-    let attempted = 0;
-
-    for (let index = 0; index < instances.length; index += INSTANCE_BATCH_SIZE) {
-      const batch = instances.slice(index, index + INSTANCE_BATCH_SIZE);
-      attempted += batch.length;
-      const settled = await Promise.allSettled(
-        batch.map((instance) => queryInstance(instance, videoId)),
-      );
-      const candidates = settled
-        .filter((result) => result.status === "fulfilled")
-        .map((result) => result.value);
-
-      for (const candidate of candidates) {
-        if (candidate.livestream) {
-          throw new Error("暂不支持正在直播的视频，请在直播结束后再试。");
-        }
-        if (!bestData || sourceScore(candidate) > sourceScore(bestData)) bestData = candidate;
-      }
-
-      const bestVideos = bestData?.videoStreams || [];
-      const bestAudios = bestData?.audioStreams || [];
-      const bestHeight = bestVideos.reduce(
-        (max, stream) => Math.max(max, Number(stream.height || 0)),
-        0,
-      );
-      const hasStandardCombined = bestVideos.some(
-        (stream) =>
-          !stream.videoOnly &&
-          !String(stream.quality || "").toUpperCase().includes("LBRY"),
-      );
-      if (bestHeight >= 360 && bestAudios.length && hasStandardCombined) break;
-    }
-
-    if (bestData) {
-      const videoStreams = uniqueStreams(bestData.videoStreams || []).sort(
-        (a, b) => b.height - a.height || b.fps - a.fps,
-      );
-      const audioStreams = uniqueStreams(bestData.audioStreams || []).sort(
-        (a, b) => b.bitrate - a.bitrate,
-      );
-      if (videoStreams.length || audioStreams.length) {
-        if (bestData._instance) {
-          try {
-            window.sessionStorage.setItem(LAST_WORKING_INSTANCE_KEY, bestData._instance);
-          } catch {
-            // The resolver still works when storage is unavailable.
-          }
-        }
-        return {
-          audioStreams,
-          duration: Number(bestData.duration || 0),
-          thumbnailUrl: bestData.thumbnailUrl || "",
-          title: bestData.title,
-          uploader: bestData.uploader || "",
-          videoId,
-          videoStreams,
-        };
-      }
-    }
-    throw new Error(
-      `已尝试 ${attempted} 个公开解析节点，均未返回可用媒体。请确认视频为公开的普通视频，然后重试；若仍失败，说明公开节点暂时受限。`,
-    );
   }
 
   function setLoading(loading) {
@@ -307,27 +192,6 @@
     elements.message.textContent = "";
   }
 
-  function showFallbackAction(videoId) {
-    const youtubeUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
-    const row = document.createElement("span");
-    row.className = "message-action-row";
-
-    const copy = document.createElement("span");
-    copy.className = "message-action-copy";
-    copy.textContent = "公开解析节点暂时受限，可把同一链接自动带到备用服务继续。";
-
-    const link = document.createElement("a");
-    link.className = "message-action";
-    link.href = `https://cobalt.tools/#${encodeURIComponent(youtubeUrl)}`;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.textContent = "使用备用下载 ↗";
-    link.setAttribute("aria-label", "在 Cobalt 官方页面使用备用下载");
-
-    row.append(copy, link);
-    elements.message.append(row);
-  }
-
   function syncClearButton() {
     elements.clearButton.hidden = !elements.input.value;
   }
@@ -338,7 +202,7 @@
     elements.toast.hidden = false;
     state.toastTimer = window.setTimeout(() => {
       elements.toast.hidden = true;
-    }, 4600);
+    }, 6500);
   }
 
   function markInvalid() {
@@ -357,81 +221,23 @@
       : `${minutes}:${String(remainder).padStart(2, "0")}`;
   }
 
-  function formatBytes(bytes) {
-    const value = Number(bytes) || 0;
-    if (!value) return "大小未知";
-    const units = ["B", "KB", "MB", "GB"];
-    const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
-    return `${(value / 1024 ** index).toFixed(index > 1 ? 1 : 0)} ${units[index]}`;
-  }
-
-  function estimatedSize(stream) {
-    if (!state.data?.duration || !stream.bitrate) return 0;
-    return (Number(stream.bitrate) * Number(state.data.duration)) / 8;
-  }
-
-  function streamExtension(stream, kind) {
-    const mime = String(stream.mimeType || "").toLowerCase();
-    const format = String(stream.format || "").toLowerCase();
-    if (mime.includes("webm") || format.includes("webm")) return "webm";
-    if (kind === "audio") {
-      if (mime.includes("mpeg")) return "mp3";
-      if (mime.includes("ogg")) return "ogg";
-      return "m4a";
-    }
-    return "mp4";
-  }
-
-  function safeFilename(value) {
-    return String(value || "youtube-video")
-      .replace(/[\\/:*?"<>|\u0000-\u001f]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 110) || "youtube-video";
-  }
-
-  function qualityLabel(stream, kind) {
-    if (kind === "audio") {
-      const kbps = stream.bitrate ? Math.round(Number(stream.bitrate) / 1000) : 0;
-      return kbps ? `${kbps} kbps` : stream.quality || "音频";
-    }
-    if (stream.quality) return stream.quality;
-    return stream.height ? `${stream.height}p` : "视频";
-  }
-
-  function detailLabel(stream, kind) {
-    const bits = [];
-    bits.push(streamExtension(stream, kind).toUpperCase());
-    if (kind === "video" && stream.fps) bits.push(`${stream.fps} FPS`);
-    if (stream.codec) bits.push(String(stream.codec).split(".")[0].toUpperCase());
-    bits.push(`约 ${formatBytes(estimatedSize(stream))}`);
-    return bits.join(" · ");
-  }
-
-  function createFormatRow(stream, kind) {
+  function createFormatRow(stream) {
     const row = document.createElement("article");
     row.className = "format-row";
 
     const quality = document.createElement("div");
     quality.className = "format-quality";
-    quality.append(document.createTextNode(qualityLabel(stream, kind)));
-
-    if (stream.videoOnly) {
-      const badge = document.createElement("span");
-      badge.className = "format-badge";
-      badge.textContent = "仅画面";
-      quality.append(badge);
-    }
+    quality.textContent = stream.quality;
 
     const detail = document.createElement("div");
     detail.className = "format-detail";
-    detail.textContent = detailLabel(stream, kind);
+    detail.textContent = stream.detail || stream.extension.toUpperCase();
 
     const button = document.createElement("button");
     button.className = "download-button";
     button.type = "button";
     button.textContent = "下载";
-    button.addEventListener("click", () => downloadStream(stream, kind, button));
+    button.addEventListener("click", () => downloadStream(stream));
 
     row.append(quality, detail, button);
     return row;
@@ -446,12 +252,6 @@
         ? state.data?.audioStreams || []
         : state.data?.videoStreams || [];
 
-    if (state.kind === "video" && streams.some((stream) => stream.videoOnly)) {
-      elements.formatNotice.textContent =
-        "标注“仅画面”的高清格式不含声音；普通 MP4 格式已包含声音。";
-      elements.formatNotice.hidden = false;
-    }
-
     if (!streams.length) {
       const empty = document.createElement("p");
       empty.className = "empty-formats";
@@ -461,17 +261,18 @@
     }
 
     const fragment = document.createDocumentFragment();
-    streams.forEach((stream) => fragment.append(createFormatRow(stream, state.kind)));
+    streams.forEach((stream) => fragment.append(createFormatRow(stream)));
     elements.formatList.append(fragment);
   }
 
   function renderResult(data) {
     state.data = data;
     state.kind = "video";
-    elements.thumbnail.src = data.thumbnailUrl || `https://i.ytimg.com/vi/${data.videoId}/hqdefault.jpg`;
+    elements.thumbnail.src =
+      data.thumbnailUrl || `https://i.ytimg.com/vi/${data.videoId}/hqdefault.jpg`;
     elements.thumbnail.alt = `${data.title} 的视频封面`;
-    elements.title.textContent = data.title || "未命名视频";
-    elements.uploader.textContent = data.uploader || "频道信息未知";
+    elements.title.textContent = data.title;
+    elements.uploader.textContent = data.uploader;
     elements.duration.textContent = formatDuration(data.duration);
     elements.tabs.forEach((tab) => {
       const active = tab.dataset.kind === "video";
@@ -485,165 +286,23 @@
     }, 80);
   }
 
-  function directOpen(url, sameTab = false) {
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.target = sameTab ? "_self" : "_blank";
-    anchor.rel = "noopener noreferrer";
-    document.body.append(anchor);
-    anchor.click();
-    anchor.remove();
-  }
-
-  function pickerOptions(filename, mimeType) {
-    return {
-      suggestedName: filename,
-      types: [
-        {
-          description: "媒体文件",
-          accept: {
-            [mimeType || "application/octet-stream"]: [`.${filename.split(".").pop()}`],
-          },
-        },
-      ],
-    };
-  }
-
-  function openPendingDownload(filename) {
-    const popup = window.open("", "_blank");
-    if (!popup) return null;
-
-    try {
-      popup.opener = null;
-      popup.document.title = "正在准备下载";
-      popup.document.body.style.cssText =
-        "margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f4ef;color:#161513;font:15px system-ui,sans-serif";
-      const message = popup.document.createElement("p");
-      message.style.cssText = "max-width:560px;padding:28px;line-height:1.8;text-align:center";
-      message.textContent = `正在准备“${filename}”。若文件随后在本页打开，请使用浏览器的“另存为”。`;
-      popup.document.body.append(message);
-    } catch {
-      // The tab can still be navigated even if its placeholder cannot be styled.
-    }
-    return popup;
-  }
-
-  async function saveWithPicker(response, fileHandle, mimeType, button) {
-    const writable = await fileHandle.createWritable();
-    const reader = response.body.getReader();
-    const total = Number(response.headers.get("content-length") || 0);
-    let received = 0;
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        received += value.byteLength;
-        await writable.write(value);
-        button.textContent = total
-          ? `${Math.min(99, Math.round((received / total) * 100))}%`
-          : formatBytes(received);
-      }
-      await writable.close();
-    } catch (error) {
-      await writable.abort().catch(() => {});
-      throw error;
-    }
-  }
-
-  async function saveWithBlob(response, filename, mimeType, button) {
-    const reader = response.body.getReader();
-    const total = Number(response.headers.get("content-length") || 0);
-    const chunks = [];
-    let received = 0;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      received += value.byteLength;
-      if (received > MAX_MEMORY_DOWNLOAD) {
-        await reader.cancel();
-        throw new Error("FILE_TOO_LARGE_FOR_MEMORY");
-      }
-      chunks.push(value);
-      button.textContent = total
-        ? `${Math.min(99, Math.round((received / total) * 100))}%`
-        : formatBytes(received);
-    }
-
-    const objectUrl = URL.createObjectURL(new Blob(chunks, { type: mimeType }));
-    const anchor = document.createElement("a");
-    anchor.href = objectUrl;
-    anchor.download = filename;
-    document.body.append(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000);
-  }
-
-  async function downloadStream(stream, kind, button) {
-    const originalLabel = button.textContent;
-    const extension = streamExtension(stream, kind);
-    const suffix = kind === "audio" ? "audio" : qualityLabel(stream, kind).replace(/\s+/g, "-");
-    const filename = `${safeFilename(state.data?.title)}-${suffix}.${extension}`;
-    const mimeType = stream.mimeType || "application/octet-stream";
-    const canPickFile = "showSaveFilePicker" in window && window.isSecureContext;
-    let pickerPromise = null;
-    let pendingWindow = null;
-
-    button.disabled = true;
-    button.textContent = "连接中";
-
-    if (canPickFile) {
+  function downloadStream(stream) {
+    const pending = window.open("about:blank", "_blank");
+    if (pending) {
       try {
-        pickerPromise = window.showSaveFilePicker(pickerOptions(filename, mimeType));
+        pending.opener = null;
+        pending.document.title = "正在生成下载文件";
+        pending.document.body.style.cssText =
+          "margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f4ef;color:#161513;font:15px system-ui,sans-serif";
+        pending.document.body.textContent = "服务器正在生成文件，请保持此页面打开。完成后浏览器会自动开始下载。";
+        pending.location.replace(stream.url);
       } catch {
-        pickerPromise = null;
+        pending.location.href = stream.url;
       }
+    } else {
+      window.location.href = stream.url;
     }
-
-    if (!pickerPromise) {
-      pendingWindow = openPendingDownload(filename);
-      if (!pendingWindow) {
-        directOpen(stream.url, true);
-        button.disabled = false;
-        button.textContent = originalLabel;
-        return;
-      }
-    }
-
-    try {
-      const fileHandle = pickerPromise ? await pickerPromise : null;
-      const response = await fetch(stream.url);
-      if (!response.ok || !response.body) throw new Error("STREAM_UNAVAILABLE");
-      const contentLength = Number(response.headers.get("content-length") || 0);
-      const responseType = mimeType || response.headers.get("content-type") || "application/octet-stream";
-
-      if (fileHandle) {
-        await saveWithPicker(response, fileHandle, responseType, button);
-      } else if (!contentLength || contentLength <= MAX_MEMORY_DOWNLOAD) {
-        await saveWithBlob(response, filename, responseType, button);
-      } else {
-        throw new Error("FILE_TOO_LARGE_FOR_MEMORY");
-      }
-      if (pendingWindow && !pendingWindow.closed) pendingWindow.close();
-      showToast("文件已保存。若没有看到文件，请检查浏览器的下载列表。");
-    } catch (error) {
-      if (error?.name === "AbortError") {
-        if (pendingWindow && !pendingWindow.closed) pendingWindow.close();
-        showToast("已取消保存。文件没有写入设备。");
-      } else {
-        if (pendingWindow && !pendingWindow.closed) {
-          pendingWindow.location.replace(stream.url);
-        } else {
-          directOpen(stream.url, true);
-        }
-        showToast("浏览器已打开媒体文件。请使用“另存为”完成保存。");
-      }
-    } finally {
-      button.disabled = false;
-      button.textContent = originalLabel;
-    }
+    showToast("服务器正在生成文件。视频越长，等待时间越久；请勿重复点击。");
   }
 
   async function parseVideo() {
@@ -667,7 +326,7 @@
 
     setLoading(true);
     elements.resultCard.hidden = true;
-    showMessage("正在轮询可用解析节点，首次使用可能需要 10–20 秒。", "info");
+    showMessage("正在连接下载服务器；免费服务首次唤醒可能需要 30–60 秒。", "info");
 
     try {
       const data = await resolveVideo(videoId);
@@ -675,7 +334,6 @@
       renderResult(data);
     } catch (error) {
       showMessage(error.message || "解析失败，请稍后再试。");
-      showFallbackAction(videoId);
     } finally {
       setLoading(false);
     }
@@ -733,4 +391,5 @@
 
   syncClearButton();
   setupVisitCounter();
+  fetch(`${BACKEND_API_URL}/health`, { mode: "cors", cache: "no-store" }).catch(() => {});
 })();
