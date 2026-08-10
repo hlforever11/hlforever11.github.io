@@ -1,5 +1,10 @@
 {
   "description": "微信视频号下载小程序",
+  "appid": "wxf7f4471533143581",
+  "projectname": "wechat-video-downloader",
+  "miniprogramRoot": "miniprogram/",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "compileType": "miniprogram",
   "packOptions": {
     "ignore": []
   },
@@ -8,11 +13,8 @@
     "es6": true,
     "enhance": true,
     "postcss": true,
-    "minified": true
+    "minified": true,
+    "checkSiteMap": true
   },
-  "compileType": "miniprogram",
-  "appid": "touristappid",
-  "projectname": "wechat-video-downloader",
-  "miniprogramRoot": "miniprogram/",
-  "cloudfunctionRoot": "cloudfunctions/"
+  "condition": {}
 }
