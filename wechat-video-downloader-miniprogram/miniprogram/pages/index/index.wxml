@@ -1,0 +1,65 @@
+<view class="page">
+  <view class="hero">
+    <view class="mark">视</view>
+    <view class="title">微信视频号下载</view>
+    <view class="subtitle">粘贴视频号分享链接，解析后保存公开视频。</view>
+  </view>
+
+  <view class="panel">
+    <textarea
+      class="input"
+      value="{{input}}"
+      placeholder="粘贴视频号分享链接或整段分享文字"
+      maxlength="2000"
+      auto-height="false"
+      bindinput="onInput"
+    />
+    <view class="actions">
+      <button class="primary" disabled="{{!canParse || parsing}}" bindtap="parseVideo">
+        {{parsing ? '解析中…' : '开始解析'}}
+      </button>
+      <button class="secondary" bindtap="pasteFromClipboard">粘贴</button>
+      <button class="secondary" bindtap="clearAll">清空</button>
+    </view>
+
+    <view wx:if="{{statusText}}" class="status {{statusType}}">
+      {{statusText}}
+    </view>
+  </view>
+
+  <view wx:if="{{video}}" class="result">
+    <video
+      class="video"
+      src="{{video.videoUrl}}"
+      poster="{{video.cover}}"
+      controls
+      show-center-play-btn
+      enable-play-gesture
+      object-fit="contain"
+    />
+
+    <view class="meta">
+      <view class="video-title">{{video.title}}</view>
+      <view wx:if="{{video.author}}" class="author">视频号：{{video.author}}</view>
+      <view class="chips">
+        <text class="chip">公开视频</text>
+        <text class="chip">{{video.codec}}</text>
+      </view>
+    </view>
+
+    <view class="result-actions">
+      <button class="download" loading="{{downloading}}" disabled="{{downloading}}" bindtap="downloadVideo">
+        {{downloading ? downloadText : '保存视频到相册'}}
+      </button>
+      <button class="secondary wide" bindtap="copyVideoUrl">复制视频直链</button>
+      <button class="secondary wide" bindtap="resetForNew">解析另一个</button>
+    </view>
+  </view>
+
+  <view class="tips">
+    <view>仅支持公开可访问的视频。解析能力可能随微信接口调整而变化。</view>
+    <view class="privacy">解析时，分享链接会通过云函数发送至第三方解析服务；本小程序不保存链接和视频。</view>
+  </view>
+
+  <view class="footer" bindtap="copyEmail">linhu@scu.edu.cn</view>
+</view>
