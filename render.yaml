@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: hl-youtube-downloader-api
+    runtime: docker
+    plan: free
+    region: singapore
+    repo: https://github.com/hlforever11/hlforever11.github.io
+    branch: main
+    rootDir: youtube-downloader-backend
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    maxShutdownDelaySeconds: 60
+    envVars:
+      - key: CORS_ORIGINS
+        value: https://hlforever11.github.io
+      - key: POT_PROVIDER_URL
+        value: http://127.0.0.1:4416
+      - key: MAX_DURATION_SECONDS
+        value: "1800"
+      - key: MAX_FILE_BYTES
+        value: "262144000"
+      - key: MAX_JOB_SECONDS
+        value: "420"
