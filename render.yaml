@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: hl-youtube-downloader-api
+    name: hlforever11-youtube-downloader-api
     runtime: docker
     plan: free
     region: singapore
