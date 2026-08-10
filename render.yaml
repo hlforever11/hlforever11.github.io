@@ -9,7 +9,6 @@ services:
     rootDir: youtube-downloader-backend
     healthCheckPath: /health
     autoDeployTrigger: commit
-    maxShutdownDelaySeconds: 60
     envVars:
       - key: CORS_ORIGINS
         value: https://hlforever11.github.io
