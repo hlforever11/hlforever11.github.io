@@ -12,7 +12,7 @@
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/hlforever11/hlforever11.github.io)
 
-登录 Render 后点击上方按钮，确认 Blueprint 名称并选择 **Deploy Blueprint**。Render 会读取仓库根目录的 `render.yaml`，创建免费的 `hl-youtube-downloader-api` Web Service。
+登录 Render 后点击上方按钮，确认 Blueprint 名称并选择 **Deploy Blueprint**。Render 会读取仓库根目录的 `render.yaml`，创建免费的 `hlforever11-youtube-downloader-api` Web Service。
 
 ## 接口
 
