@@ -5,6 +5,7 @@
   const INSTANCE_BATCH_SIZE = 5;
   const INSTANCE_LIST_TIMEOUT = 3500;
   const INSTANCE_REQUEST_TIMEOUT = 6500;
+  const VISIT_COUNTER_BASELINE = 0;
   const LAST_WORKING_INSTANCE_KEY = "yt-helper-working-piped-instance";
   const PIPED_INSTANCE_LIST_URL =
     "https://raw.githubusercontent.com/TeamPiped/documentation/main/content/docs/public-instances/index.md";
@@ -33,6 +34,7 @@
     rights: document.querySelector("#rights-confirm"),
     parseButton: document.querySelector("#parse-button"),
     buttonLabel: document.querySelector(".button-label"),
+    clearButton: document.querySelector("#clear-button"),
     pasteButton: document.querySelector("#paste-button"),
     message: document.querySelector("#message"),
     resultCard: document.querySelector("#result-card"),
@@ -46,7 +48,8 @@
     formatNotice: document.querySelector("#format-notice"),
     toast: document.querySelector("#toast"),
     visitCounter: document.querySelector("#site-counter"),
-    visitValue: document.querySelector("#busuanzi_site_pv"),
+    visitRaw: document.querySelector("#busuanzi_page_pv"),
+    visitValue: document.querySelector("#page-visit-count"),
   };
 
   const state = {
@@ -56,14 +59,15 @@
   };
 
   function setupVisitCounter() {
-    if (!elements.visitCounter || !elements.visitValue) return;
+    if (!elements.visitCounter || !elements.visitRaw || !elements.visitValue) return;
 
     const reveal = () => {
-      const raw = String(elements.visitValue.textContent || "").replace(/[,，\s]/g, "");
+      const raw = String(elements.visitRaw.textContent || "").replace(/[,，\s]/g, "");
       if (!/^\d+$/.test(raw)) return false;
-      elements.visitValue.textContent = Number(raw).toLocaleString("zh-CN");
+      const count = Math.max(0, Number(raw) - VISIT_COUNTER_BASELINE);
+      elements.visitValue.textContent = count.toLocaleString("zh-CN");
       elements.visitCounter.classList.add("is-ready");
-      elements.visitCounter.setAttribute("aria-label", `本站累计访问 ${raw} 次`);
+      elements.visitCounter.setAttribute("aria-label", `本页面累计访问 ${count} 次`);
       return true;
     };
 
@@ -71,7 +75,7 @@
     const observer = new MutationObserver(() => {
       if (reveal()) observer.disconnect();
     });
-    observer.observe(elements.visitValue, {
+    observer.observe(elements.visitRaw, {
       childList: true,
       subtree: true,
       characterData: true,
@@ -294,6 +298,31 @@
   function hideMessage() {
     elements.message.hidden = true;
     elements.message.textContent = "";
+  }
+
+  function showFallbackAction(videoId) {
+    const youtubeUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+    const row = document.createElement("span");
+    row.className = "message-action-row";
+
+    const copy = document.createElement("span");
+    copy.className = "message-action-copy";
+    copy.textContent = "公开解析节点暂时受限，可把同一链接自动带到备用服务继续。";
+
+    const link = document.createElement("a");
+    link.className = "message-action";
+    link.href = `https://cobalt.tools/#${encodeURIComponent(youtubeUrl)}`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "使用备用下载 ↗";
+    link.setAttribute("aria-label", "在 Cobalt 官方页面使用备用下载");
+
+    row.append(copy, link);
+    elements.message.append(row);
+  }
+
+  function syncClearButton() {
+    elements.clearButton.hidden = !elements.input.value;
   }
 
   function showToast(text) {
@@ -639,6 +668,7 @@
       renderResult(data);
     } catch (error) {
       showMessage(error.message || "解析失败，请稍后再试。");
+      showFallbackAction(videoId);
     } finally {
       setLoading(false);
     }
@@ -651,12 +681,23 @@
 
   elements.input.addEventListener("input", () => {
     elements.urlField.classList.remove("is-invalid");
+    syncClearButton();
     if (!elements.message.classList.contains("is-info")) hideMessage();
+  });
+
+  elements.clearButton.addEventListener("click", () => {
+    elements.input.value = "";
+    elements.resultCard.hidden = true;
+    state.data = null;
+    hideMessage();
+    syncClearButton();
+    elements.input.focus();
   });
 
   elements.pasteButton.addEventListener("click", async () => {
     try {
       elements.input.value = await navigator.clipboard.readText();
+      syncClearButton();
       elements.input.focus();
       hideMessage();
     } catch {
@@ -683,5 +724,6 @@
     });
   });
 
+  syncClearButton();
   setupVisitCounter();
 })();
