@@ -1,6 +1,7 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
-    [switch]$Startup
+    [switch]$Startup,
+    [switch]$NoOpenSite
 )
 
 $ErrorActionPreference = "Stop"
@@ -133,6 +134,10 @@ if ($UrlMatch.Success) {
     if (-not $Startup) {
         Write-Host "公网 HTTPS 地址：$($UrlMatch.Value.TrimEnd('/'))" -ForegroundColor Green
         Write-Host "地址也已保存到 windows\public-url.txt。"
+    }
+
+    if (-not $Startup -and -not $NoOpenSite) {
+        Start-Process "https://hlforever11.github.io/youtube-downloader/"
     }
 } elseif (-not $Startup) {
     Write-Host $StatusOutput

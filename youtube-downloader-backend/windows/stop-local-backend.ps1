@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param()
 
 $ErrorActionPreference = "Stop"
@@ -26,4 +26,3 @@ if ($null -ne $Process) {
 }
 Remove-Item $PidFile -Force -ErrorAction SilentlyContinue
 Write-Host "Tailscale Funnel 配置已保留；下次启动后仍使用相同地址。"
-

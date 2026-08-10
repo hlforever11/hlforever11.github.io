@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param()
 
 $ErrorActionPreference = "Stop"
@@ -129,20 +129,37 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "Tailscale 已登录。"
 }
 
-Write-Step "4/5 设置开机登录后自动运行"
+Write-Step "4/5 创建桌面手动启动和停止快捷方式"
 $StartupFolder = [Environment]::GetFolderPath("Startup")
-$ShortcutPath = Join-Path $StartupFolder "YouTubeDownloaderBackend.lnk"
+$PreviousStartupShortcut = Join-Path $StartupFolder "YouTubeDownloaderBackend.lnk"
+if (Test-Path $PreviousStartupShortcut) {
+    Remove-Item $PreviousStartupShortcut -Force
+    Write-Host "已删除旧版开机启动项。"
+}
+
+$DesktopFolder = [Environment]::GetFolderPath("Desktop")
 $Shell = New-Object -ComObject WScript.Shell
-$Shortcut = $Shell.CreateShortcut($ShortcutPath)
-$Shortcut.TargetPath = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
-$Shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$(Join-Path $WindowsFolder 'start-local-backend.ps1')`" -Startup"
-$Shortcut.WorkingDirectory = $BackendFolder
-$Shortcut.Description = "启动 YouTube 下载助手本机后端"
-$Shortcut.Save()
-Write-Host "已创建启动项：$ShortcutPath"
+
+$StartShortcutPath = Join-Path $DesktopFolder "启动 YouTube 下载助手.lnk"
+$StartShortcut = $Shell.CreateShortcut($StartShortcutPath)
+$StartShortcut.TargetPath = Join-Path $WindowsFolder "start-local-backend.cmd"
+$StartShortcut.WorkingDirectory = $WindowsFolder
+$StartShortcut.Description = "按需启动下载后端并打开网站"
+$StartShortcut.Save()
+
+$StopShortcutPath = Join-Path $DesktopFolder "停止 YouTube 下载服务.lnk"
+$StopShortcut = $Shell.CreateShortcut($StopShortcutPath)
+$StopShortcut.TargetPath = Join-Path $WindowsFolder "stop-local-backend.cmd"
+$StopShortcut.WorkingDirectory = $WindowsFolder
+$StopShortcut.Description = "停止 YouTube 下载助手本机后端"
+$StopShortcut.Save()
+
+Write-Host "已创建桌面快捷方式：启动 YouTube 下载助手"
+Write-Host "已创建桌面快捷方式：停止 YouTube 下载服务"
+Write-Host "登录 Windows 后，后端不会自动启动。" -ForegroundColor Green
 
 Write-Step "5/5 启动服务并申请 HTTPS 地址"
-& (Join-Path $WindowsFolder "start-local-backend.ps1")
+& (Join-Path $WindowsFolder "start-local-backend.ps1") -NoOpenSite
 if ($LASTEXITCODE -ne 0) {
     throw "本机服务启动未完成。"
 }
@@ -150,5 +167,4 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host ""
 Write-Host "安装完成。" -ForegroundColor Green
 Write-Host "请把 windows\public-url.txt 中的 https://...ts.net 地址发给我。" -ForegroundColor Green
-Write-Host "重要：电脑接通电源时请关闭自动睡眠；电脑睡眠或关机后，网站下载功能会暂时离线。" -ForegroundColor Yellow
-
+Write-Host "以后需要使用时，双击桌面的“启动 YouTube 下载助手”；用完可双击“停止 YouTube 下载服务”。" -ForegroundColor Yellow

@@ -1,6 +1,6 @@
-# Windows 常驻后端
+# Windows 按需启动后端
 
-这套脚本把下载后端运行在当前 Windows 电脑，并通过 Tailscale Funnel 提供固定的 HTTPS 地址。GitHub Pages 网页仍托管在 GitHub；只有解析和文件传输经过这台电脑。
+这套脚本把下载后端按需运行在当前 Windows 电脑，并通过 Tailscale Funnel 提供固定的 HTTPS 地址。GitHub Pages 网页仍托管在 GitHub；只有解析和文件传输经过这台电脑。登录 Windows 后，后端不会自动启动。
 
 ## 首次安装
 
@@ -12,12 +12,12 @@
 
 ## 日常使用
 
-- 登录 Windows 后会自动启动后端。
-- 手动启动：双击 `windows\start-local-backend.cmd`。
-- 手动停止：双击 `windows\stop-local-backend.cmd`。
+- 需要使用时，双击桌面的“启动 YouTube 下载助手”。它会启动后端并自动打开网站。
+- 使用结束后，可双击桌面的“停止 YouTube 下载服务”。
+- 也可以直接运行 `windows\start-local-backend.cmd` 和 `windows\stop-local-backend.cmd`。
 - 错误日志：`windows\backend-error.log`。
 
-电脑睡眠、关机或断网时，网页的下载功能会暂时离线。请在 Windows 的“电源和睡眠”设置中，将接通电源后的自动睡眠设置为“从不”。
+没有启动后端、电脑睡眠、关机或断网时，网页下载功能会显示离线；再次双击启动快捷方式即可恢复。
 
 ## 安全边界
 
