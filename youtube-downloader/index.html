@@ -145,7 +145,7 @@
         <div class="format-notice" id="format-notice" hidden></div>
         <div class="format-list" id="format-list" role="tabpanel" aria-live="polite"></div>
         <p class="download-tip">
-          下载过程在当前浏览器中完成。若无法直接保存，会在新页面打开媒体文件供你另存。
+          下载服务器会临时生成文件并发送到当前浏览器；发送完成后，服务器自动删除临时文件。
         </p>
       </section>
 
@@ -160,8 +160,8 @@
         <article>
           <span class="trust-index">02</span>
           <div>
-            <h2>不上传视频</h2>
-            <p>文件从媒体服务直接传输到你的设备。</p>
+            <h2>临时处理</h2>
+            <p>文件仅在下载时生成，发送完成后自动删除。</p>
           </div>
         </article>
         <article>
@@ -211,6 +211,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
     <noscript>请启用 JavaScript 后使用视频解析与下载功能。</noscript>
-    <script src="./app.js?v=20260810-4" defer></script>
+    <script src="./app.js?v=20260810-render-1" defer></script>
   </body>
 </html>
