@@ -1,0 +1,7 @@
+{
+  "name": "parseVideo",
+  "version": "1.0.0",
+  "description": "解析微信视频号公开分享链接",
+  "main": "index.js",
+  "dependencies": {}
+}
