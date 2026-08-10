@@ -5,8 +5,7 @@
   const INSTANCE_BATCH_SIZE = 5;
   const INSTANCE_LIST_TIMEOUT = 3500;
   const INSTANCE_REQUEST_TIMEOUT = 6500;
-  // This page's independent counter was reset after the initial verification visits.
-  const VISIT_COUNTER_BASELINE = 5;
+  const COUNTER_RESET_OFFSET = 1;
   const LAST_WORKING_INSTANCE_KEY = "yt-helper-working-piped-instance";
   const PIPED_INSTANCE_LIST_URL =
     "https://raw.githubusercontent.com/TeamPiped/documentation/main/content/docs/public-instances/index.md";
@@ -49,7 +48,7 @@
     formatNotice: document.querySelector("#format-notice"),
     toast: document.querySelector("#toast"),
     visitCounter: document.querySelector("#site-counter"),
-    visitRaw: document.querySelector("#busuanzi_page_pv"),
+    visitFrame: document.querySelector("#visit-counter-frame"),
     visitValue: document.querySelector("#page-visit-count"),
   };
 
@@ -60,28 +59,35 @@
   };
 
   function setupVisitCounter() {
-    if (!elements.visitCounter || !elements.visitRaw || !elements.visitValue) return;
+    if (!elements.visitCounter || !elements.visitFrame || !elements.visitValue) return;
 
-    const reveal = () => {
-      const raw = String(elements.visitRaw.textContent || "").replace(/[,，\s]/g, "");
-      if (!/^\d+$/.test(raw)) return false;
-      const count = Math.max(0, Number(raw) - VISIT_COUNTER_BASELINE);
+    const reveal = (raw) => {
+      if (!Number.isInteger(raw) || raw < 0) return false;
+      const count = Math.max(0, raw - COUNTER_RESET_OFFSET);
       elements.visitValue.textContent = count.toLocaleString("zh-CN");
       elements.visitCounter.classList.add("is-ready");
       elements.visitCounter.setAttribute("aria-label", `本页面累计访问 ${count} 次`);
       return true;
     };
 
-    if (reveal()) return;
-    const observer = new MutationObserver(() => {
-      if (reveal()) observer.disconnect();
-    });
-    observer.observe(elements.visitRaw, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
-    window.setTimeout(() => observer.disconnect(), 10_000);
+    const receiveCount = (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.source !== elements.visitFrame.contentWindow) return;
+      if (event.data?.type !== "youtube-downloader-page-count") return;
+      if (!reveal(Number(event.data.raw))) return;
+      window.removeEventListener("message", receiveCount);
+    };
+
+    window.addEventListener("message", receiveCount);
+    const requestCount = () => {
+      elements.visitFrame.contentWindow?.postMessage(
+        { type: "youtube-downloader-count-request" },
+        window.location.origin,
+      );
+    };
+    elements.visitFrame.addEventListener("load", requestCount, { once: true });
+    requestCount();
+    window.setTimeout(() => window.removeEventListener("message", receiveCount), 15_000);
   }
 
   function extractVideoId(value) {
