@@ -1,11 +1,22 @@
 @echo off
-chcp 65001 >nul
-title YouTube 下载助手 - 启动
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0start-local-backend.ps1"
-if errorlevel 1 (
+setlocal
+title YouTube Downloader Start
+
+set "POWERSHELL=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+if not exist "%POWERSHELL%" (
+  echo Windows PowerShell was not found:
+  echo %POWERSHELL%
   echo.
-  echo 启动失败。请把上面的红色错误截图发给我。
+  pause
+  exit /b 1
+)
+
+"%POWERSHELL%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0start-local-backend.ps1"
+set "RESULT=%ERRORLEVEL%"
+if not "%RESULT%"=="0" (
+  echo.
+  echo Start did not finish. Please send a screenshot of this window.
 )
 echo.
 pause
-
+exit /b %RESULT%
