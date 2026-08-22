@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Citrus Ballerina — Drawn Stroke by Stroke</title>
+<style>
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#efeee9;}
+  body{display:grid;place-items:center;}
+  #stage{position:relative;width:min(100vw,74.8276vh);aspect-ratio:1085/1450;overflow:hidden;}
+  #base,#ink{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  #base{object-fit:cover;user-select:none;-webkit-user-drag:none;}
+  #ink{pointer-events:none;}
+  *{cursor:none!important;}
+</style>
+</head>
+<body>
+<div id="stage" aria-label="Animated hand-drawn citrus ballerina artwork">
+  <img id="base" alt="Citrus slice baseline image" src="https://www.bubbbly.com/assets/slice-of-lime.webp" />
+  <canvas id="ink" width="1085" height="1450"></canvas>
+</div>
+<script>
+(() => {
+  const W=1085,H=1450, canvas=document.getElementById('ink'), ctx=canvas.getContext('2d');
+  const FOREST='#244936', GREEN='#3f7d55', LIGHT='rgba(79,142,92,.48)', WARM='rgba(171,89,60,.62)';
+  ctx.lineCap='round'; ctx.lineJoin='round';
+
+  const wobble=(pts,amp=1.8)=>pts.map((p,i)=>[p[0]+Math.sin(i*1.73+0.6)*amp,p[1]+Math.cos(i*1.31+0.2)*amp]);
+  const line=(pts, color=FOREST, width=5.2, amp=1.6)=>({type:'line',pts:wobble(pts,amp),color,width});
+  const dot=(x,y,r,color)=>({type:'dot',x,y,r,color});
+  function qcurve(p0,p1,p2,n=36){
+    const a=[]; for(let i=0;i<=n;i++){const t=i/n,u=1-t;a.push([u*u*p0[0]+2*u*t*p1[0]+t*t*p2[0],u*u*p0[1]+2*u*t*p1[1]+t*t*p2[1]]);} return a;
+  }
+  function cubic(p0,p1,p2,p3,n=42){
+    const a=[]; for(let i=0;i<=n;i++){const t=i/n,u=1-t;a.push([
+      u*u*u*p0[0]+3*u*u*t*p1[0]+3*u*t*t*p2[0]+t*t*t*p3[0],
+      u*u*u*p0[1]+3*u*u*t*p1[1]+3*u*t*t*p2[1]+t*t*t*p3[1]
+    ]);} return a;
+  }
+  function ellipse(cx,cy,rx,ry,start=0,end=Math.PI*2,n=58){
+    const a=[]; for(let i=0;i<=n;i++){const t=start+(end-start)*i/n;a.push([cx+rx*Math.cos(t),cy+ry*Math.sin(t)]);} return a;
+  }
+
+  const strokes=[];
+  strokes.push(line(ellipse(558,226,32,27,0,Math.PI*2),FOREST,5.0,1.3));
+  strokes.push(line(cubic([534,244],[494,260],[492,337],[526,355]),FOREST,5.2,1.5));
+  strokes.push(line(cubic([526,355],[564,376],[611,345],[606,292]),FOREST,5.2,1.5));
+  strokes.push(line(cubic([606,292],[603,255],[580,239],[552,240]),FOREST,5.2,1.5));
+  strokes.push(line(cubic([513,272],[548,246],[582,251],[605,275]),GREEN,3.4,1.2));
+  strokes.push(line(qcurve([530,298],[540,294],[550,299],10),FOREST,3.0,0.8));
+  strokes.push(line(qcurve([568,299],[578,294],[587,298],10),FOREST,3.0,0.8));
+  strokes.push(line(qcurve([553,326],[561,333],[571,326],12),WARM,3.0,0.7));
+  strokes.push(dot(520,323,5,'rgba(171,89,60,.34)'));
+  strokes.push(dot(590,323,5,'rgba(171,89,60,.34)'));
+
+  strokes.push(line(cubic([538,357],[538,374],[532,392],[521,404]),FOREST,4.7,1.2));
+  strokes.push(line(cubic([580,357],[579,378],[586,391],[600,401]),FOREST,4.7,1.2));
+  strokes.push(line(cubic([521,403],[491,416],[469,449],[482,491],[507,544]),FOREST,5.6,1.6));
+  strokes.push(line(cubic([600,401],[632,415],[648,450],[627,492],[594,546]),FOREST,5.6,1.6));
+  strokes.push(line(qcurve([521,403],[557,426],[600,401],28),FOREST,4.4,1.1));
+  strokes.push(line(qcurve([507,544],[550,532],[594,546],24),GREEN,4.6,1.0));
+  const hatch=[
+    [[494,438],[554,420]],[[490,454],[592,425]],[[488,471],[611,437]],[[489,487],[621,451]],
+    [[495,502],[619,469]],[[501,517],[611,489]],[[507,531],[600,509]]
+  ];
+  hatch.forEach(h=>strokes.push(line(h,LIGHT,3.3,0.8)));
+
+  strokes.push(line(cubic([502,416],[449,397],[388,354],[337,293]),FOREST,5.2,1.7));
+  strokes.push(line(cubic([337,293],[299,247],[298,201],[331,178]),FOREST,5.2,1.7));
+  strokes.push(line(cubic([518,431],[462,421],[399,384],[350,326]),GREEN,3.5,1.4));
+  strokes.push(line(cubic([350,326],[317,285],[313,223],[338,190]),GREEN,3.5,1.4));
+  strokes.push(line(cubic([331,178],[344,166],[354,164],[365,169]),FOREST,3.2,1.0));
+  strokes.push(line(cubic([331,178],[335,161],[342,153],[350,147]),FOREST,2.5,0.9));
+  strokes.push(line(cubic([331,178],[325,161],[325,151],[329,143]),FOREST,2.5,0.9));
+
+  strokes.push(line(cubic([617,417],[674,394],[734,346],[773,286]),FOREST,5.2,1.7));
+  strokes.push(line(cubic([773,286],[809,232],[803,188],[770,164]),FOREST,5.2,1.7));
+  strokes.push(line(cubic([604,431],[666,413],[722,370],[761,314]),GREEN,3.5,1.4));
+  strokes.push(line(cubic([761,314],[794,267],[793,211],[765,178]),GREEN,3.5,1.4));
+  strokes.push(line(cubic([770,164],[757,154],[748,153],[739,159]),FOREST,3.2,1.0));
+  strokes.push(line(cubic([770,164],[764,148],[757,140],[748,135]),FOREST,2.5,0.9));
+  strokes.push(line(cubic([770,164],[778,150],[779,139],[777,130]),FOREST,2.5,0.9));
+
+  strokes.push(line(cubic([500,957],[500,1076],[485,1204],[447,1353]),FOREST,6.1,1.8));
+  strokes.push(line(cubic([536,960],[533,1080],[520,1211],[467,1356]),GREEN,4.2,1.5));
+  strokes.push(line(cubic([447,1353],[435,1374],[427,1391],[441,1396]),FOREST,4.5,1.1));
+  strokes.push(line(cubic([441,1396],[458,1395],[470,1376],[467,1356]),FOREST,4.5,1.1));
+  strokes.push(line([[436,1371],[468,1380]],WARM,3.6,0.8));
+  strokes.push(line([[435,1382],[462,1388]],WARM,3.0,0.8));
+
+  strokes.push(line(cubic([603,954],[669,998],[742,1066],[837,1157]),FOREST,6.0,1.8));
+  strokes.push(line(cubic([637,940],[700,982],[779,1048],[862,1128]),GREEN,4.2,1.5));
+  strokes.push(line(cubic([837,1157],[856,1174],[877,1181],[897,1172]),FOREST,4.5,1.1));
+  strokes.push(line(cubic([862,1128],[882,1143],[897,1153],[897,1172]),FOREST,4.5,1.1));
+  strokes.push(line([[870,1145],[893,1163]],WARM,3.4,0.8));
+  strokes.push(line([[473,1326],[451,1335]],WARM,3.0,0.8));
+  strokes.push(line([[812,1129],[832,1109]],WARM,3.0,0.8));
+
+  function dist(a,b){return Math.hypot(b[0]-a[0],b[1]-a[1]);}
+  function strokeLength(s){
+    if(s.type==='dot') return 55;
+    let L=0; for(let i=1;i<s.pts.length;i++)L+=dist(s.pts[i-1],s.pts[i]); return L;
+  }
+  const durations=strokes.map(s=>Math.max(85,strokeLength(s)*2.2));
+  const totalDraw=durations.reduce((a,b)=>a+b,0);
+  const leadIn=900, finalHold=3600, cycle=leadIn+totalDraw+finalHold;
+
+  function drawPartialLine(s,p){
+    const pts=s.pts; if(p<=0)return null;
+    ctx.strokeStyle=s.color; ctx.lineWidth=s.width;
+    ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+    const target=(pts.length-1)*p, whole=Math.floor(target), frac=target-whole;
+    for(let i=1;i<=whole && i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]);
+    let cursor=pts[Math.min(whole,pts.length-1)];
+    if(whole<pts.length-1){
+      const a=pts[whole],b=pts[whole+1],x=a[0]+(b[0]-a[0])*frac,y=a[1]+(b[1]-a[1])*frac;
+      ctx.lineTo(x,y); cursor=[x,y];
+    }
+    ctx.stroke(); return cursor;
+  }
+  function drawFull(s){
+    if(s.type==='line') return drawPartialLine(s,1);
+    if(s.type==='dot'){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();return [s.x,s.y];}
+  }
+  function drawDotPartial(s,p){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(s.x,s.y,s.r*Math.min(1,p*1.6),0,Math.PI*2);ctx.fill();return [s.x,s.y];}
+  function pencilCursor(x,y){
+    ctx.save(); ctx.translate(x,y); ctx.rotate(-0.65);
+    ctx.shadowColor='rgba(0,0,0,.18)'; ctx.shadowBlur=5; ctx.shadowOffsetY=2;
+    ctx.fillStyle='#f2d36a'; ctx.beginPath(); ctx.roundRect(-2,-26,7,22,2); ctx.fill();
+    ctx.fillStyle='#d67b78'; ctx.fillRect(-2,-29,7,5);
+    ctx.fillStyle=FOREST; ctx.beginPath();ctx.moveTo(-2,-4);ctx.lineTo(5,-4);ctx.lineTo(1.5,2);ctx.closePath();ctx.fill();
+    ctx.restore();
+  }
+
+  function render(ms){
+    ctx.clearRect(0,0,W,H);
+    const staticFinal=new URLSearchParams(location.search).get('final')==='1';
+    let t=staticFinal?leadIn+totalDraw+1:(ms%cycle);
+    if(t<leadIn){requestAnimationFrame(render);return;}
+    t-=leadIn;
+    let elapsed=0, cursor=null, drawing=false;
+    for(let i=0;i<strokes.length;i++){
+      const s=strokes[i],d=durations[i];
+      if(t>=elapsed+d){drawFull(s); elapsed+=d; continue;}
+      if(t>=elapsed){
+        const p=(t-elapsed)/d;
+        cursor=s.type==='line'?drawPartialLine(s,p):drawDotPartial(s,p);
+        drawing=true;
+      }
+      break;
+    }
+    ctx.globalAlpha=.16; ctx.lineWidth=1.1;
+    let doneT=t, acc=0;
+    for(let i=0;i<strokes.length;i++){acc+=durations[i]; if(doneT<acc)break; const s=strokes[i]; if(s.type==='line'&&s.width>4){ctx.strokeStyle=FOREST;ctx.beginPath();ctx.moveTo(s.pts[0][0]+2,s.pts[0][1]-1);for(let j=1;j<s.pts.length;j++)ctx.lineTo(s.pts[j][0]+2*Math.sin(j),s.pts[j][1]-1);ctx.stroke();}}
+    ctx.globalAlpha=1;
+    if(drawing && cursor) pencilCursor(cursor[0]+3,cursor[1]-2);
+    if(!staticFinal) requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+})();
+</script>
+</body>
+</html>
