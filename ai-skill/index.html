@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f6f8fb" />
+  <title>Skill 是什么？一页看懂 AI Skill</title>
+  <meta name="description" content="用大图和极少文字解释 AI Skill 是什么，以及普通人怎么使用 Skill。" />
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:rgba(255,255,255,.78);
+      --ink:#111827;
+      --muted:#667085;
+      --line:#dce5ee;
+      --blue:#2497d2;
+      --blue2:#63c9ef;
+      --deep:#176f9e;
+      --soft:#e9f6fc;
+      --shadow:0 24px 70px rgba(42,72,98,.12);
+      --radius:30px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 50% -10%, rgba(95,201,239,.18), transparent 36%),
+        linear-gradient(180deg,#f9fbfd 0%,var(--bg) 60%,#f3f7fa 100%);
+      -webkit-font-smoothing:antialiased;
+    }
+    button{font:inherit}
+    .page{width:min(1180px,calc(100% - 32px));margin:0 auto}
+    section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:78px 0}
+    .eyebrow{font-size:14px;font-weight:700;letter-spacing:.16em;color:var(--blue);text-transform:uppercase;margin-bottom:16px}
+    h1,h2,p{margin:0}
+    h1{font-size:clamp(34px,5vw,66px);line-height:1.12;letter-spacing:-.04em;text-align:center;max-width:1080px}
+    h2{font-size:clamp(30px,4vw,52px);line-height:1.15;letter-spacing:-.035em;text-align:center}
+    .sub{margin-top:18px;font-size:clamp(16px,2vw,20px);line-height:1.7;color:var(--muted);text-align:center;max-width:760px}
+    .hero-visual{width:100%;margin:34px auto 10px;filter:drop-shadow(0 26px 44px rgba(42,88,118,.08))}
+    .hero-visual svg{display:block;width:100%;height:auto;overflow:visible}
+    .float{animation:float 6s ease-in-out infinite}
+    .pulse{animation:pulse 2.8s ease-in-out infinite}
+    .dash{stroke-dasharray:10 10;animation:dash 1.4s linear infinite}
+    @keyframes float{50%{transform:translateY(-8px)}}
+    @keyframes pulse{50%{opacity:.35;transform:scale(1.05)}}
+    @keyframes dash{to{stroke-dashoffset:-40}}
+
+    .mini-steps{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+    .mini-step{
+      border:1px solid rgba(36,151,210,.14);background:rgba(255,255,255,.82);box-shadow:0 12px 36px rgba(45,77,104,.07);
+      border-radius:999px;padding:13px 22px;font-size:15px;font-weight:650;color:#334155;transition:.25s ease;cursor:pointer
+    }
+    .mini-step:hover,.mini-step.active{transform:translateY(-3px);border-color:rgba(36,151,210,.45);color:var(--deep);box-shadow:0 16px 38px rgba(36,151,210,.13)}
+    .mini-step span{color:var(--blue);margin-right:7px}
+
+    .how-wrap{width:100%;margin-top:40px;display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:stretch}
+    .stage{
+      min-height:500px;border:1px solid rgba(120,151,174,.18);border-radius:38px;background:rgba(255,255,255,.72);box-shadow:var(--shadow);
+      padding:34px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden
+    }
+    .stage:before{content:"";position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(83,195,237,.22),rgba(83,195,237,0) 66%);right:-130px;top:-140px}
+    .phone{width:min(350px,100%);background:#fff;border:1px solid #e3e9ef;border-radius:34px;padding:16px;box-shadow:0 28px 70px rgba(48,78,100,.15);position:relative;z-index:1}
+    .phone-head{display:flex;align-items:center;gap:9px;padding:8px 6px 16px;color:#64748b;font-size:13px;font-weight:650}
+    .dot{width:9px;height:9px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 6px rgba(36,151,210,.1)}
+    .chat{display:flex;flex-direction:column;gap:11px}
+    .bubble{max-width:86%;padding:13px 15px;border-radius:18px;font-size:14px;line-height:1.55;transition:.35s ease}
+    .user{margin-left:auto;background:#eff6fb;color:#19374b;border-bottom-right-radius:6px}
+    .ai{background:#f7f8fa;color:#334155;border-bottom-left-radius:6px}
+    .skill-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(36,151,210,.24);background:#f0f9fd;color:var(--deep);border-radius:999px;padding:9px 12px;font-size:12px;font-weight:700;width:max-content;max-width:100%;transition:.35s ease}
+    .skill-pill b{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 5px rgba(36,151,210,.12)}
+    .result-sheet{border:1px solid #e4eaf0;border-radius:18px;background:#fff;padding:15px;margin-top:4px;transition:.35s ease}
+    .result-line{height:7px;background:#dde8ef;border-radius:999px;margin:8px 0}
+    .result-line:nth-child(2){width:86%}.result-line:nth-child(3){width:68%}
+    .dim{opacity:.25;filter:saturate(.55)}
+    .pop{transform:scale(1.025);box-shadow:0 10px 24px rgba(36,151,210,.12)}
+
+    .use-list{display:flex;flex-direction:column;gap:12px}
+    .use-card{
+      display:grid;grid-template-columns:56px 1fr;gap:16px;align-items:center;padding:20px;border-radius:24px;border:1px solid rgba(120,151,174,.17);
+      background:rgba(255,255,255,.65);cursor:pointer;transition:.25s ease;text-align:left
+    }
+    .use-card:hover,.use-card.active{transform:translateX(4px);background:#fff;border-color:rgba(36,151,210,.35);box-shadow:0 18px 44px rgba(48,78,100,.08)}
+    .num{width:48px;height:48px;border-radius:16px;background:var(--soft);display:grid;place-items:center;color:var(--blue);font-size:20px;font-weight:800}
+    .use-card h3{margin:0 0 3px;font-size:19px;letter-spacing:-.015em}
+    .use-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+    .how-note{margin-top:18px;color:var(--muted);font-size:14px;line-height:1.7;text-align:center}
+    .how-note strong{color:#364152}
+
+    .analogy-grid{width:100%;margin-top:42px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    .analogy-card{border-radius:38px;background:rgba(255,255,255,.74);border:1px solid rgba(120,151,174,.17);box-shadow:var(--shadow);padding:40px 34px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:420px}
+    .analogy-card svg{width:min(230px,62%);height:auto;margin-bottom:24px}
+    .analogy-card p{font-size:clamp(21px,2.3vw,29px);font-weight:750;line-height:1.35;letter-spacing:-.02em}
+    .analogy-caption{margin-top:24px;color:var(--muted);font-size:17px;text-align:center;max-width:720px;line-height:1.7}
+
+    .example-card{width:min(900px,100%);margin-top:36px;border-radius:38px;background:rgba(255,255,255,.76);border:1px solid rgba(120,151,174,.17);box-shadow:var(--shadow);padding:34px;cursor:pointer;transition:.3s ease}
+    .example-card:hover{transform:translateY(-3px)}
+    .example-top{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .example-title{font-size:clamp(28px,4vw,46px);font-weight:800;letter-spacing:-.035em}
+    .tap{color:var(--muted);font-size:14px}
+    .example-flow{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .45s ease,opacity .35s ease,margin .35s ease;margin-top:0}
+    .example-card.open .example-flow{grid-template-rows:1fr;opacity:1;margin-top:30px}
+    .flow-inner{min-height:0;overflow:hidden}
+    .flow-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+    .chip{padding:11px 16px;border-radius:999px;background:#eef6fa;color:#29465a;font-size:14px;font-weight:700}
+    .arrow{color:var(--blue);font-weight:800}
+    .fixed{margin-top:22px;text-align:center;color:var(--muted);font-size:15px}
+    .remember{margin-top:34px;padding:16px 22px;border-radius:999px;background:rgba(36,151,210,.08);color:#31546a;font-size:15px;font-weight:650;text-align:center}
+
+    @media (max-width:850px){
+      section{padding:64px 0;min-height:auto}
+      .hero{min-height:100vh}
+      .how-wrap,.analogy-grid{grid-template-columns:1fr}
+      .stage{min-height:420px;padding:24px}
+      .analogy-card{min-height:340px;padding:30px 22px}
+      .use-card:hover,.use-card.active{transform:none}
+    }
+    @media (max-width:560px){
+      .page{width:min(100% - 20px,1180px)}
+      section{padding:54px 0}
+      .hero{padding-top:44px}
+      .hero-visual{margin-top:22px}
+      .mini-step{padding:11px 15px;font-size:13px}
+      .stage{border-radius:28px;padding:14px;min-height:380px}
+      .phone{border-radius:27px}
+      .use-card{grid-template-columns:48px 1fr;padding:16px;gap:12px;border-radius:20px}
+      .num{width:44px;height:44px;border-radius:14px}
+      .analogy-card,.example-card{border-radius:28px}
+      .example-card{padding:24px 18px}
+      .example-top{align-items:flex-start;flex-direction:column}
+    }
+    @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">AI SKILL</div>
+      <h1>Skill，就是给 AI 装上一套<br>可重复使用的做事方法。</h1>
+      <p class="sub">不是让 AI 变聪明，而是让它更会把某一件事做对。</p>
+
+      <div class="hero-visual" id="heroVisual">
+        <svg viewBox="0 0 1100 500" role="img" aria-label="用户任务通过 Skill 交给 AI，得到结果">
+          <defs>
+            <radialGradient id="core" cx="50%" cy="42%" r="62%">
+              <stop offset="0" stop-color="#7eddf7"/>
+              <stop offset=".6" stop-color="#38a8da"/>
+              <stop offset="1" stop-color="#2a8fbe"/>
+            </radialGradient>
+            <linearGradient id="skill" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset="1" stop-color="#deeff8"/>
+            </linearGradient>
+            <filter id="blur"><feGaussianBlur stdDeviation="20"/></filter>
+          </defs>
+
+          <path class="dash" d="M180 250H340" fill="none" stroke="#2798cf" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M540 250H590" fill="none" stroke="#2798cf" stroke-width="3" stroke-linecap="round"/>
+          <path class="dash" d="M790 250H900" fill="none" stroke="#2798cf" stroke-width="2.5" stroke-linecap="round"/>
+
+          <g id="node-task">
+            <circle cx="110" cy="250" r="54" fill="#fff" stroke="#d9e1e8" stroke-width="2"/>
+            <circle cx="110" cy="232" r="15" fill="#9aa6b2"/>
+            <path d="M82 278a28 28 0 0156 0" fill="#9aa6b2"/>
+            <text x="110" y="340" text-anchor="middle" font-size="23" font-weight="700" fill="#2c3440">用户任务</text>
+          </g>
+
+          <g id="node-skill" class="float">
+            <rect x="345" y="115" width="205" height="270" rx="30" fill="url(#skill)" stroke="#2798cf" stroke-width="2.5"/>
+            <text x="447" y="165" text-anchor="middle" font-size="29" font-weight="800" letter-spacing="5" fill="#268fc4">SKILL</text>
+            <g font-size="19" fill="#384655" text-anchor="middle">
+              <rect x="370" y="188" width="155" height="36" rx="18" fill="#fff" stroke="#dde5eb"/><text x="447" y="212">指令</text>
+              <rect x="370" y="235" width="155" height="36" rx="18" fill="#fff" stroke="#dde5eb"/><text x="447" y="259">步骤</text>
+              <rect x="370" y="282" width="155" height="36" rx="18" fill="#fff" stroke="#dde5eb"/><text x="447" y="306">工具</text>
+              <rect x="370" y="329" width="155" height="36" rx="18" fill="#fff" stroke="#dde5eb"/><text x="447" y="353">知识</text>
+            </g>
+            <g fill="#2f9fd2">
+              <rect x="548" y="184" width="33" height="13" rx="6"/><rect x="548" y="219" width="33" height="13" rx="6"/><rect x="548" y="254" width="33" height="13" rx="6"/><rect x="548" y="289" width="33" height="13" rx="6"/>
+            </g>
+          </g>
+
+          <g id="node-ai">
+            <circle class="pulse" cx="685" cy="250" r="118" fill="#5dc8ee" opacity=".22" filter="url(#blur)" transform-origin="685px 250px"/>
+            <circle cx="685" cy="250" r="91" fill="url(#core)"/>
+            <circle cx="685" cy="250" r="107" fill="none" stroke="#69c5e9" stroke-width="1.5" stroke-dasharray="4 10" opacity=".7"/>
+            <circle cx="655" cy="235" r="9" fill="#fff"/><circle cx="715" cy="235" r="9" fill="#fff"/>
+            <path d="M656 287q29 20 58 0" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+            <text x="685" y="390" text-anchor="middle" font-size="23" font-weight="700" fill="#2c3440">AI</text>
+          </g>
+
+          <g id="node-result">
+            <rect x="905" y="192" width="110" height="116" rx="20" fill="#fff" stroke="#dce3e9" stroke-width="2"/>
+            <path d="M930 228h60M930 251h60M930 274h36" stroke="#2798cf" stroke-width="5" stroke-linecap="round"/>
+            <text x="960" y="340" text-anchor="middle" font-size="23" font-weight="700" fill="#2c3440">结果</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="mini-steps">
+        <button class="mini-step active" data-focus="task"><span>①</span>提出任务</button>
+        <button class="mini-step" data-focus="skill"><span>②</span>调用 Skill</button>
+        <button class="mini-step" data-focus="result"><span>③</span>完成任务</button>
+      </div>
+    </section>
+
+    <section id="how">
+      <div class="eyebrow">HOW TO USE</div>
+      <h2>那普通人，到底怎么用 Skill？</h2>
+      <p class="sub">大多数时候，不需要学代码。你只是在“把任务交给一套现成的方法”。</p>
+
+      <div class="how-wrap">
+        <div class="stage">
+          <div class="phone" aria-label="Skill 使用示例">
+            <div class="phone-head"><span class="dot"></span>AI 助手</div>
+            <div class="chat">
+              <div class="bubble user" id="demoTask">帮我把这份材料做成一份文献综述。</div>
+              <div class="skill-pill" id="demoSkill"><b></b>已匹配：文献综述 Skill</div>
+              <div class="bubble ai" id="demoMaterial">可以。请把论文、PDF 或检索结果给我。</div>
+              <div class="result-sheet" id="demoResult">
+                <div style="font-size:13px;font-weight:800;color:#36556a;margin-bottom:8px">综述结构</div>
+                <div class="result-line"></div><div class="result-line"></div><div class="result-line"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="use-list" role="list">
+          <button class="use-card active" data-demo="1">
+            <div class="num">1</div>
+            <div><h3>说清任务</h3><p>像平时聊天一样，直接告诉 AI 想做什么。</p></div>
+          </button>
+          <button class="use-card" data-demo="2">
+            <div class="num">2</div>
+            <div><h3>选择 / 自动匹配 Skill</h3><p>有的产品让你手动选，有的会自动调用。</p></div>
+          </button>
+          <button class="use-card" data-demo="3">
+            <div class="num">3</div>
+            <div><h3>补充材料</h3><p>Skill 需要资料、文件或确认时，再交给它。</p></div>
+          </button>
+          <button class="use-card" data-demo="4">
+            <div class="num">4</div>
+            <div><h3>拿到结果</h3><p>AI 按 Skill 里约定的方法，一步步完成。</p></div>
+          </button>
+        </div>
+      </div>
+      <p class="how-note"><strong>关键：</strong>你不一定会看到“正在使用 Skill”这几个字；很多系统会在后台自动匹配。</p>
+    </section>
+
+    <section>
+      <div class="eyebrow">ANALOGY</div>
+      <h2>最简单的类比</h2>
+      <div class="analogy-grid">
+        <div class="analogy-card">
+          <svg viewBox="0 0 180 180" aria-hidden="true">
+            <circle cx="90" cy="90" r="82" fill="#e9f6fc"/>
+            <circle cx="90" cy="70" r="28" fill="#369dcc"/>
+            <path d="M42 146a48 48 0 0196 0" fill="#369dcc" opacity=".8"/>
+          </svg>
+          <p>AI 像一个<br>很聪明的新员工</p>
+        </div>
+        <div class="analogy-card">
+          <svg viewBox="0 0 180 180" aria-hidden="true">
+            <rect x="24" y="22" width="78" height="102" rx="12" fill="#fff" stroke="#3498c7" stroke-width="4"/>
+            <path d="M43 50h40M43 69h40M43 88h25" stroke="#3498c7" stroke-width="5" stroke-linecap="round"/>
+            <rect x="82" y="91" width="72" height="60" rx="13" fill="#3498c7"/>
+            <path d="M104 91V80h29v11" fill="none" stroke="#3498c7" stroke-width="5"/>
+            <path d="M82 117h72" stroke="#fff" stroke-width="5" opacity=".8"/>
+          </svg>
+          <p>Skill 像一份<br>岗位 SOP + 工具箱</p>
+        </div>
+      </div>
+      <p class="analogy-caption">人再聪明，也需要一套成熟的做事方法。Skill 就是把这套方法交给 AI。</p>
+    </section>
+
+    <section>
+      <div class="eyebrow">EXAMPLE</div>
+      <h2>再看一个具体例子</h2>
+      <div class="example-card" id="exampleCard" role="button" tabindex="0" aria-expanded="false">
+        <div class="example-top">
+          <div class="example-title">“帮我做文献综述”</div>
+          <div class="tap" id="tapText">点击展开 Skill</div>
+        </div>
+        <div class="example-flow">
+          <div class="flow-inner">
+            <div class="flow-row">
+              <span class="chip">检索数据库</span><span class="arrow">→</span>
+              <span class="chip">筛选文献</span><span class="arrow">→</span>
+              <span class="chip">提取观点</span><span class="arrow">→</span>
+              <span class="chip">归纳争议</span><span class="arrow">→</span>
+              <span class="chip">输出结构</span>
+            </div>
+            <div class="fixed">这是一套固定方法，不是每次临时从头想。</div>
+          </div>
+        </div>
+      </div>
+      <div class="remember">一句话记住：任务是“做什么”，Skill 是“怎么稳定地把它做好”。</div>
+    </section>
+  </main>
+
+  <script>
+    const miniSteps=[...document.querySelectorAll('.mini-step')];
+    const heroNodes={task:document.getElementById('node-task'),skill:document.getElementById('node-skill'),result:document.getElementById('node-result')};
+    function focusHero(which){
+      miniSteps.forEach(b=>b.classList.toggle('active',b.dataset.focus===which));
+      Object.entries(heroNodes).forEach(([k,node])=>{node.style.transition='opacity .3s ease';node.style.opacity=(k===which||which==='task'&&k==='task')?'1':'.38'});
+      document.getElementById('node-ai').style.opacity=which==='result'||which==='skill'?'.78':'1';
+    }
+    miniSteps.forEach(b=>{
+      b.addEventListener('mouseenter',()=>focusHero(b.dataset.focus));
+      b.addEventListener('click',()=>focusHero(b.dataset.focus));
+    });
+
+    const useCards=[...document.querySelectorAll('.use-card')];
+    const demoEls={
+      1:document.getElementById('demoTask'),
+      2:document.getElementById('demoSkill'),
+      3:document.getElementById('demoMaterial'),
+      4:document.getElementById('demoResult')
+    };
+    function showDemo(step){
+      useCards.forEach(c=>c.classList.toggle('active',c.dataset.demo===String(step)));
+      Object.entries(demoEls).forEach(([k,el])=>{
+        el.classList.toggle('dim',Number(k)!==step);
+        el.classList.toggle('pop',Number(k)===step);
+      });
+    }
+    useCards.forEach(c=>{
+      c.addEventListener('mouseenter',()=>showDemo(Number(c.dataset.demo)));
+      c.addEventListener('click',()=>showDemo(Number(c.dataset.demo)));
+    });
+    showDemo(1);
+
+    const ex=document.getElementById('exampleCard');
+    const tap=document.getElementById('tapText');
+    function toggleExample(){
+      const open=ex.classList.toggle('open');
+      ex.setAttribute('aria-expanded',String(open));
+      tap.textContent=open?'这就是 Skill 里的固定方法':'点击展开 Skill';
+    }
+    ex.addEventListener('click',toggleExample);
+    ex.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleExample();}});
+  </script>
+</body>
+</html>
