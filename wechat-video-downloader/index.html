@@ -54,12 +54,7 @@
     .download:hover{background:var(--accent2)}
     .tip{width:min(760px,100%);margin-top:20px;color:#8c949d;font-size:12px;line-height:1.8;text-align:center}
     .privacy{margin-top:10px;font-size:11px;color:#a0a7ae}
-    footer{margin-top:auto;padding-top:70px;color:#a1a7ae;font-size:11px;text-align:center;line-height:1.85}
-    .footer-meta{margin-top:4px;color:#b0b5bb}
-    .footer-meta a{color:inherit;text-decoration:none;transition:color .15s}
-    .footer-meta a:hover{color:#858d96}
-    .footer-sep{margin:0 8px;color:#c1c5ca}
-    #busuanzi_value_page_pv{font-variant-numeric:tabular-nums}
+    footer{margin-top:auto;padding-top:70px;color:#9aa1a9;font-size:11px;text-align:center;line-height:1.8}
     .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:rgba(25,29,33,.9);color:#fff;padding:10px 15px;border-radius:999px;font-size:13px;transition:.2s;z-index:10}
     .toast.show{opacity:1;transform:translate(-50%,0)}
     @media(max-width:620px){
@@ -113,18 +108,10 @@
       <div class="privacy">解析时，视频号分享链接会发送至第三方公共解析服务；本站不保存链接和视频。</div>
     </div>
 
-    <footer>
-      <div>仅支持公开可访问的视频。解析能力可能随微信接口调整而变化。</div>
-      <div class="footer-meta">
-        <a href="mailto:linhu@scu.edu.cn">linhu@scu.edu.cn</a>
-        <span class="footer-sep">·</span>
-        <span id="busuanzi_container_page_pv" style="display:none">累计访问 <span id="busuanzi_value_page_pv"></span> 次</span>
-      </div>
-    </footer>
+    <footer>仅支持公开可访问的视频。解析能力可能随微信接口调整而变化。</footer>
   </main>
   <div id="toast" class="toast">已复制</div>
 
-<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 <script>
 (() => {
   const API = 'https://sph.litao.workers.dev/api/fetch_video_profile';
