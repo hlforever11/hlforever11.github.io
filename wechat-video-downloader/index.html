@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="使用 Apify 国外解析服务处理微信视频号分享链接，并保存公开可访问的视频。">
+  <meta name="description" content="免费解析微信视频号分享链接，并保存公开可访问的视频。">
   <meta name="theme-color" content="#f2f4f2">
   <title>微信视频号视频下载</title>
   <style>
@@ -304,44 +304,6 @@
 
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-    dialog {
-      width: min(470px, calc(100% - 32px));
-      padding: 0;
-      color: var(--ink);
-      background: var(--surface-solid);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      box-shadow: 0 28px 90px rgba(25, 34, 30, 0.2);
-    }
-
-    dialog::backdrop { background: rgba(24, 31, 28, 0.35); backdrop-filter: blur(3px); }
-    .dialog-body { padding: 24px; }
-    .dialog-body h2 { margin: 0; font-size: 20px; letter-spacing: -0.02em; }
-    .dialog-copy { margin: 9px 0 18px; color: var(--muted); font-size: 13px; line-height: 1.7; }
-
-    .token-input {
-      width: 100%;
-      height: 48px;
-      padding: 0 14px;
-      color: var(--ink);
-      background: #f7f9f7;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      outline: none;
-      font: inherit;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 13px;
-    }
-
-    .token-input:focus { border-color: #9aa9a2; box-shadow: 0 0 0 4px rgba(77, 98, 89, 0.08); }
-    .remember { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--muted); font-size: 12px; }
-    .remember input { accent-color: var(--accent); }
-    .dialog-links { margin-top: 15px; color: var(--faint); font-size: 12px; line-height: 1.8; }
-    .dialog-links a { color: #63716a; }
-    .dialog-actions { display: flex; justify-content: space-between; gap: 9px; margin-top: 20px; }
-    .dialog-actions-right { display: flex; gap: 9px; }
-    .dialog-actions button { min-height: 43px; border-radius: 13px; }
-
     @media (max-width: 620px) {
       .page { padding-top: 48px; }
       .workbench { margin-top: 32px; padding: 12px; }
@@ -385,10 +347,9 @@
       </div>
       <div class="service-row">
         <span class="service-label">
-          <span id="serviceDot" class="service-dot" aria-hidden="true"></span>
-          国外解析：Apify · <span id="tokenState">Token 未配置</span>
+          <span id="serviceDot" class="service-dot ready" aria-hidden="true"></span>
+          匿名免费解析 · 无需 Token
         </span>
-        <button id="settingsButton" class="text-button" type="button">配置 Token</button>
       </div>
       <div id="status" class="status" role="status" aria-live="polite"></div>
     </section>
@@ -415,7 +376,7 @@
 
     <div class="note">
       如果浏览器直接播放视频，请在播放页面选择“保存视频”或“视频另存为”。
-      <div class="privacy">解析请求仅发往 api.apify.com；本站服务器不保存链接、Token 或视频。视频文件仍来自原始 CDN。</div>
+      <div class="privacy">解析请求会经过免费后端；本站不保存分享链接或视频，视频文件由源站或下载代理直接提供。</div>
     </div>
 
     <footer>
@@ -433,47 +394,16 @@
     </footer>
   </main>
 
-  <dialog id="tokenDialog" aria-labelledby="tokenTitle">
-    <form method="dialog" class="dialog-body">
-      <h2 id="tokenTitle">配置 Apify Token</h2>
-      <p class="dialog-copy">Apify 是国外解析平台。Token 只保存在当前浏览器中，并通过 Authorization 请求头直接发送给 Apify，不会写入 GitHub。</p>
-      <label for="tokenInput" class="sr-only" hidden>Apify API Token</label>
-      <input id="tokenInput" class="token-input" type="password" placeholder="apify_api_..." autocomplete="off" spellcheck="false">
-      <label class="remember">
-        <input id="rememberToken" type="checkbox">
-        在此浏览器中记住（不勾选则关闭标签页后清除）
-      </label>
-      <div class="dialog-links">
-        <a href="https://console.apify.com/settings/integrations" target="_blank" rel="noopener noreferrer">获取 API Token</a>
-        ·
-        <a href="https://apify.com/agentflow/wechat-channels-video-downloader" target="_blank" rel="noopener noreferrer">打开解析服务</a>
-        <br>成功解析约 US$0.02 / 条；本页为每次调用设置 US$0.02 费用上限。
-      </div>
-      <div class="dialog-actions">
-        <button id="removeTokenButton" class="text-button" type="button">清除 Token</button>
-        <div class="dialog-actions-right">
-          <button class="secondary" type="submit">取消</button>
-          <button id="saveTokenButton" class="primary" type="button">保存</button>
-        </div>
-      </div>
-    </form>
-  </dialog>
-
   <div id="toast" class="toast" role="status" aria-live="polite">已复制</div>
 
   <script>
     (() => {
       'use strict';
 
-      const APIFY_API = 'https://api.apify.com/v2/actors/agentflow~wechat-channels-video-downloader/run-sync-get-dataset-items?maxTotalChargeUsd=0.02&timeout=60';
-      const TOKEN_SESSION_KEY = 'wechat-video.apify-token.session';
-      const TOKEN_LOCAL_KEY = 'wechat-video.apify-token.local';
+      const PARSE_API = 'https://wechat-video-downloader-api-hlforever11-6366.vercel.app/api/parse';
       const shareInput = document.getElementById('shareInput');
       const parseButton = document.getElementById('parseButton');
       const clearButton = document.getElementById('clearButton');
-      const serviceDot = document.getElementById('serviceDot');
-      const tokenState = document.getElementById('tokenState');
-      const settingsButton = document.getElementById('settingsButton');
       const status = document.getElementById('status');
       const result = document.getElementById('result');
       const cover = document.getElementById('cover');
@@ -484,11 +414,6 @@
       const downloadButton = document.getElementById('downloadButton');
       const copyButton = document.getElementById('copyButton');
       const againButton = document.getElementById('againButton');
-      const tokenDialog = document.getElementById('tokenDialog');
-      const tokenInput = document.getElementById('tokenInput');
-      const rememberToken = document.getElementById('rememberToken');
-      const removeTokenButton = document.getElementById('removeTokenButton');
-      const saveTokenButton = document.getElementById('saveTokenButton');
       const toast = document.getElementById('toast');
       let currentVideoUrl = '';
       let toastTimer;
@@ -554,70 +479,6 @@
         toastTimer = window.setTimeout(() => toast.classList.remove('show'), 1600);
       }
 
-      function readToken() {
-        try {
-          return sessionStorage.getItem(TOKEN_SESSION_KEY)
-            || localStorage.getItem(TOKEN_LOCAL_KEY)
-            || '';
-        } catch (_) {
-          return '';
-        }
-      }
-
-      function updateTokenState() {
-        const token = readToken();
-        let remembered = false;
-        try {
-          remembered = Boolean(localStorage.getItem(TOKEN_LOCAL_KEY));
-        } catch (_) {}
-
-        serviceDot.classList.toggle('ready', Boolean(token));
-        tokenState.textContent = token
-          ? remembered ? '已配置（此浏览器）' : '已配置（当前会话）'
-          : 'Token 未配置';
-        settingsButton.textContent = token ? '更换 Token' : '配置 Token';
-        removeTokenButton.hidden = !token;
-      }
-
-      function openTokenDialog() {
-        const token = readToken();
-        let remembered = false;
-        try {
-          remembered = Boolean(localStorage.getItem(TOKEN_LOCAL_KEY));
-        } catch (_) {}
-
-        tokenInput.value = token;
-        rememberToken.checked = remembered;
-        tokenInput.setCustomValidity('');
-        removeTokenButton.hidden = !token;
-        if (typeof tokenDialog.showModal === 'function') {
-          tokenDialog.showModal();
-          window.setTimeout(() => tokenInput.focus(), 60);
-        }
-      }
-
-      function writeToken(token, shouldRemember) {
-        sessionStorage.removeItem(TOKEN_SESSION_KEY);
-        localStorage.removeItem(TOKEN_LOCAL_KEY);
-        if (shouldRemember) {
-          localStorage.setItem(TOKEN_LOCAL_KEY, token);
-        } else {
-          sessionStorage.setItem(TOKEN_SESSION_KEY, token);
-        }
-      }
-
-      function removeToken() {
-        try {
-          sessionStorage.removeItem(TOKEN_SESSION_KEY);
-          localStorage.removeItem(TOKEN_LOCAL_KEY);
-        } catch (_) {}
-        tokenInput.value = '';
-        rememberToken.checked = false;
-        updateTokenState();
-        tokenDialog.close();
-        showToast('Token 已清除');
-      }
-
       function errorText(value) {
         if (!value) return '';
         if (typeof value === 'string') return value;
@@ -628,12 +489,14 @@
 
       function responseError(response, payload) {
         const remoteMessage = errorText(payload && payload.error) || errorText(payload);
-        if (response.status === 401) return 'Apify Token 无效或已失效，请重新配置。';
-        if (response.status === 402) return 'Apify 账户余额不足，或尚未启用该付费解析服务。';
-        if (response.status === 403) return 'Apify 拒绝了本次调用，请在解析服务页面确认试用或计费授权。';
-        if (response.status === 408) return '国外解析服务运行超时，请稍后再试。';
-        if (response.status === 429) return 'Apify 调用过于频繁或已达到额度限制，请稍后再试。';
-        return remoteMessage || `Apify 服务错误（HTTP ${response.status}）`;
+        if (response.status === 401) return '解析后端尚未公开访问。';
+        if (response.status === 403) return remoteMessage || '当前页面无权调用解析服务。';
+        if (response.status === 408 || response.status === 504) return '免费解析服务运行超时，请稍后再试。';
+        if (response.status === 422) {
+          return [remoteMessage, payload && payload.details].filter(Boolean).join('；');
+        }
+        if (response.status === 429) return remoteMessage || '操作太快，请稍后再试。';
+        return remoteMessage || `免费解析服务错误（HTTP ${response.status}）`;
       }
 
       async function parseVideo() {
@@ -643,29 +506,21 @@
           return;
         }
 
-        const token = readToken();
-        if (!token) {
-          showError('请先配置 Apify API Token，再开始解析。');
-          openTokenDialog();
-          return;
-        }
-
         resetResult();
         parseButton.disabled = true;
-        showLoading('正在通过 Apify 解析，通常需要几秒钟…');
+        showLoading('正在免费解析，通常需要 10–30 秒…');
 
         const controller = new AbortController();
-        const timeout = window.setTimeout(() => controller.abort(), 90000);
+        const timeout = window.setTimeout(() => controller.abort(), 65000);
 
         try {
-          const response = await fetch(APIFY_API, {
+          const response = await fetch(PARSE_API, {
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
               Accept: 'application/json'
             },
-            body: JSON.stringify({ urls: [shareUrl] }),
+            body: JSON.stringify({ url: shareUrl }),
             signal: controller.signal
           });
 
@@ -674,49 +529,45 @@
           try {
             payload = JSON.parse(raw);
           } catch (_) {
-            throw new Error('Apify 返回了无法识别的数据。');
+            throw new Error('免费解析服务返回了无法识别的数据。');
           }
 
           if (!response.ok) {
             throw new Error(responseError(response, payload));
           }
 
-          const item = Array.isArray(payload)
-            ? payload[0]
-            : payload && Array.isArray(payload.items)
-              ? payload.items[0]
-              : payload;
+          const item = payload;
 
           if (!item) {
             throw new Error('解析完成，但没有返回视频数据。请确认分享链接没有过期。');
           }
 
-          if (item.success === false) {
+          if (item.ok === false) {
             throw new Error(errorText(item.error) || errorText(item.message) || '这个链接无法解析，请确认视频仍为公开状态。');
           }
 
-          const videoUrl = safeHttpUrl(item.download_url || item.downloadUrl || item.video_url || item.videoUrl);
+          const videoUrl = safeHttpUrl(item.video_url);
 
           if (!videoUrl) {
             throw new Error('已经取得视频信息，但没有找到可下载的视频直链。');
           }
 
           currentVideoUrl = videoUrl;
-          const title = String(item.title || item.desc || item.description || '').trim();
+          const title = String(item.title || '').trim();
           videoTitle.textContent = title ? title.split('\n')[0].slice(0, 100) : '微信视频号视频';
 
-          const nickname = String(item.author || item.nickname || '').trim();
+          const nickname = String(item.author || '').trim();
           author.textContent = nickname ? `视频号：${nickname}` : '';
           author.hidden = !nickname;
 
-          const coverUrl = safeHttpUrl(item.cover || item.cover_url || item.coverUrl);
+          const coverUrl = safeHttpUrl(item.cover_url);
           if (coverUrl) {
             cover.src = coverUrl;
             cover.classList.add('show');
           }
 
-          format.textContent = new URL(videoUrl).pathname.toLowerCase().includes('.m3u8') ? 'HLS' : 'MP4';
-          counts.textContent = 'Apify';
+          format.textContent = String(item.format || 'MP4');
+          counts.textContent = '匿名免费';
           counts.hidden = false;
 
           downloadButton.href = videoUrl;
@@ -725,11 +576,11 @@
           result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } catch (error) {
           let message = error && error.name === 'AbortError'
-            ? '解析超过 90 秒，已停止等待，请稍后再试。'
+            ? '解析超过 65 秒，已停止等待，请稍后再试。'
             : error && error.message || '解析失败，请稍后再试。';
 
           if (/Failed to fetch|NetworkError/i.test(message)) {
-            message = '无法连接 api.apify.com，请确认翻墙网络可用后重试。';
+            message = '无法连接免费解析服务，请检查网络后重试。';
           }
           showError(message);
         } finally {
@@ -746,30 +597,6 @@
       });
 
       parseButton.addEventListener('click', parseVideo);
-      settingsButton.addEventListener('click', openTokenDialog);
-
-      tokenInput.addEventListener('input', () => tokenInput.setCustomValidity(''));
-
-      saveTokenButton.addEventListener('click', () => {
-        const token = tokenInput.value.trim();
-        if (token.length < 20) {
-          tokenInput.setCustomValidity('请输入完整的 Apify API Token。');
-          tokenInput.reportValidity();
-          return;
-        }
-        try {
-          writeToken(token, rememberToken.checked);
-        } catch (_) {
-          tokenInput.setCustomValidity('浏览器禁止了本地存储，请检查隐私设置。');
-          tokenInput.reportValidity();
-          return;
-        }
-        updateTokenState();
-        tokenDialog.close();
-        showToast('Token 已保存');
-      });
-
-      removeTokenButton.addEventListener('click', removeToken);
 
       clearButton.addEventListener('click', () => {
         shareInput.value = '';
@@ -798,7 +625,7 @@
         }
       });
 
-      updateTokenState();
+      updateButtonState();
     })();
   </script>
 </body>
