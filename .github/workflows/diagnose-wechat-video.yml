@@ -1,0 +1,43 @@
+name: Diagnose WeChat Video Parser
+
+on:
+  push:
+    paths:
+      - '.github/workflows/diagnose-wechat-video.yml'
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test parser homepage
+        shell: bash
+        run: |
+          set +e
+          echo '=== GET / ==='
+          curl -sS -D /tmp/h1 -o /tmp/b1 --max-time 20 https://sph.litao.workers.dev/
+          cat /tmp/h1
+          head -c 300 /tmp/b1 || true
+          echo
+      - name: Test parser API and CORS
+        shell: bash
+        run: |
+          set +e
+          echo '=== OPTIONS API ==='
+          curl -sS -D /tmp/h2 -o /tmp/b2 --max-time 20 -X OPTIONS \
+            -H 'Origin: https://hlforever11.github.io' \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: content-type' \
+            https://sph.litao.workers.dev/api/fetch_video_profile
+          cat /tmp/h2
+          cat /tmp/b2 || true
+          echo
+          echo '=== POST API ==='
+          curl -sS -D /tmp/h3 -o /tmp/b3 --max-time 30 \
+            -H 'Origin: https://hlforever11.github.io' \
+            -H 'Content-Type: application/json' \
+            --data '{"url":"https://weixin.qq.com/sph/AxPprQgcwh"}' \
+            https://sph.litao.workers.dev/api/fetch_video_profile
+          cat /tmp/h3
+          cat /tmp/b3 || true
+          echo
