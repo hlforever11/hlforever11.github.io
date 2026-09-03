@@ -75,6 +75,16 @@
       {source:'ScienceDirect 正式题录',sourceUrl:'https://doi.org/10.1016/j.serrev.2009.02.002',title:'Bridges to China: Developing Partnerships Between Serials Librarians in the United States and China',authors:['Allan Scherlen','Xiaorong Shao','Elizabeth Cramer'],year:2009,container:'Serials Review',volume:'35',issue:'2',pages:'75-79',doi:'10.1016/j.serrev.2009.02.002',type:'journal-article'},
       {source:'University of Pretoria 机构知识库',sourceUrl:'https://repository.up.ac.za/items/8ed7a628-0aa0-4865-b17d-a9f5b1b1bcb2',title:'Critical Reflections on International Librarianship',authors:['Peter Johan Lor'],year:2008,container:'Mousaion',volume:'26',issue:'1',pages:'1-15',type:'journal-article'},
       {source:'Emerald 正式题录',sourceUrl:'https://doi.org/10.1108/EUM0000000005499',title:'Library Cooperation on Overseas Chinese Studies: From Resource Sharing to the Development of Library Collections',authors:['Sheau-yueh J. Chao'],year:2001,container:'Collection Building',volume:'20',issue:'3',pages:'123-130',doi:'10.1108/EUM0000000005499',type:'journal-article'},
+      {source:'万方正式期刊题录',sourceUrl:'https://c.wanfangdata.com.cn/magazine/fxj?isSync=0&issueNum=3&page=1&publishYear=2015&tabId=article',title:'我国刑事证据能力之理论归纳及思考',authors:['纵博'],year:2015,container:'法学家',volume:'',issue:'3',pages:'72-85',type:'journal-article'},
+      {source:'维普正式期刊题录',sourceUrl:'https://dianda.cqvip.com/Qikan/Article/Detail?from=Qikan_Article_Detail&id=668904657',title:'“热”与“冷”:非法证据排除规则适用的实证研究',authors:['左卫民'],year:2015,container:'法商研究',volume:'32',issue:'3',pages:'151-160',type:'journal-article'},
+      {source:'CNKI 期刊参考文献题录',sourceUrl:'https://scjg.cbpt.cnki.net/portal/journal/portal/client/paper/ed6c597b0cd8e8b4f22b331463d39e7d',title:'论侦查中心主义',authors:['陈瑞华'],year:2017,container:'政法论坛',volume:'35',issue:'2',pages:'3-19',type:'journal-article'},
+      {source:'公开期刊引证题录',sourceUrl:'https://www.hanspub.org/journal/paperinformation?paperid=83687',title:'《关于全面推进以审判为中心的刑事诉讼制度改革的实施意见》的理解与适用',authors:['戴长林','刘静坤'],year:2017,container:'人民司法(应用)',volume:'',issue:'10',pages:'22-34',type:'journal-article'},
+      {source:'公开期刊引证题录',sourceUrl:'https://www.hanspub.org/journal/paperinformation?paperid=99277',title:'中国法语境中的“排除合理怀疑”',authors:['龙宗智'],year:2012,container:'中外法学',volume:'24',issue:'6',pages:'1124-1144',type:'journal-article'},
+      {source:'《中国法学》正式题录',sourceUrl:'https://clsjp.chinalaw.org.cn/portal/article/index/id/8874.html',title:'刑事证据审查的基本制度结构',authors:['吴洪淇'],year:2017,container:'中国法学',volume:'',issue:'6',pages:'167-186',type:'journal-article'},
+      {source:'《法律科学》编辑部期次目录',sourceUrl:'https://flkx.nwupl.edu.cn/jkdt/56274.htm',title:'“不得作为定案根据”条款的学理解析',authors:['纵博'],year:2014,container:'法律科学(西北政法大学学报)',volume:'32',issue:'4',pages:'',partialFields:['页码'],type:'journal-article'},
+      {source:'《现代法学》公开期刊题录',sourceUrl:'https://lawdata.com.tw/tw/detail.aspx?no=254930',title:'论无证据能力的证据——兼评我国的证据能力规则',authors:['万毅'],year:2014,container:'现代法学',volume:'36',issue:'4',pages:'131-145',type:'journal-article'},
+      {source:'维普正式期刊题录',sourceUrl:'https://dianda.cqvip.com/Qikan/Article/Detail?from=Qikan_Article_Detail&id=32114080',title:'西方自我宽恕模型研究进展',authors:['刘凌','马旭颖','沈悦'],year:2013,container:'辽宁师范大学学报(社会科学版)',volume:'36',issue:'2',pages:'211-215',type:'journal-article'},
+      {source:'《法学研究》正式期次题录',sourceUrl:'https://zgfxqk.chinalaw.org.cn/portal/article/index/id/3145.html',title:'证据属性层次论——基于证据规则结构体系的理论反思',authors:['郑飞'],year:2021,container:'法学研究',volume:'43',issue:'2',pages:'123-137',type:'journal-article'},
       {source:'Springer 正式书目',sourceUrl:'https://link.springer.com/book/10.1007/978-1-4614-3597-6',title:'Models, Methods, Concepts & Applications of the Analytic Hierarchy Process',authors:['Thomas L. Saaty','Luis G. Vargas'],year:2012,container:'Springer',volume:'',issue:'',pages:'',doi:'10.1007/978-1-4614-3597-6',isbn:'9781461435976',type:'book'}
     ];
     const $=s=>document.querySelector(s), input=$('#input'), counter=$('#counter'), clearBtn=$('#clearBtn'), verifyBtn=$('#verifyBtn'), fileInput=$('#fileInput'), drop=$('#dropZone'), msg=$('#fileMessage');
@@ -135,14 +145,16 @@
     async function handleFile(file){try{if(file.size>MAX_SIZE)throw Error('文件不能超过 15 MB。');const ext=file.name.split('.').pop().toLowerCase();if(!['docx','pdf','txt'].includes(ext))throw Error('暂只支持 DOCX、文字版 PDF 和 TXT。');fileState('正在本地读取文档…');let text='';if(ext==='txt')text=new TextDecoder('utf-8').decode(await file.arrayBuffer());else if(ext==='docx'){if(!window.mammoth)throw Error('DOCX 解析组件加载失败，请刷新后重试。');text=(await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()})).value}else{const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;if(pdf.numPages>100)throw Error('PDF 超过 100 页，请只保留参考文献部分。');const pages=[];for(let n=1;n<=pdf.numPages;n++){const content=await(await pdf.getPage(n)).getTextContent();pages.push(content.items.map(i=>i.str+(i.hasEOL?'\n':' ')).join(''))}text=pages.join('\n')};const list=extractReferences(text),shown=list.slice(0,MAX);input.value=shown.join('\n');update();fileState(`从 ${file.name} 识别出 ${list.length} 条参考文献，已载入${list.length>MAX?'前 20 条':'待核验区'}。`,'success')}catch(e){fileState(e.message||'读取文档失败。','error')}finally{fileInput.value=''}}
     const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
     const meta={verified:['已确认真实，著录一致','✓'],partial:['已确认真实，部分字段待复核','✓'],corrected:['已确认真实，著录需修正','!'],review:['真实性需人工复核','?'],unverified:['暂未证实','—'],error:['核验失败','×']};
+    function numberedCanonical(citation,index){const value=String(citation||'').replace(/^\[\s*\d+\s*\]\s*/,'').trim();return value?`[${index+1}] ${value}`:''}
     function card(r,i){
       const m=meta[r.status]||meta.error,diffs=(r.differences||[]).map(d=>`<div class="diff"><b>${esc(d.field)}</b><span>提交：${esc(d.submitted)}</span><span>核实：${esc(d.verified)}</span></div>`).join('');
       const links=(r.evidenceLinks||[]).map(link=>`<a target="_blank" rel="noopener" href="${esc(link.url)}">${esc(link.label)} ↗</a>`).join('');
-      return `<article class="result"><div class="result-top"><span class="status ${r.status==='error'?'error-status':r.status}">${m[1]} ${m[0]}</span><span class="confidence">第 ${i+1} 条 · 真实性置信度 ${Math.round((r.authenticityConfidence??r.confidence??0)*100)}%</span></div><p class="submitted">${esc(r.submitted)}</p><p class="note">${esc(r.note)}</p>${diffs?`<div class="diffs">${diffs}</div>`:''}${r.canonical?`<div class="canonical"><b>建议著录（GB/T 7714 风格）</b>${esc(r.canonical)}</div>`:''}${r.sourceUrl?`<a class="source" target="_blank" rel="noopener" href="${esc(r.sourceUrl)}">查看 ${esc(r.source||'来源')} 原始记录 ↗</a>`:''}${links?`<div class="evidence-links">${links}</div>`:''}</article>`
+      const citationLabel=r.canonicalStandard==='GB/T 7714—2015'?'建议著录（GB/T 7714—2015）':'建议著录（GB/T 7714 风格）';
+      return `<article class="result"><div class="result-top"><span class="status ${r.status==='error'?'error-status':r.status}">${m[1]} ${m[0]}</span><span class="confidence">第 ${i+1} 条 · 真实性置信度 ${Math.round((r.authenticityConfidence??r.confidence??0)*100)}%</span></div><p class="submitted">${esc(r.submitted)}</p><p class="note">${esc(r.note)}</p>${diffs?`<div class="diffs">${diffs}</div>`:''}${r.canonical?`<div class="canonical"><b>${citationLabel}</b>${esc(numberedCanonical(r.canonical,i))}</div>`:''}${r.sourceUrl?`<a class="source" target="_blank" rel="noopener" href="${esc(r.sourceUrl)}">查看 ${esc(r.source||'来源')} 原始记录 ↗</a>`:''}${links?`<div class="evidence-links">${links}</div>`:''}</article>`
     }
     function render(all){const counts={verified:0,partial:0,corrected:0,review:0,unverified:0,error:0};all.forEach(x=>counts[x.status]=(counts[x.status]||0)+1);$('#summary').innerHTML=[['已确认真实',counts.verified+counts.partial],['真实但需修正',counts.corrected],['需人工复核',counts.review],['暂未证实/失败',counts.unverified+counts.error]].map(x=>`<div><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');$('#cards').innerHTML=all.map(card).join('')}
     const HISTORY_KEY='wenzheng-verification-history-v1',HISTORY_LIMIT=20,historyList=$('#historyList'),clearHistoryBtn=$('#clearHistoryBtn');
-    const VERIFY_CACHE_KEY='wenzheng-success-cache-v1',VERIFY_CACHE_TTL=180*24*60*60*1000,VERIFY_CACHE_LIMIT=120;
+    const VERIFY_CACHE_KEY='wenzheng-success-cache-v2',VERIFY_CACHE_TTL=180*24*60*60*1000,VERIFY_CACHE_LIMIT=120;
     function verificationCacheKey(reference){const value=String(reference||''),normalized=typeof value.normalize==='function'?value.normalize('NFKC'):value;return normalized.toLowerCase().replace(/[\s\u3000.,，。;；:：'"“”‘’()[\]（）【】{}<>《》\-–—_/\\]+/g,'')}
     function readVerificationCache(){try{const value=JSON.parse(localStorage.getItem(VERIFY_CACHE_KEY)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch(e){return{}}}
     function cachedVerification(reference){const key=verificationCacheKey(reference),cache=readVerificationCache(),item=cache[key];if(!item)return null;if(Date.now()-Number(item.storedAt||0)>VERIFY_CACHE_TTL){delete cache[key];try{localStorage.setItem(VERIFY_CACHE_KEY,JSON.stringify(cache))}catch(e){}return null}return{...item.result,submitted:reference,cacheHit:true,note:`已使用本机最近一次成功核验的公开书目证据。${item.result.note||''}`}}
@@ -241,6 +253,10 @@
       const month=String(Number(match[2])).padStart(2,'0');if(!match[3])return`${year}-${month}`;
       return`${year}-${month}-${String(Number(match[3])).padStart(2,'0')}`;
     }
+    function looksLikeChineseAuthorList(value){
+      const names=String(value||'').split(/\s*[;；,，、]\s*/).map(cleanValue).filter(Boolean);
+      return!!(names.length&&names.length<=20&&names.every(name=>/^[\p{Script=Han}·]{2,24}$/u.test(name.replace(/\s+/g,''))));
+    }
     function parseReference(reference){
       const raw=String(reference).replace(/\s+/g,' ').trim();
       const work=raw.replace(/^\s*(?:\[\s*\d+\s*\]|[\(（]\s*\d{1,3}\s*[\)）]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)]|(?!(?:18|19|20)\d{2}\b)\d{1,3}\s+(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff]))\s*/,'').trim();
@@ -252,13 +268,20 @@
       const publicationMatch=(type==='EB/OL'||url)?body.match(/\(\s*((?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2}(?:\s*[月\-/.]\s*\d{1,2}\s*日?)?)?)\s*\)/):null;
       const accessMatch=body.match(/\[\s*((?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2}(?:\s*[月\-/.]\s*\d{1,2}\s*日?)?)?)\s*\]/);
       const publicationDate=normalizeDate(publicationMatch?.[1]||''),accessDate=normalizeDate(accessMatch?.[1]||'');
-      let title='',authors='',container='';
+      let title='',authors='',container='',cnkiTitleFirst=false;
       if(typeMatch){
-        const before=body.slice(0,typeMatch.index).trim(),parts=before.split(/[.。]\s*/).map(cleanValue).filter(Boolean);
-        title=parts.pop()||'';authors=parts.join('. ').trim();
+        const before=body.slice(0,typeMatch.index).trim();
         const tail=body.slice(typeMatch.index+typeMatch[0].length).replace(/^[\s./／]+/,'');
-        const containerMatch=tail.match(/^(.+?)(?:[,，]\s*|[.。]\s+)(?=(?:18|19|20)\d{2}\b)/);
-        if(containerMatch)container=cleanValue(containerMatch[1]);
+        const authorStop=tail.search(/[.。]/),possibleAuthors=authorStop>0?cleanValue(tail.slice(0,authorStop)):'',afterAuthors=authorStop>0?tail.slice(authorStop+1).replace(/^\s+/,''):'';
+        const cnkiContainerMatch=afterAuthors.match(/^(.+?)(?:[,，]\s*|[.。]\s+)(?=(?:18|19|20)\d{2}\b)/);
+        if(authorStop>0&&looksLikeChineseAuthorList(possibleAuthors)&&cnkiContainerMatch){
+          title=cleanValue(before);authors=possibleAuthors;container=cleanValue(cnkiContainerMatch[1]);cnkiTitleFirst=true;
+        }else{
+          const parts=before.split(/[.。]\s*/).map(cleanValue).filter(Boolean);
+          title=parts.pop()||'';authors=parts.join('. ').trim();
+          const containerMatch=tail.match(/^(.+?)(?:[,，]\s*|[.。]\s+)(?=(?:18|19|20)\d{2}\b)/);
+          if(containerMatch)container=cleanValue(containerMatch[1]);
+        }
       }else if(url){
         const authorLabel=body.match(/(?:作者|author)\s*[:：]\s*(.+?)(?=\s*[;；]\s*(?:题名|标题|title)\s*[:：])/i),titleLabel=body.match(/(?:题名|标题|title)\s*[:：]\s*(.+?)(?=\s*[;；]\s*(?:日期|发布时间|网址|url)\s*[:：]|\s*\(?\s*(?:18|19|20)\d{2})/i);
         if(authorLabel&&titleLabel){authors=cleanValue(authorLabel[1]);title=cleanValue(titleLabel[1])}
@@ -299,7 +322,15 @@
         else if(volIssue?.[1]||volIssue?.[2]||pages)type='J';
         else if(/\b(?:press|springer|wiley|publisher)\b/i.test(body)||/出版社/.test(body))type='M';
       }
-      return{raw,work,doi,isbn,pmid,arxivId,standardNumber,patentNumber,url,type,title,authors,container,year,publicationDate,accessDate,volume:volIssue?.[1]||'',issue:volIssue?.[2]||issueWithoutVolume?.[1]||'',pages};
+      return{raw,work,doi,isbn,pmid,arxivId,standardNumber,patentNumber,url,type,title,authors,container,year,publicationDate,accessDate,volume:volIssue?.[1]||'',issue:volIssue?.[2]||issueWithoutVolume?.[1]||'',pages,cnkiTitleFirst};
+    }
+    function conventionalReference(parsed){
+      if(!parsed?.cnkiTitleFirst)return parsed?.raw||'';
+      let value=`${parsed.authors}. ${parsed.title}[${parsed.type}]. ${parsed.container}`;
+      if(parsed.year)value+=`, ${parsed.year}`;
+      if(parsed.volume)value+=`, ${parsed.volume}${parsed.issue?`(${parsed.issue})`:''}`;else if(parsed.issue)value+=`(${parsed.issue})`;
+      if(parsed.pages)value+=`:${parsed.pages}`;
+      return`${value}.`;
     }
     const hasHan=value=>/\p{Script=Han}/u.test(String(value||''));
     function splitSubmittedAuthors(value){
@@ -712,7 +743,7 @@
     }
     function canonicalCitation(candidate,parsed){
       const names=(candidate.authors||[]).map(gtAuthor).filter(Boolean),hasChinese=names.some(x=>/\p{Script=Han}/u.test(x));
-      let authors=names.slice(0,3).join(hasChinese?'，':', ');if(names.length>3)authors+=hasChinese?'，等':', et al.';
+      let authors=names.slice(0,3).join(', ');if(names.length>3)authors+=hasChinese?', 等':', et al.';
       const candidateType=String(candidate.type||'').toLowerCase();let type=candidateGbType(candidate)||parsed?.type||'J';if(type==='R'&&parsed?.url)type='R/OL';
       const submittedTitle=cleanValue(parsed?.title),verifiedTitle=cleanValue(candidate.title),submittedNorm=normalizeText(submittedTitle),verifiedNorm=normalizeText(verifiedTitle);
       const title=submittedNorm&&verifiedNorm&&submittedNorm.includes(verifiedNorm)?submittedTitle:verifiedTitle;
@@ -721,7 +752,7 @@
       if(container)citation+=type==='C'?`//${container}`:`. ${container}`;
       if(year)citation+=`${container?', ':'. '}${year}`;
       if(volume)citation+=`, ${volume}${issue?`(${issue})`:''}`;else if(issue)citation+=`(${issue})`;
-      if(pages)citation+=`: ${pages}`;
+      if(pages)citation+=`:${pages}`;
       citation+='.';if(candidate.doi)citation+=` DOI:${candidate.doi}.`;if(type==='M'&&candidate.isbn)citation+=` ISBN:${candidate.isbn}.`;if(type.includes('/OL')&&candidate.sourceUrl)citation+=` ${candidate.sourceUrl}.`;
       return citation.replace(/\.\./g,'.');
     }
@@ -744,9 +775,9 @@
       if(parsed.authors&&candidate.authors?.length&&metrics.authorScore<.55&&metrics.titleScore>.88)add('作者',parsed.authors,candidate.authors.map(displayName).join('，'));
       if(parsed.year&&candidate.year&&parsed.year!==candidate.year)add('年份',parsed.year,candidate.year);
       if(parsed.container&&candidate.container&&metrics.containerScore<.76&&metrics.titleScore>.86)add('刊名/来源',parsed.container,candidate.container);
-      if(parsed.volume&&candidate.volume&&!sameNumberField(parsed.volume,candidate.volume))add('卷号',parsed.volume,candidate.volume);
-      if(parsed.issue&&candidate.issue&&!sameNumberField(parsed.issue,candidate.issue))add('期号',parsed.issue,candidate.issue);
-      if(parsed.pages&&candidate.pages&&!same(parsed.pages.replace(/[–—]/g,'-'),candidate.pages.replace(/[–—]/g,'-')))add('页码',parsed.pages,candidate.pages);
+      if(candidate.volume&&!parsed.volume)add('卷号','未提供',candidate.volume);else if(parsed.volume&&candidate.volume&&!sameNumberField(parsed.volume,candidate.volume))add('卷号',parsed.volume,candidate.volume);
+      if(candidate.issue&&!parsed.issue)add('期号','未提供',candidate.issue);else if(parsed.issue&&candidate.issue&&!sameNumberField(parsed.issue,candidate.issue))add('期号',parsed.issue,candidate.issue);
+      if(candidate.pages&&!parsed.pages)add('页码','未提供',candidate.pages);else if(parsed.pages&&candidate.pages&&!same(parsed.pages.replace(/[–—]/g,'-'),candidate.pages.replace(/[–—]/g,'-')))add('页码',parsed.pages,candidate.pages);
       if(parsed.doi&&candidate.doi&&parsed.doi!==candidate.doi)add('DOI',parsed.doi,candidate.doi);
       let verifiedType=candidateGbType(candidate);if(verifiedType==='R'&&parsed.url)verifiedType='R/OL';if(parsed.type&&verifiedType&&parsed.type!==verifiedType)add('文献类型',`[${parsed.type}]`,`[${verifiedType}]`);
       return out;
@@ -765,12 +796,12 @@
         const best=ranked[0],confidence=best.metrics.score,evidenceLinks=scholarlyEvidenceLinks(parsed,best.candidate.doi||parsed.doi);
         if(confidence<.67)return{status:'unverified',confidence,submitted:reference,differences:[],note:`已查询 ${checked.join('、')}，但没有找到足以确认的同一文献；这可能是未收录或著录信息不足，不应仅据此判为虚假。`,checkedSources:checked,evidenceLinks};
         const diffs=differences(parsed,best.candidate,best.metrics),source=best.candidate.sources.join(' + ');
-        if(confidence<.80)return{status:'review',confidence,authenticityConfidence:confidence,submitted:reference,differences:diffs,accuracyDifferences:diffs,note:`在 ${source} 找到近似记录，但身份字段匹配度尚不足以自动确认，请人工复核。`,canonical:canonicalCitation(best.candidate,parsed),sourceUrl:best.candidate.sourceUrl,source,checkedSources:checked,evidenceLinks};
+        if(confidence<.80)return{status:'review',confidence,authenticityConfidence:confidence,submitted:reference,differences:diffs,accuracyDifferences:diffs,note:`在 ${source} 找到近似记录，但身份字段匹配度尚不足以自动确认，请人工复核。`,canonical:canonicalCitation(best.candidate,parsed),canonicalStandard:candidateGbType(best.candidate)==='J'?'GB/T 7714—2015':'',sourceUrl:best.candidate.sourceUrl,source,checkedSources:checked,evidenceLinks,trustedSource:!!best.candidate.trustedIndex};
         const partialFields=[...new Set([...(best.candidate.partialFields||[]),...missingMetadataFields(parsed,best.candidate)])],status=diffs.length?'corrected':partialFields.length?'partial':'verified';
         let note=diffs.length?`已在 ${source} 确认该文献真实存在；以下差异不降低真实性置信度，但建议按来源记录修正著录。`:`已在 ${source} 找到身份字段高度一致的记录，可确认该文献真实存在。`;
         if(partialFields.length&&!diffs.length)note=source==='DOI 注册元数据'?`已由 DOI 注册元数据确认篇名、年份、期刊、卷期、首页和 DOI；注册记录未完整提供${partialFields.join('、')}，本站保留原著录，并提供公开检索入口供继续核对。`:`已在 ${source} 通过篇名、作者和年份等核心字段确认该文献真实存在；该记录未完整提供${partialFields.join('、')}，这些字段暂时保留原著录，仍建议通过原始文献或下方公开检索入口复核。`;
         if(partialFields.length&&diffs.length)note+=source.includes('DOI 注册元数据')?` DOI 注册记录未完整提供${partialFields.join('、')}，相关原著录仍需通过下方公开检索入口复核。`:` 来源记录未完整提供${partialFields.join('、')}，相关原著录仍需通过下方公开检索入口复核。`;
-        return{status,confidence,authenticityConfidence:confidence,submitted:reference,differences:diffs,accuracyDifferences:diffs,authenticityBasis:best.metrics.basis,note,canonical:canonicalCitation(best.candidate,parsed),sourceUrl:best.candidate.sourceUrl,source,checkedSources:checked,evidenceLinks};
+        return{status,confidence,authenticityConfidence:confidence,submitted:reference,differences:diffs,accuracyDifferences:diffs,authenticityBasis:best.metrics.basis,note,canonical:canonicalCitation(best.candidate,parsed),canonicalStandard:candidateGbType(best.candidate)==='J'?'GB/T 7714—2015':'',sourceUrl:best.candidate.sourceUrl,source,checkedSources:checked,evidenceLinks,trustedSource:!!best.candidate.trustedIndex};
       }catch(e){
         return{status:'error',confidence:0,submitted:reference,differences:[],note:`核验失败：${e.name==='AbortError'?'开放数据源连接超时':e.message||'网络错误'}。可使用下方公开检索入口继续复核。`,checkedSources:[],evidenceLinks:scholarlyEvidenceLinks(parsed,parsed.doi)};
       }
@@ -787,22 +818,27 @@
       }finally{clearTimeout(timer)}
     }
     async function verifyOne(reference){
+      const parsed=parseReference(reference),cloudReference=conventionalReference(parsed);
       const cached=cachedVerification(reference);if(cached)return cached;
-      let result=null;
+      let result=null,localAttempt=null;
+      if(parsed.cnkiTitleFirst){
+        localAttempt=await verifyOneLocal(reference);
+        if(localAttempt.trustedSource){result={...localAttempt,browserFallback:true};rememberVerification(reference,result);return result}
+      }
       if(CLOUD_VERIFY_ENDPOINT){
         try{
-          const first=await callCloudVerification(reference);result=first;
+          const first=await callCloudVerification(cloudReference);result={...first,submitted:reference};
           if(['review','unverified','error'].includes(first.status)){
             await new Promise(resolve=>setTimeout(resolve,160));
-            try{const second=await callCloudVerification(reference);result={...(resultQuality(second)>resultQuality(first)?second:first),attemptCount:2}}catch(retryError){console.warn('云端核验自动重试失败',retryError)}
+            try{const second=await callCloudVerification(cloudReference),preferred=resultQuality(second)>resultQuality(first)?second:first;result={...preferred,submitted:reference,attemptCount:2}}catch(retryError){console.warn('云端核验自动重试失败',retryError)}
           }
         }catch(error){
           console.warn('云端核验暂不可用，回退浏览器开放数据源',error);
         }
       }
       if(!result||['review','unverified','error'].includes(result.status)){
-        const local=await verifyOneLocal(reference);
-        if(!result||resultQuality(local)>resultQuality(result))result={...local,browserFallback:true};
+        const local=localAttempt||await verifyOneLocal(reference);
+        if(local.trustedSource||!result||resultQuality(local)>resultQuality(result))result={...local,browserFallback:true};
       }
       rememberVerification(reference,result);
       return result;
