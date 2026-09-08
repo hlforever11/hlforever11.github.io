@@ -22,5 +22,7 @@
 #site-contact a:hover{text-decoration:underline;color:#e6d1a9}
 #site-contact .contact-separator{opacity:.45}
 #site-contact strong{font-weight:500;font-variant-numeric:tabular-nums;color:#c5c7ce}
-.timeline-panel{bottom:calc(26px + env(safe-area-inset-bottom))}
-@media(max-width:480px){#site-contact-content{font-size:12px;gap:4px 6px}.timeline-panel{bottom:calc(28px + env(safe-area-inset-bottom))}}
+:root{--contact-space:calc(26px + env(safe-area-inset-bottom))}
+#experience{height:calc(100dvh - var(--contact-space));min-height:min(600px,calc(100dvh - var(--contact-space)))}
+.timeline-panel{bottom:0}
+@media(max-width:480px){:root{--contact-space:calc(28px + env(safe-area-inset-bottom))}#site-contact-content{font-size:12px;gap:4px 6px}}
