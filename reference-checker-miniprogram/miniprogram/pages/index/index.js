@@ -9,6 +9,8 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v3";
 const VERIFICATION_CACHE_TTL = 180 * 24 * 60 * 60 * 1000;
 const VERIFICATION_CACHE_LIMIT = 120;
+const VISIT_BASE = 1000;
+const VISIT_CACHE_KEY = 'wenzheng-mini-pv-base1000-20261008';
 const SAMPLE = [
   "[1] 李书宁,刘一鸣.ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战[J].图书馆论坛,2023,43(05):104-110.",
   "[2] FLORIDI L. The Ethics of Information[M]. Oxford: Oxford University Press, 2014. ISBN 9780199641321.",
@@ -110,8 +112,8 @@ Page({
     showResults: false,
     historyEnabled: false,
     accountLoading: false,
-    visitTotal: "—",
-    historyPending:true,
+    visitTotal: VISIT_BASE,
+    historyPending:false,
     visitNote: "",
     historyCount: 0
   },
@@ -123,11 +125,19 @@ Page({
 
   async refreshVisits() {
     try {
+      const cached=Number(wx.getStorageSync(VISIT_CACHE_KEY));
+      if(Number.isSafeInteger(cached) && cached>=VISIT_BASE)this.setData({visitTotal:cached});
+    }catch(error){}
+    try {
       if(!app.globalData.visitId)app.globalData.visitId=Date.now().toString(36)+"_"+Math.random().toString(36).slice(2);
       const response=await this.callCloud("userHistory",{action:"visit",visitId:app.globalData.visitId});
       if(!response.ok)throw new Error(response.message || "访问统计暂不可用");
-      this.setData({visitTotal:response.total,historyPending:response.historyPending,visitNote:""});
-    }catch(error){this.setData({visitNote:"访问统计暂不可用"});}
+      const total=Number(response.total);
+      if(response.platform!=='miniprogram' || response.legacyBase!==VISIT_BASE || !Number.isSafeInteger(total) || total<VISIT_BASE)throw new Error("请部署新版访问计数云函数");
+      const latest=Math.max(Number(this.data.visitTotal)||VISIT_BASE,total);
+      this.setData({visitTotal:latest,historyPending:false,visitNote:""});
+      try{wx.setStorageSync(VISIT_CACHE_KEY,latest)}catch(error){}
+    }catch(error){this.setData({visitNote:"统计暂不可用，显示起始基数或最近一次统计值"});}
   },
 
   onShow() {

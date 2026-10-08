@@ -1,34 +1,37 @@
-// Restore the original site-PV metric so earlier cumulative visits continue.
+// A user-selected starting value plus this website's independent new page views.
 (() => {
-  const value=document.getElementById('busuanzi_site_pv');
+  const value=document.getElementById('websiteVisitCount');
   const holder=document.getElementById('siteCounter');
-  if(!value || !holder)return;
-  const page='https://hlforever11.github.io/reference-checker/';
-  const key='wenzheng-site-pv-last';
-  const show=(number,cached=false)=>{
+  if(!value || !holder || window.wenzhengVisitCounted)return;
+  window.wenzhengVisitCounted=true;
+  const base=1000;
+  const key='wenzheng-web-pv-base1000-20261008';
+  const counter='wenzheng_web_pv_20261008_3bfea882af07';
+  const show=(number,state='live')=>{
     value.textContent=number.toLocaleString('zh-CN');
     holder.classList.add('ready');
-    holder.title=cached?'上次成功读取的原站点累计访问次数，当前统计服务暂不可用':'沿用原站点历史累计访问次数；与微信小程序分别计数';
+    holder.setAttribute('aria-label',`文证网站累计访问 ${number} 次`);
+    holder.title=state==='base'?'预设起始基数1000，正在读取网站新增访问次数':state==='cached'?'显示最近一次成功读取值；起始基数1000，与小程序分别计数':'起始基数1000＋网站新增访问次数；与小程序分别计数';
   };
-  try {const old=Number(localStorage.getItem(key));if(Number.isSafeInteger(old)&&old>0)show(old,true)}catch(error){}
-  // The original counter did not cancel slow responses. Keep waiting after the
-  // loading hint so a late historical total can still reach the page.
-  const timeout=setTimeout(()=>{
-    if(value.textContent==='—'){
-      holder.title='正在读取原站点历史累计访问次数，统计请求仍在等待响应';
-      value.textContent='读取中';
-    }
-  },8000);
-  fetch('https://cdn.busuanzi.cc/api.php',{
-    method:'POST',body:JSON.stringify({url:page,referrer:document.referrer})
+  let last=base;
+  show(last,'base');
+  try {
+    const old=Number(localStorage.getItem(key));
+    if(Number.isSafeInteger(old) && old>=base){last=old;show(last,'cached')}
+  }catch(error){}
+  // No automatic retry: an ambiguous network failure must not count twice.
+  fetch(`https://countapi.mileshilliard.com/api/v1/hit/${counter}`,{
+    cache:'no-store',referrerPolicy:'no-referrer'
   }).then(response=>{if(!response.ok)throw Error('counter unavailable');return response.json()})
     .then(data=>{
-      const raw=data.busuanzi_site_pv;
-      const number=Number(raw);
-      if(raw===undefined || raw===null || !/^\d+$/.test(String(raw)) || !Number.isSafeInteger(number) || number<0)throw Error('invalid count');
-      show(number);try{localStorage.setItem(key,String(number))}catch(error){}
+      const raw=data.value;
+      const added=Number(raw);
+      if(raw===undefined || raw===null || !/^\d+$/.test(String(raw)) || !Number.isSafeInteger(added) || !Number.isSafeInteger(base+added) || added<0)throw Error('invalid count');
+      last=Math.max(last,base+added);
+      show(last);
+      try{localStorage.setItem(key,String(last))}catch(error){}
     }).catch(error=>{
       console.warn('访问统计读取失败：',error.message);
-      if(value.textContent==='—' || value.textContent==='读取中'){holder.title='当前连接未能读取历史累计访问次数，未重置计数';value.textContent='暂不可用'}
-    }).finally(()=>clearTimeout(timeout));
+      holder.title=last===base?'统计暂不可用，当前显示预设起始基数1000':'统计暂不可用，保留最近一次成功读取值；起始基数1000';
+    });
 })();

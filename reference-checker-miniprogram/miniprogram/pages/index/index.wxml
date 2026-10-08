@@ -162,7 +162,7 @@
     <view>重要用途请以出版者或原始网页记录为准</view>
     <navigator class="privacy-link" url="/pages/privacy/privacy">隐私说明</navigator>
     <view class="footer-email">linhu@scu.edu.cn</view>
-    <view class="footer-visits">{{historyPending?"新版累计访问":"累计访问"}} {{visitTotal}} 次</view>
+    <view class="footer-visits">累计访问 {{visitTotal}} 次</view>
     <view wx:if="{{visitNote}}" class="footer-visit-note">{{visitNote}}</view>
   </view>
 </view>

@@ -1,6 +1,7 @@
 const crypto = require('node:crypto');
 const COUNTER_ID = 'wenzheng-miniprogram-visits';
 const COLLECTION = 'reference_users';
+const BASE_VISITS = 1000;
 
 function historicalBase(value) {
   if(value === undefined || value === null || String(value).trim() === '')return null;
@@ -8,7 +9,7 @@ function historicalBase(value) {
   return Number.isSafeInteger(number) && number >= 0 ? number : null;
 }
 
-function createVisitRecorder(db, getBase = () => process.env.MINIPROGRAM_HISTORY_PV) {
+function createVisitRecorder(db) {
   return async function recordVisit(owner, event = {}) {
     const increment = event.action === 'visit';
     const token = String(event.visitId || '');
@@ -22,17 +23,19 @@ function createVisitRecorder(db, getBase = () => process.env.MINIPROGRAM_HISTORY
       }
       if(Array.isArray(old))old = old[0];
       const data = old || {newVisits:0,legacyBase:null,recentVisits:[]};
-      const base = historicalBase(data.legacyBase) ?? historicalBase(getBase());
+      // The owner explicitly selected 1000. Replace any earlier placeholder
+      // base, but preserve every already-recorded new visit.
+      const base = BASE_VISITS;
       const recent = Array.isArray(data.recentVisits) ? data.recentVisits.slice(-1000) : [];
       const previous = historicalBase(data.newVisits) ?? 0;
       const next = previous + (increment && !recent.includes(key) ? 1 : 0);
+      if(!Number.isSafeInteger(base + next))throw new Error('访问计数超出安全整数范围');
       if(increment && !recent.includes(key))recent.push(key);
-      // Updates never overwrite existing history or reset the incremental count.
-      await doc.set({data:{newVisits:next,legacyBase:base,recentVisits:recent.slice(-1000),updatedAt:Date.now()}});
-      return {ok:true,platform:'miniprogram',newVisits:next,legacyBase:base,historyPending:base===null,total:base===null?next:base+next};
+      await doc.set({data:{...data,newVisits:next,legacyBase:base,recentVisits:recent.slice(-1000),updatedAt:Date.now()}});
+      return {ok:true,platform:'miniprogram',build:'2026.10.08-visits-1000',newVisits:next,legacyBase:base,historyPending:false,total:base+next};
     });
     return response.result || response;
   };
 }
 
-module.exports = {createVisitRecorder,historicalBase,COUNTER_ID};
+module.exports = {createVisitRecorder,historicalBase,COUNTER_ID,BASE_VISITS};

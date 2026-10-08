@@ -36,10 +36,10 @@
     <section class="history" id="history" aria-label="本机核验历史"><div class="history-head"><div><h2>本机历史记录</h2><p>免登录保存最近 20 次核验，仅存于当前浏览器；可一键载入后重新核验。</p></div><button class="history-clear hidden" id="clearHistoryBtn" type="button">清空记录</button></div><div class="history-list" id="historyList"></div></section>
     <section class="boundary" id="limits"><div class="kicker">BOUNDARIES</div><h2>“暂未证实”不等于“虚假”</h2><p>真实性置信度只依据篇名、作者、来源、永久标识和原始网址等作品身份字段及证据强度计算。年份、卷期页、文献类型和格式差异会在确认是同一作品后单独列为著录准确性问题，不会反向降低真实性。若来源暂时不可访问或未被数据库收录，系统只会标记为“暂未证实”，并保留官网与搜索引擎复核入口。</p></section>
   </main>
-  <footer><div>系统优先检索公开题录，再由专业来源与原始网页复核。重要用途请以出版者原始记录为准。</div><div class="footer-meta"><a class="author-email" href="mailto:linhu@scu.edu.cn" aria-label="网站联系邮箱">linhu@scu.edu.cn</a><span class="site-counter" id="siteCounter" aria-live="polite" title="沿用原站点历史累计访问次数"><span class="dot" aria-hidden="true">·</span><span>累计访问 <span class="site-counter-value" id="busuanzi_site_pv">—</span> 次</span></span></div></footer>
+  <footer><div>系统优先检索公开题录，再由专业来源与原始网页复核。重要用途请以出版者原始记录为准。</div><div class="footer-meta"><a class="author-email" href="mailto:linhu@scu.edu.cn" aria-label="网站联系邮箱">linhu@scu.edu.cn</a><span class="site-counter ready" id="siteCounter" aria-live="polite" title="预设起始基数1000，与小程序分别计数"><span class="dot" aria-hidden="true">·</span><span>累计访问 <span class="site-counter-value" id="websiteVisitCount">1,000</span> 次</span></span></div></footer>
   <script src="./vendor/mammoth.browser.min.js"></script>
   <script>window.WENZHENG_API_URL="https://cloud1-d6gtx1retbc8754fa-1457855977.ap-shanghai.app.tcloudbase.com/api/verify-reference";</script>
-  <script defer src="./counter.js?v=20261008-history-2"></script>
+  <script defer src="./counter.js?v=20261008-base1000"></script>
   <script type="module">
     import * as pdfjsLib from './vendor/pdf.min.mjs';
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://hlforever11.github.io/reference-checker/vendor/pdf.worker.min.mjs';
@@ -95,14 +95,6 @@
 {"source": "CNKI 分类题录（公开镜像）", "sourceUrl": "https://cnki.istiz.org.cn/kcms/detail/frame/list.aspx?cat=G251.6&curdbcode=cjfd&dbcode=CJFD&dbname=CJFD2002&filename=tsgl200205038&page=3&reftype=9", "title": "高校图书馆馆员生成式人工智能胜任力测度研究", "authors": ["吴爱红"], "year": 2025, "container": "情报科学", "volume": "", "issue": "8", "pages": "", "type": "journal-article", "partialFields": ["卷号", "页码"]}
 ];
     const $=s=>document.querySelector(s), input=$('#input'), counter=$('#counter'), clearBtn=$('#clearBtn'), verifyBtn=$('#verifyBtn'), fileInput=$('#fileInput'), drop=$('#dropZone'), msg=$('#fileMessage');
-    const visitCounter=$('#siteCounter'),visitValue=$('#busuanzi_site_pv');
-    function revealVisitCounter(){
-      const raw=String(visitValue?.textContent||'').replace(/[,，\s]/g,'');if(!/^\d+$/.test(raw))return false;
-      visitValue.textContent=Number(raw).toLocaleString('zh-CN');visitCounter.classList.add('ready');visitCounter.setAttribute('aria-label',`文证网站累计访问 ${raw} 次`);return true;
-    }
-    if(!revealVisitCounter()){
-      const visitObserver=new MutationObserver(()=>{if(revealVisitCounter())visitObserver.disconnect()});visitObserver.observe(visitValue,{childList:true,subtree:true,characterData:true});setTimeout(()=>visitObserver.disconnect(),10000);
-    }
     const sample=['[1] 李书宁,刘一鸣.ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战[J].图书馆论坛,2023,43(05):104-110.','[2] FLORIDI L. The Ethics of Information[M]. Oxford: Oxford University Press, 2014. ISBN 9780199641321.','[3] Guidance for generative AI in education and research[R/OL]. 2023.','[4] 王晨曦.生成式人工智能环境下大学生学术信息核验行为研究[D].武汉:武汉大学,2024.'].join('\n');
     const numberedReferenceStart=/^(?:\[\s*\d{1,3}\s*\]|[\(（]\s*\d{1,3}\s*[\)）]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)]|\d{1,3}\s+(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff]))\s*/;
     const bibliographicCue=value=>/(?:18|19|20)\d{2}|\[[A-Z/]+\]|https?:\/\/|10\.\d{4,9}\//i.test(String(value||''));
