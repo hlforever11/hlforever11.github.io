@@ -1,0 +1,100 @@
+[
+  {
+    "source": "《图书情报知识》官网",
+    "sourceUrl": "https://dik.whu.edu.cn/jwk3/tsqbzs/CN/10.13366/j.dik.2024.06.094",
+    "title": "人工智能赋能智慧图书馆发展的作用机制",
+    "authors": [
+      "王曦"
+    ],
+    "year": 2024,
+    "container": "图书情报知识",
+    "volume": "41",
+    "issue": "6",
+    "pages": "94-101, 165",
+    "doi": "10.13366/j.dik.2024.06.094",
+    "type": "journal-article"
+  },
+  {
+    "source": "《图书情报工作》官网",
+    "sourceUrl": "https://www.lis.ac.cn/CN/10.13266/j.issn.0252-3116.2024.13.006",
+    "title": "生成式AI背景下的图书馆员：角色、技能与进路",
+    "authors": [
+      "郭亚军",
+      "冯思倩",
+      "寇旭颍",
+      "刘振阳"
+    ],
+    "year": 2024,
+    "container": "图书情报工作",
+    "volume": "68",
+    "issue": "13",
+    "pages": "69-77",
+    "doi": "10.13266/j.issn.0252-3116.2024.13.006",
+    "type": "journal-article"
+  },
+  {
+    "source": "《图书情报工作》官网",
+    "sourceUrl": "https://www.lis.ac.cn/CN/10.13266/j.issn.0252-3116.2022.23.005",
+    "title": "数字化转型中的高校图书馆数字化服务能力影响因素研究",
+    "authors": [
+      "时莹",
+      "王铮"
+    ],
+    "year": 2022,
+    "container": "图书情报工作",
+    "volume": "66",
+    "issue": "23",
+    "pages": "41-50",
+    "doi": "10.13266/j.issn.0252-3116.2022.23.005",
+    "type": "journal-article"
+  },
+  {
+    "source": "SAGE / Crossref 正式出版题录",
+    "sourceUrl": "https://journals.sagepub.com/doi/10.1177/09610006221142029",
+    "title": "Defining artificial intelligence for librarians",
+    "authors": [
+      "Andrew M. Cox",
+      "Suvodeep Mazumdar"
+    ],
+    "year": 2024,
+    "container": "Journal of Librarianship and Information Science",
+    "volume": "56",
+    "issue": "2",
+    "pages": "330-340",
+    "doi": "10.1177/09610006221142029",
+    "type": "journal-article"
+  },
+  {
+    "source": "《图书情报知识》官网",
+    "sourceUrl": "https://dik.whu.edu.cn/jwk3/tsqbzs/CN/10.13366/j.dik.2023.05.097",
+    "title": "ChatGPT类生成式AI对高校图书馆数字素养教育的影响探析",
+    "authors": [
+      "龚芙蓉"
+    ],
+    "year": 2023,
+    "container": "图书情报知识",
+    "volume": "40",
+    "issue": "5",
+    "pages": "97-106, 156",
+    "doi": "10.13366/j.dik.2023.05.097",
+    "type": "journal-article"
+  },
+  {
+    "source": "CNKI 分类题录（公开镜像）",
+    "sourceUrl": "https://cnki.istiz.org.cn/kcms/detail/frame/list.aspx?cat=G251.6&curdbcode=cjfd&dbcode=CJFD&dbname=CJFD2002&filename=tsgl200205038&page=3&reftype=9",
+    "title": "高校图书馆馆员生成式人工智能胜任力测度研究",
+    "authors": [
+      "吴爱红"
+    ],
+    "year": 2025,
+    "container": "情报科学",
+    "volume": "",
+    "issue": "8",
+    "pages": "",
+    "type": "journal-article",
+    "partialFields": [
+      "卷号",
+      "页码"
+    ]
+  }
+]

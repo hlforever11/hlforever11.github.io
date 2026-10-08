@@ -6,10 +6,14 @@ const {
 
 const MAX_REFERENCES = 20;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v3";
+const VERIFICATION_CACHE_TTL = 180 * 24 * 60 * 60 * 1000;
+const VERIFICATION_CACHE_LIMIT = 120;
 const SAMPLE = [
   "[1] 李书宁,刘一鸣.ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战[J].图书馆论坛,2023,43(05):104-110.",
-  "[2] 陈金榜.朱民博士畅谈ChatGPT与人工智能未来[EB/OL].(2023-03-13)[2023-04-18]. https://www.shanghaitech.edu.cn/2023/0313/c1001a1075770/page.htm.",
-  "[3] RADFORD A, WU J, CHILD R, et al. Language models are unsupervised multitask learners[J]. OpenAI Blog, 2019, 1(8): 9."
+  "[2] FLORIDI L. The Ethics of Information[M]. Oxford: Oxford University Press, 2014. ISBN 9780199641321.",
+  "[3] Guidance for generative AI in education and research[R/OL]. 2023.",
+  "[4] 王晨曦.生成式人工智能环境下大学生学术信息核验行为研究[D].武汉:武汉大学,2024."
 ].join("\n");
 
 const STATUS_META = {
@@ -20,6 +24,74 @@ const STATUS_META = {
   unverified: { label: "暂未证实", mark: "—" },
   error: { label: "核验失败", mark: "×" }
 };
+
+function normalizedVerificationKey(reference) {
+  const value = String(reference || "");
+  return (typeof value.normalize === "function" ? value.normalize("NFKC") : value)
+    .toLowerCase()
+    .replace(/[\s\u3000.,，。;；:：'"“”‘’()[\]（）【】{}<>《》\-–—_/\\]+/g, "");
+}
+
+function verificationCache() {
+  try {
+    const value = wx.getStorageSync(VERIFICATION_CACHE_KEY);
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch(error) { return {}; }
+}
+
+function cachedVerification(reference) {
+  const key = normalizedVerificationKey(reference);
+  const cache = verificationCache();
+  const item = cache[key];
+  if (!item) return null;
+  if (Date.now() - Number(item.storedAt || 0) > VERIFICATION_CACHE_TTL) {
+    delete cache[key];
+    try { wx.setStorageSync(VERIFICATION_CACHE_KEY, cache); } catch(error) {}
+    return null;
+  }
+  return {
+    ...item.result,
+    submitted: reference,
+    cacheHit: true,
+    note: `已使用本机最近一次成功核验的公开书目证据。${item.result.note || ""}`
+  };
+}
+
+function rememberVerification(reference, result) {
+  const confidence = Number(
+    result?.authenticityConfidence ?? result?.confidence ?? 0
+  );
+  if (
+    !["verified", "partial", "corrected"].includes(result?.status) ||
+    confidence < 0.8
+  ) {
+    return;
+  }
+  const cache = verificationCache();
+  const key = normalizedVerificationKey(reference);
+  cache[key] = {
+    storedAt: Date.now(),
+    result: { ...result, submitted: "" }
+  };
+  const entries = Object.entries(cache)
+    .sort((a, b) => Number(b[1]?.storedAt || 0) - Number(a[1]?.storedAt || 0))
+    .slice(0, VERIFICATION_CACHE_LIMIT);
+  try { wx.setStorageSync(VERIFICATION_CACHE_KEY, Object.fromEntries(entries)); } catch(error) {}
+}
+
+function resultQuality(result) {
+  const rank = {
+    verified: 6,
+    partial: 5,
+    corrected: 5,
+    review: 3,
+    unverified: 2,
+    error: 1
+  }[result?.status] || 0;
+  return rank * 10 + Number(
+    result?.authenticityConfidence ?? result?.confidence ?? 0
+  );
+}
 
 Page({
   data: {
@@ -38,11 +110,24 @@ Page({
     showResults: false,
     historyEnabled: false,
     accountLoading: false,
+    visitTotal: "—",
+    historyPending:true,
+    visitNote: "",
     historyCount: 0
   },
 
   onLoad() {
     this.restoreHistoryState();
+    this.refreshVisits();
+  },
+
+  async refreshVisits() {
+    try {
+      if(!app.globalData.visitId)app.globalData.visitId=Date.now().toString(36)+"_"+Math.random().toString(36).slice(2);
+      const response=await this.callCloud("userHistory",{action:"visit",visitId:app.globalData.visitId});
+      if(!response.ok)throw new Error(response.message || "访问统计暂不可用");
+      this.setData({visitTotal:response.total,historyPending:response.historyPending,visitNote:""});
+    }catch(error){this.setData({visitNote:"访问统计暂不可用"});}
   },
 
   onShow() {
@@ -83,11 +168,13 @@ Page({
   },
 
   fillSample() {
+    if(this.data.loading)return;
     this.resetResults();
     this.updateInput(SAMPLE);
   },
 
   clearInput() {
+    if(this.data.loading)return;
     this.setData({
       inputValue: "",
       count: 0,
@@ -218,6 +305,26 @@ Page({
     return response.result || {};
   },
 
+  async verifyReferenceStable(reference) {
+    const cached = cachedVerification(reference);
+    if (cached) return cached;
+
+    const first = await this.callCloud("verifyReference", { reference });
+    let best = first;
+    if (["review", "unverified", "error"].includes(first?.status)) {
+      await new Promise((resolve) => setTimeout(resolve, 160));
+      try {
+        const second = await this.callCloud("verifyReference", { reference });
+        best = resultQuality(second) > resultQuality(first) ? second : first;
+        best = { ...best, attemptCount: 2 };
+      } catch (error) {
+        console.warn("verifyReference retry failed", error);
+      }
+    }
+    rememberVerification(reference, best);
+    return best;
+  },
+
   restoreHistoryState() {
     const historyEnabled = wx.getStorageSync("historyEnabled") === true;
     this.setData({ historyEnabled });
@@ -326,9 +433,7 @@ Page({
       while (next < references.length) {
         const index = next++;
         try {
-          const result = await this.callCloud("verifyReference", {
-            reference: references[index]
-          });
+          const result = await this.verifyReferenceStable(references[index]);
           output[index] = this.prepareResult(result, references[index], index);
         } catch (error) {
           console.error("verifyReference cloud call failed", {
@@ -381,6 +486,7 @@ Page({
 
     return {
       ...result,
+      canonical: result.canonical ? `[${String(submitted).match(/^\s*\[\s*(\d+)\s*\]/)?.[1] || index + 1}] ${String(result.canonical).replace(/^\[\s*\d+\s*\]\s*/, '')}` : '',
       submitted: result.submitted || submitted,
       status,
       statusLabel: meta.label,

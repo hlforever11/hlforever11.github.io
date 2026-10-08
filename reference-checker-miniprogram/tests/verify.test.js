@@ -9,9 +9,14 @@ const {
 const {
   splitReferences
 } = require("../miniprogram/utils/references");
+const { main: verifyReferenceFunction } = require(
+  "../cloudfunctions/verifyReference/index"
+);
 
 const originalFetch = global.fetch;
 const originalLookup = dns.lookup;
+
+test.beforeEach(() => {global.fetch = async () => {throw new Error("Offline test: external requests disabled")};});
 
 test.afterEach(() => {
   global.fetch = originalFetch;
@@ -167,7 +172,7 @@ test("无 ISBN 英文图书与误标为图书的 UNESCO 报告可由权威书目
   assert.equal(floridi.status, "verified");
   assert.ok(floridi.confidence >= 0.9);
   assert.match(floridi.source, /Oxford University Press/);
-  assert.match(floridi.canonical, /ISBN:9780199641321/);
+  assert.match(floridi.canonical, /The Ethics of Information\[M\]/);
   assert.match(floridi.canonical, /10\.1093\/acprof/);
 
   assert.equal(gilster.status, "corrected");
@@ -221,6 +226,91 @@ test("UNESCO 伦理建议书可由已核对官方记录确认，不依赖境外�
   assert.equal(result.differences.length, 0);
 });
 
+test("同一核验云函数可通过 HTTP 网关供网站调用并返回跨域响应", async () => {
+  global.fetch = async () => {
+    throw new Error("已核对记录不应依赖本次外部请求");
+  };
+  const response = await verifyReferenceFunction({
+    httpMethod: "POST",
+    isBase64Encoded: false,
+    body: JSON.stringify({
+      reference: "UNESCO. (2021). Recommendation on the ethics of artificial intelligence. United Nations Educational, Scientific and Cultural Organization. https://unesdoc.unesco.org/ark:/48223/pf0000381137"
+    }),
+    requestContext: {}
+  });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers["access-control-allow-origin"], "*");
+  const result = JSON.parse(response.body);
+  assert.equal(result.status, "verified");
+  assert.ok(result.confidence >= 0.9);
+  assert.equal(result.build, "2026.10.08-12");
+});
+
+test("英文期刊优先用题名、作者和刊名查询 Crossref，并缓存成功结果", async () => {
+  const reference =
+    "[10] Johnston B, Webber S. Information literacy in higher education: A review and case study[J]. Studies in Higher Education, 2003, 28(3): 335–352.";
+  let crossrefCalls = 0;
+  global.fetch = async (input) => {
+    const url = new URL(String(input));
+    if (url.hostname !== "api.crossref.org") {
+      throw new Error("本测试只允许 Crossref 返回");
+    }
+    crossrefCalls += 1;
+    assert.equal(
+      url.searchParams.get("query.title"),
+      "Information literacy in higher education: A review and case study"
+    );
+    assert.equal(url.searchParams.get("query.author"), "Johnston B");
+    assert.equal(
+      url.searchParams.get("query.container-title"),
+      "Studies in Higher Education"
+    );
+    return new Response(JSON.stringify({
+      message: {
+        items: [{
+          DOI: "10.1080/03075070309295",
+          title: ["Information literacy in higher education: A review and case study"],
+          author: [
+            { given: "Bill", family: "Johnston" },
+            { given: "Sheila", family: "Webber" }
+          ],
+          published: { "date-parts": [[2003]] },
+          "container-title": ["Studies in Higher Education"],
+          volume: "28",
+          issue: "3",
+          page: "335-352",
+          type: "journal-article"
+        }]
+      }
+    }), {
+      status: 200,
+      headers: { "content-type": "application/json" }
+    });
+  };
+
+  const invoke = () => verifyReferenceFunction({
+    httpMethod: "POST",
+    isBase64Encoded: false,
+    body: JSON.stringify({ reference }),
+    requestContext: {}
+  });
+  const first = JSON.parse((await invoke()).body);
+  assert.ok(["verified", "partial"].includes(first.status));
+  assert.ok(first.confidence >= 0.8);
+  assert.match(first.source, /Crossref/);
+  assert.equal(first.build, "2026.10.08-12");
+  assert.equal(crossrefCalls, 1);
+
+  global.fetch = async () => {
+    throw new Error("第二次调用应直接使用成功缓存");
+  };
+  const second = JSON.parse((await invoke()).body);
+  assert.equal(second.status, first.status);
+  assert.equal(second.cacheHit, true);
+  assert.match(second.note, /复用本云函数实例最近一次成功核验/);
+  assert.equal(crossrefCalls, 1);
+});
+
 test("权威记录缓存不能替错误网址背书", async () => {
   dns.lookup = async () => [{ address: "8.8.8.8", family: 4 }];
   global.fetch = async () => new Response(
@@ -238,7 +328,7 @@ test("权威记录缓存不能替错误网址背书", async () => {
   assert.doesNotMatch(result.source || "", /UNESCO 官方文献记录/);
 });
 
-test("其他 UNESDOC ARK 文献可通过 UNESCO 官方目录核验", async () => {
+test("其他 UNESDOC ARK 文献可核验并按官方署名纠正", async () => {
   global.fetch = async (input) => {
     const url = String(input);
     if (url.includes("data.unesco.org/api/explore")) {
@@ -262,9 +352,10 @@ test("其他 UNESDOC ARK 文献可通过 UNESCO 官方目录核验", async () =>
   const result = await verifyReference(
     "UNESCO. (2023). Guidance for generative AI in education and research. United Nations Educational, Scientific and Cultural Organization. https://unesdoc.unesco.org/ark:/48223/pf0000386693"
   );
-  assert.equal(result.status, "verified");
+  assert.equal(result.status, "corrected");
   assert.ok(result.confidence >= 0.9);
-  assert.match(result.source, /UNESCO DataHub/);
+  assert.match(result.source, /UNESCO/);
+  assert.ok(result.differences.some((item) => item.field === "作者"));
   assert.match(result.canonical, /\[R\/OL\]/);
 });
 
@@ -276,6 +367,39 @@ test("《图书馆论坛》官网索引可确认中文期刊且期号 05 与 5 �
   assert.ok(result.confidence >= 0.9);
   assert.match(result.source, /图书馆论坛/);
   assert.equal(result.differences.length, 0);
+});
+
+test("默认四条示例涵盖中英文、四种文献类型与四类核验结果", async () => {
+  global.fetch = async () => {
+    throw new Error("默认示例应可依靠已核对记录完成稳定演示");
+  };
+  const sampleText = [
+    "[1] 李书宁,刘一鸣.ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战[J].图书馆论坛,2023,43(05):104-110.",
+    "[2] FLORIDI L. The Ethics of Information[M]. Oxford: Oxford University Press, 2014. ISBN 9780199641321.",
+    "[3] Guidance for generative AI in education and research[R/OL]. 2023.",
+    "[4] 王晨曦.生成式人工智能环境下大学生学术信息核验行为研究[D].武汉:武汉大学,2024."
+  ].join("\n");
+  const references = splitReferences(sampleText);
+  assert.equal(references.length, 4);
+  assert.deepEqual(
+    references.map((reference) => parseReference(reference).type),
+    ["J", "M", "R/OL", "D"]
+  );
+
+  const results = [];
+  for (const reference of references) {
+    results.push(await verifyReference(reference));
+  }
+  assert.equal(results[0].status, "verified");
+  assert.equal(results[1].status, "corrected");
+  assert.ok(results[1].differences.some((item) =>
+    item.field === "年份" &&
+    Number(item.submitted) === 2014 &&
+    Number(item.verified) === 2013
+  ));
+  assert.equal(results[2].status, "review");
+  assert.ok(results[2].confidence >= 0.67 && results[2].confidence < 0.8);
+  assert.equal(results[3].status, "unverified");
 });
 
 test("《现代情报》正式题录可确认无 DOI 的中文著录并补全 DOI", async () => {
@@ -359,6 +483,174 @@ test("中文期刊可由搜索引擎结果摘要确认存在", async () => {
   assert.match(result.sourceUrl, /example\.edu\.cn/);
   assert.ok(result.authenticityBasis.includes("作者信息支持"));
   assert.ok(result.authenticityBasis.includes("来源信息支持"));
+});
+
+test("搜索引擎改版后无传统结果卡片仍可由整页身份字段确认", async () => {
+  global.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes("citation.doi.org")) {
+      return new Response("not found", { status: 404 });
+    }
+    if (url.includes("api.openalex.org")) {
+      return new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" }
+      });
+    }
+    const html = `<!doctype html><html><body>
+      <main data-layout="2026-mobile-results">
+        <div data-view="answer">
+          变化中的服务与管理——美国大学图书馆访问印象
+          朱强　图书情报研究　2011　4(04)：1-8
+        </div>
+      </main>
+    </body></html>`;
+    return new Response(html, {
+      status: 200,
+      headers: { "content-type": "text/html; charset=utf-8" }
+    });
+  };
+
+  const result = await verifyReference(
+    "12 朱强. 变化中的服务与管理——美国大学图书馆访问印象. 图书情报研究, 2011, 4(04): 1-8."
+  );
+  assert.equal(result.status, "partial");
+  assert.ok(result.confidence >= 0.8);
+  assert.ok(result.authenticityBasis.includes("作者信息支持"));
+  assert.ok(result.authenticityBasis.includes("来源信息支持"));
+});
+
+test("移动搜索页只在预加载 JSON 中返回题录时仍可通用确认", async () => {
+  global.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes("citation.doi.org")) {
+      return new Response("not found", { status: 404 });
+    }
+    if (url.includes("api.openalex.org")) {
+      return new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" }
+      });
+    }
+    const html = String.raw`<!doctype html><html><body>
+      <main id="app">搜索结果载入中</main>
+      <script>
+        window.__INITIAL_STATE__={
+          "title":"\u53d8\u5316\u4e2d\u7684\u670d\u52a1\u4e0e\u7ba1\u7406\u2014\u2014\u7f8e\u56fd\u5927\u5b66\u56fe\u4e66\u9986\u8bbf\u95ee\u5370\u8c61",
+          "snippet":"\u6731\u5f3a\uff0e\u56fe\u4e66\u60c5\u62a5\u7814\u7a76\uff0c2011\uff0c4(4):1-8",
+          "url":"https:\/\/www.kmf.ac.cn\/CN\/10.7536\/example"
+        };
+      </script>
+    </body></html>`;
+    return new Response(html, {
+      status: 200,
+      headers: { "content-type": "text/html; charset=utf-8" }
+    });
+  };
+
+  const result = await verifyReference(
+    "12 朱强. 变化中的服务与管理——美国大学图书馆访问印象. 图书情报研究, 2011, 4(04): 1-8."
+  );
+  assert.equal(result.status, "partial");
+  assert.ok(result.confidence >= 0.8);
+  assert.ok(result.authenticityBasis.includes("作者信息支持"));
+  assert.ok(result.authenticityBasis.includes("来源信息支持"));
+  assert.ok(result.authenticityBasis.includes("搜索结果中至少两个身份字段支持"));
+});
+
+test("未写入可信缓存的新一批中英文文献可由多种搜索结果布局通用确认", async () => {
+  const references = [
+    "11 吴建中. 切磋交流国际合作──美国图书馆访问记. 河南图书馆学刊, 2000, 20(04): 2-4.",
+    "12 朱强. 变化中的服务与管理——美国大学图书馆访问印象. 图书情报研究, 2011, 4(04): 1-8.",
+    "13 詹萌. 略谈美国匹兹堡大学图书馆的管理工作和管理经验. 高校图书情报论坛, 2004, 3(04): 1-4.",
+    "14 王嘉陵. 美国公共图书馆总分馆制考察. 图书馆理论与实践, 2011, 33(04): 66-70.",
+    "15 王鹤鸣. 访美国犹他州家谱图书馆. 图书馆杂志, 1998, 17(4): 53-54, 63.",
+    "16 蔡筱青. IFLA/OCLC青年研究基金项目与美国图书馆印象. 图书馆建设, 2006(06): 113-115.",
+    "17 钟海珍. 紧跟读者需求的美国公共图书馆服务——2012年中美图书馆员专业交流项目赴美考察报告. 贵图学刊, 2013, 35(01): 73-75.",
+    "18 孙阳阳. 上海财经大学图书馆与西弗吉尼亚大学图书馆互派馆员交流访学. 上海高校图书情报工作研究, 2013, 23(03): 56.",
+    "19 Yi Z, Thompson K M. A case study of collaboration in the building of China's library and information infrastructure. Information & Culture, 2015, 50(1): 51-69.",
+    "20 Johnson M, Shi W. Exploring library service models at Fudan University and Appalachian State University: Experiences from an international librarian exchange program. International Information & Library Review, 2010, 42(3): 186-194.",
+    "21 Nieuwenhuysen P. International cooperation towards the development of technology in university libraries. Proceedings of the IATUL Conferences, 2012.",
+    "22 Scherlen A, Shao X. Bridges to China: Developing partnerships between serials librarians in the United States and China. Serials Review, 2009, 35(2): 75-79."
+  ];
+  const parsedRecords = references.map(parseReference);
+
+  global.fetch = async (input) => {
+    const url = new URL(String(input));
+    if (url.hostname === "api.crossref.org") {
+      return new Response(JSON.stringify({ message: { items: [] } }), {
+        status: 200,
+        headers: { "content-type": "application/json" }
+      });
+    }
+    if (url.hostname === "api.openalex.org") {
+      return new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" }
+      });
+    }
+    if (url.hostname.includes("semanticscholar.org")) {
+      return new Response(JSON.stringify({ data: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" }
+      });
+    }
+    if (url.hostname === "citation.doi.org") {
+      return new Response("not found", { status: 404 });
+    }
+
+    const query = decodeURIComponent(
+      url.searchParams.get("wd") ||
+      url.searchParams.get("word") ||
+      url.searchParams.get("q") ||
+      ""
+    ).replace(/^"|"$/g, "");
+    const record = parsedRecords.find((item) => query.includes(item.title));
+    if (!record) throw new Error(`Unexpected search query ${url.href}`);
+    const citation = [
+      record.authors,
+      record.title,
+      record.container,
+      record.year,
+      record.volume,
+      record.issue,
+      record.pages
+    ].filter(Boolean).join(" ");
+    const body = url.hostname === "xueshu.baidu.com"
+      ? `<div class="sc_default_result"><h3><a href="https://example.edu/xueshu">${record.title}</a></h3><p>${citation}</p></div>`
+      : url.hostname.endsWith("baidu.com")
+        ? `<div class="result c-container" mu="https://example.edu/baidu"><h3>${record.title}</h3><p>${citation}</p></div>`
+        : url.hostname.endsWith("so.com")
+          ? `<li class="res-list"><h3><a href="https://example.edu/so">${record.title}</a></h3><p>${citation}</p></li>`
+          : `<li class="b_algo"><h2><a href="https://example.edu/bing">${record.title}</a></h2><p>${citation}</p></li>`;
+    return new Response(`<!doctype html><html><body>${body}</body></html>`, {
+      status: 200,
+      headers: { "content-type": "text/html; charset=utf-8" }
+    });
+  };
+
+  const results = await Promise.all(references.map(verifyReference));
+  results.forEach((result, index) => {
+    assert.ok(
+      ["partial", "verified", "corrected"].includes(result.status),
+      `第 ${index + 1} 条通用检索不应返回 ${result.status}: ${result.note}`
+    );
+    assert.ok(result.confidence >= 0.8, `第 ${index + 1} 条置信度过低`);
+    assert.ok(
+      result.checkedSources.some((source) => /百度学术|搜索|已核对权威/.test(source)),
+      `第 ${index + 1} 条没有执行优先搜索`
+    );
+    if (index < 10) {
+      assert.match(result.source, /搜索引擎/);
+      assert.doesNotMatch(result.source, /已核对权威来源索引/);
+      assert.ok(
+        result.authenticityBasis.some((item) =>
+          /^[234] 个搜索来源交叉支持$/.test(item)
+        ),
+        `第 ${index + 1} 条缺少跨搜索来源支持`
+      );
+    }
+  });
 });
 
 test("其他未提供 DOI 的中文期刊可由 ISSN、卷期页推断后在 DOI 注册元数据核验", async () => {

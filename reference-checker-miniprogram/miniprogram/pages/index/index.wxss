@@ -584,3 +584,6 @@
     margin-top: 8rpx;
   }
 }
+
+.footer-visits{margin-top:12rpx;color:#7c7f86;font-size:22rpx;}
+.footer-visit-note{color:#8a8d93;font-size:20rpx;margin-top:4rpx;}

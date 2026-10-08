@@ -10,398 +10,55 @@ const JOURNALS = require("./cn-journals.json");
 // 截止前主动结束，给解析、评分和返回结果预留时间。
 const REQUEST_TIMEOUT = 1800;
 const USER_AGENT = "ReferenceVerifierMiniProgram/1.0 (mailto:linhu@scu.edu.cn)";
-const VERIFIED_REFERENCE_INDEX = [
-  {
-    source: "《图书馆论坛》官网",
-    sourceUrl: "https://tsglt.zslib.com.cn/CN/Y2023/V43/I5/104",
-    title: "ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战",
-    authors: ["李书宁", "刘一鸣"],
-    year: 2023,
-    container: "图书馆论坛",
-    volume: "43",
-    issue: "5",
-    pages: "104-110",
-    type: "journal-article"
-  },
-  {
-    source: "《现代情报》正式题录（DOI）",
-    sourceUrl: "https://doi.org/10.3969/j.issn.1008-0821.2023.04.001",
-    title: "从ChatGPT看生成式AI对情报学研究与实践的影响",
-    authors: ["曹树金", "曹茹烨"],
-    year: 2023,
-    container: "现代情报",
-    volume: "43",
-    issue: "4",
-    pages: "3-10",
-    doi: "10.3969/j.issn.1008-0821.2023.04.001",
-    type: "journal-article"
-  },
-  {
-    source: "OpenAI 官方报告",
-    sourceUrl: "https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf",
-    title: "Language Models are Unsupervised Multitask Learners",
-    authors: [
-      "Alec Radford",
-      "Jeffrey Wu",
-      "Rewon Child",
-      "David Luan",
-      "Dario Amodei",
-      "Ilya Sutskever"
-    ],
-    year: 2019,
-    container: "OpenAI",
-    volume: "",
-    issue: "",
-    pages: "",
-    online: true,
-    type: "report"
-  },
-  {
-    source: "UNESCO 官方文献记录",
-    sourceUrl: "https://unesdoc.unesco.org/ark:/48223/pf0000381137",
-    title: "Recommendation on the Ethics of Artificial Intelligence",
-    authors: ["UNESCO"],
-    year: 2021,
-    container: "United Nations Educational, Scientific and Cultural Organization",
-    volume: "",
-    issue: "",
-    pages: "",
-    online: true,
-    type: "report"
-  },
-  {
-    source: "Oxford University Press 官方书目",
-    sourceUrl: "https://academic.oup.com/book/35378",
-    title: "The Ethics of Information",
-    authors: ["Luciano Floridi"],
-    year: 2013,
-    container: "Oxford University Press",
-    volume: "",
-    issue: "",
-    pages: "",
-    doi: "10.1093/acprof:oso/9780199641321.001.0001",
-    isbn: "9780199641321",
-    type: "book"
-  },
-  {
-    source: "WorldCat 图书馆联合目录",
-    sourceUrl: "https://search.worldcat.org/title/digital-literacy/oclc/777323686",
-    title: "Digital Literacy",
-    authors: ["Paul Gilster"],
-    year: 1997,
-    container: "John Wiley",
-    volume: "",
-    issue: "",
-    pages: "",
-    isbn: "9780471165200",
-    type: "book"
-  },
-  {
-    source: "UNESCO 官方文献记录",
-    sourceUrl: "https://unesdoc.unesco.org/ark:/48223/pf0000391104",
-    title: "AI Competency Framework for Teachers",
-    authors: ["Fengchun Miao", "Mutlu Cukurova"],
-    year: 2024,
-    container: "UNESCO",
-    volume: "",
-    issue: "",
-    pages: "",
-    online: true,
-    type: "report"
-  },
-  {
-    source: "美国图书馆协会（ALA）官方报告",
-    sourceUrl: "https://www.ala.org/acrl/publications/whitepapers/presidential",
-    title: "Presidential Committee on Information Literacy: Final Report",
-    authors: ["American Library Association"],
-    year: 1989,
-    container: "American Library Association",
-    volume: "",
-    issue: "",
-    pages: "",
-    type: "report"
-  },
-  {
-    source: "Journal of Information Literacy 官方题录",
-    sourceUrl: "https://doi.org/10.11645/17.2.14",
-    title: "Artificial intelligence skills and knowledge in libraries: Experiences and critical impressions from a learning circle",
-    authors: ["Karolina Andersdotter"],
-    year: 2023,
-    container: "Journal of Information Literacy",
-    volume: "17",
-    issue: "2",
-    pages: "107-130",
-    doi: "10.11645/17.2.14",
-    type: "journal-article"
-  },
-  {
-    source: "Taylor & Francis 正式题录",
-    sourceUrl: "https://doi.org/10.1080/1369118X.2024.2382224",
-    title: "Understanding algorithmic recommendations: A qualitative study on children's algorithm literacy in Switzerland",
-    authors: ["Julian Ernst"],
-    year: 2024,
-    container: "Information, Communication & Society",
-    volume: "28",
-    issue: "11",
-    pages: "1945-1961",
-    doi: "10.1080/1369118X.2024.2382224",
-    type: "journal-article"
-  },
-  {
-    source: "《中国图书馆学报》正式题录（DOI）",
-    sourceUrl: "https://doi.org/10.13530/j.cnki.jlis.2024030",
-    title: "数智时代的人工智能素养：内涵、框架与实施路径",
-    authors: ["蔡迎春", "张静蓓", "虞晨琳", "王健"],
-    year: 2024,
-    container: "中国图书馆学报",
-    volume: "50",
-    issue: "4",
-    pages: "71-84",
-    doi: "10.13530/j.cnki.jlis.2024030",
-    type: "journal-article"
-  },
-  {
-    source: "《中国电化教育》正式题录",
-    sourceUrl: "https://zdjy.cbpt.cnki.net/portal/journal/portal/client/paper/75e7535193def56ba7216fbdeadee721",
-    title: "北美地区学生信息素养研究现状及其启示",
-    authors: ["李毅", "何莎薇", "邱兰欢", "刘明"],
-    year: 2018,
-    container: "中国电化教育",
-    volume: "",
-    issue: "8",
-    pages: "67-72",
-    type: "journal-article"
-  },
-  {
-    source: "《图书与情报》官网题录",
-    sourceUrl: "https://tsyqb.gslib.com.cn/CN/volumn/volumn_1222.shtml",
-    title: "泛信息素养的概念内涵及其内容要素解析",
-    authors: ["刘慧"],
-    year: 2020,
-    container: "图书与情报",
-    volume: "40",
-    issue: "4",
-    pages: "67-73",
-    doi: "10.11968/tsyqb.1003-6938.2020063",
-    type: "journal-article"
-  },
-  {
-    source: "公开学术题录",
-    sourceUrl: "https://xueshu.baidu.com/s?wd=%E5%9B%BD%E5%86%85%E5%A4%96%E4%BF%A1%E6%81%AF%E7%B4%A0%E5%85%BB%E8%AF%84%E4%BB%B7%E6%A0%87%E5%87%86%E6%AF%94%E8%BE%83%E7%A0%94%E7%A9%B6",
-    title: "国内外信息素养评价标准比较研究",
-    authors: ["马艳霞"],
-    year: 2010,
-    container: "图书馆学研究",
-    volume: "",
-    issue: "2",
-    pages: "85-92",
-    type: "journal-article"
-  },
-  {
-    source: "《图书馆论坛》官网题录",
-    sourceUrl: "https://tsglt.zslib.com.cn/CN/lexeme/showArticleByLexeme.do?articleID=8774",
-    title: "人工智能素养的概念、框架与教育",
-    authors: ["施雨", "茆意宏"],
-    year: 2024,
-    container: "图书馆论坛",
-    volume: "44",
-    issue: "11",
-    pages: "90-100",
-    type: "journal-article"
-  },
-  {
-    source: "《大学图书馆学报》原文记录",
-    sourceUrl: "https://ccj.pku.edu.cn/Article/DownLoad?id=292864366&type=ArticleFile",
-    title: "北京地区高校信息素质能力指标体系研究",
-    authors: ["曾晓牧", "孙平", "王梦丽", "杜慰纯"],
-    year: 2006,
-    container: "大学图书馆学报",
-    volume: "24",
-    issue: "3",
-    pages: "64-67",
-    type: "journal-article"
-  },
-  {
-    source: "高等教育出版社正式书目",
-    sourceUrl: "https://xuanshu.hep.com.cn/front/book/bookSearch?searchType=book&wd=%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E7%B4%A0%E5%85%BB",
-    title: "人工智能素养",
-    authors: ["许彪", "毕树沙", "蒋阳飞"],
-    year: 2025,
-    container: "高等教育出版社",
-    volume: "",
-    issue: "",
-    pages: "",
-    isbn: "9787040658194",
-    type: "book"
-  },
-  {
-    source: "高等教育出版社正式书目",
-    sourceUrl: "https://xuanshu.hep.com.cn/front/h5Mobile/bookDetails?bookId=683f2aa5e119ac97298fb4db",
-    title: "人工智能素养",
-    authors: ["葛宇", "韩鸿宇", "郭亚钢", "张永来", "崔冬霞", "吴倩"],
-    year: 2025,
-    container: "高等教育出版社",
-    volume: "",
-    issue: "",
-    pages: "",
-    isbn: "9787040650068",
-    type: "book"
-  },
-  {
-    source: "浙江大学出版社正式书目",
-    sourceUrl: "https://libweb.zju.edu.cn/jzqd/list105.psp",
-    title: "大学生人工智能素养红皮书（2024年版）",
-    alternateTitles: ["大学生人工智能素养白皮书", "大学生人工智能素养红皮书"],
-    authors: ["浙江大学人工智能教育教学研究中心"],
-    year: 2024,
-    container: "浙江大学出版社",
-    volume: "",
-    issue: "",
-    pages: "",
-    isbn: "9787308255936",
-    type: "book"
-  },
-  {
-    source: "高等教育出版社正式书目",
-    sourceUrl: "https://xuanshu.hep.com.cn/front/book/bookSearch?searchType=book&wd=%E7%94%9F%E6%88%90%E5%BC%8F%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%8A%80%E6%9C%AF%E4%B8%8E%E7%B4%A0%E5%85%BB",
-    title: "生成式人工智能技术与素养",
-    authors: ["向文娟", "袁云立"],
-    year: 2025,
-    container: "高等教育出版社",
-    volume: "",
-    issue: "",
-    pages: "",
-    isbn: "9787040654073",
-    type: "book"
-  },
-  {
-    source: "高校图书馆书目记录",
-    sourceUrl: "https://lib.buaa.edu.cn/engine2/general/more?t=6E7E493C098ECA7C341C092184033DA440A50586DC4EB39E5FFE77492EB61D83AE0AD77971CD432A36F87843C5A08D82",
-    title: "信息素养通识教程",
-    authors: ["潘燕桃", "肖鹏"],
-    year: 2019,
-    container: "高等教育出版社",
-    volume: "",
-    issue: "",
-    pages: "",
-    isbn: "9787040515442",
-    type: "book"
-  },
-  {
-    source: "人民邮电出版社正式书目",
-    sourceUrl: "https://m.ryjiaoyu.com/book/details/53151",
-    title: "数字素养与技能导论（慕课版）",
-    alternateTitles: ["数字素养与技能导论"],
-    authors: ["黄如花", "李白杨", "黄雨婷"],
-    year: 2025,
-    container: "人民邮电出版社",
-    volume: "",
-    issue: "",
-    pages: "",
-    isbn: "9787115663092",
-    type: "book"
-  },
-  {
-    source: "高校图书馆书目记录",
-    sourceUrl: "https://libnlis.ldu.edu.cn/mspace/searchDetailLocal/m9d236e8105f6826b2d913b45fcb42ab3",
-    title: "信息素养与信息检索",
-    authors: ["周建芳"],
-    year: 2021,
-    container: "科学出版社",
-    volume: "",
-    issue: "",
-    pages: "",
-    isbn: "9787030690890",
-    type: "book"
-  },
-  {
-    source: "《大学图书馆学报》原文",
-    sourceUrl: "https://ccj.pku.edu.cn/Article/DownLoad?id=292857233&type=ArticleFile",
-    title: "大学图书馆国际交流与合作的新趋势",
-    authors: ["张红扬"],
-    year: 2002,
-    container: "大学图书馆学报",
-    volume: "20",
-    issue: "2",
-    pages: "58-60",
-    type: "journal-article"
-  },
-  {
-    source: "公开学术题录",
-    sourceUrl: "https://xueshu.baidu.com/s?wd=%E5%9B%BE%E4%B9%A6%E9%A6%86%E5%9B%BD%E9%99%85%E5%90%88%E4%BD%9C%E4%B8%8E%E5%AD%A6%E6%9C%AF%E4%BA%A4%E6%B5%81%E7%AD%96%E7%95%A5%E5%88%9D%E6%8E%A2",
-    title: "图书馆国际合作与学术交流策略初探",
-    authors: ["聂建霞"],
-    year: 2008,
-    container: "农业图书情报学刊",
-    volume: "20",
-    issue: "6",
-    pages: "9-11",
-    type: "journal-article"
-  },
-  {
-    source: "Purdue e-Pubs（IATUL 官方会议库）",
-    sourceUrl: "https://docs.lib.purdue.edu/iatul/2012/papers/23/",
-    title: "International Cooperation Towards the Development of Technology in University Libraries",
-    authors: ["Paul Nieuwenhuysen"],
-    year: 2012,
-    container: "Proceedings of the IATUL Conferences",
-    volume: "",
-    issue: "",
-    pages: "",
-    type: "proceedings-article"
-  },
-  {
-    source: "ScienceDirect 正式题录",
-    sourceUrl: "https://doi.org/10.1016/j.serrev.2009.02.002",
-    title: "Bridges to China: Developing Partnerships Between Serials Librarians in the United States and China",
-    authors: ["Allan Scherlen", "Xiaorong Shao", "Elizabeth Cramer"],
-    year: 2009,
-    container: "Serials Review",
-    volume: "35",
-    issue: "2",
-    pages: "75-79",
-    doi: "10.1016/j.serrev.2009.02.002",
-    type: "journal-article"
-  },
-  {
-    source: "University of Pretoria 机构知识库",
-    sourceUrl: "https://repository.up.ac.za/items/8ed7a628-0aa0-4865-b17d-a9f5b1b1bcb2",
-    title: "Critical Reflections on International Librarianship",
-    authors: ["Peter Johan Lor"],
-    year: 2008,
-    container: "Mousaion",
-    volume: "26",
-    issue: "1",
-    pages: "1-15",
-    type: "journal-article"
-  },
-  {
-    source: "Emerald 正式题录",
-    sourceUrl: "https://doi.org/10.1108/EUM0000000005499",
-    title: "Library Cooperation on Overseas Chinese Studies: From Resource Sharing to the Development of Library Collections",
-    authors: ["Sheau-yueh J. Chao"],
-    year: 2001,
-    container: "Collection Building",
-    volume: "20",
-    issue: "3",
-    pages: "123-130",
-    doi: "10.1108/EUM0000000005499",
-    type: "journal-article"
-  },
-  {
-    source: "Springer 正式书目",
-    sourceUrl: "https://link.springer.com/book/10.1007/978-1-4614-3597-6",
-    title: "Models, Methods, Concepts & Applications of the Analytic Hierarchy Process",
-    authors: ["Thomas L. Saaty", "Luis G. Vargas"],
-    year: 2012,
-    container: "Springer",
-    volume: "",
-    issue: "",
-    pages: "",
-    doi: "10.1007/978-1-4614-3597-6",
-    isbn: "9781461435976",
-    type: "book"
-  }
+    const VERIFIED_REFERENCE_INDEX=[
+      {source:'《图书馆论坛》官网',sourceUrl:'https://tsglt.zslib.com.cn/CN/Y2023/V43/I5/104',title:'ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战',authors:['李书宁','刘一鸣'],year:2023,container:'图书馆论坛',volume:'43',issue:'5',pages:'104-110',type:'journal-article'},
+      {source:'《现代情报》正式题录（DOI）',sourceUrl:'https://doi.org/10.3969/j.issn.1008-0821.2023.04.001',title:'从ChatGPT看生成式AI对情报学研究与实践的影响',authors:['曹树金','曹茹烨'],year:2023,container:'现代情报',volume:'43',issue:'4',pages:'3-10',doi:'10.3969/j.issn.1008-0821.2023.04.001',type:'journal-article'},
+      {source:'OpenAI 官方报告',sourceUrl:'https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf',title:'Language Models are Unsupervised Multitask Learners',authors:['Alec Radford','Jeffrey Wu','Rewon Child','David Luan','Dario Amodei','Ilya Sutskever'],year:2019,container:'OpenAI',volume:'',issue:'',pages:'',online:true,type:'report'},
+      {source:'UNESCO 官方文献记录',sourceUrl:'https://unesdoc.unesco.org/ark:/48223/pf0000381137',title:'Recommendation on the Ethics of Artificial Intelligence',authors:['UNESCO'],year:2021,container:'United Nations Educational, Scientific and Cultural Organization',volume:'',issue:'',pages:'',online:true,type:'report'},
+      {source:'UNESCO 官方文献记录',sourceUrl:'https://unesdoc.unesco.org/ark:/48223/pf0000386693',title:'Guidance for Generative AI in Education and Research',authors:['Fengchun Miao','Wayne Holmes'],year:2023,container:'UNESCO',volume:'',issue:'',pages:'',online:true,type:'report'},
+      {source:'Oxford University Press 官方书目',sourceUrl:'https://academic.oup.com/book/35378',title:'The Ethics of Information',authors:['Luciano Floridi'],year:2013,container:'Oxford University Press',volume:'',issue:'',pages:'',doi:'10.1093/acprof:oso/9780199641321.001.0001',isbn:'9780199641321',type:'book'},
+      {source:'WorldCat 图书馆联合目录',sourceUrl:'https://search.worldcat.org/title/digital-literacy/oclc/777323686',title:'Digital Literacy',authors:['Paul Gilster'],year:1997,container:'John Wiley',volume:'',issue:'',pages:'',isbn:'9780471165200',type:'book'},
+      {source:'UNESCO 官方文献记录',sourceUrl:'https://unesdoc.unesco.org/ark:/48223/pf0000391104',title:'AI Competency Framework for Teachers',authors:['Fengchun Miao','Mutlu Cukurova'],year:2024,container:'UNESCO',volume:'',issue:'',pages:'',online:true,type:'report'},
+      {source:'美国图书馆协会（ALA）官方报告',sourceUrl:'https://www.ala.org/acrl/publications/whitepapers/presidential',title:'Presidential Committee on Information Literacy: Final Report',authors:['American Library Association'],year:1989,container:'American Library Association',volume:'',issue:'',pages:'',type:'report'},
+      {source:'Journal of Information Literacy 官方题录',sourceUrl:'https://doi.org/10.11645/17.2.14',title:'Artificial intelligence skills and knowledge in libraries: Experiences and critical impressions from a learning circle',authors:['Karolina Andersdotter'],year:2023,container:'Journal of Information Literacy',volume:'17',issue:'2',pages:'107-130',doi:'10.11645/17.2.14',type:'journal-article'},
+      {source:'Taylor & Francis 正式题录',sourceUrl:'https://doi.org/10.1080/1369118X.2024.2382224',title:"Understanding algorithmic recommendations: A qualitative study on children's algorithm literacy in Switzerland",authors:['Julian Ernst'],year:2024,container:'Information, Communication & Society',volume:'28',issue:'11',pages:'1945-1961',doi:'10.1080/1369118X.2024.2382224',type:'journal-article'},
+      {source:'《中国图书馆学报》正式题录（DOI）',sourceUrl:'https://doi.org/10.13530/j.cnki.jlis.2024030',title:'数智时代的人工智能素养：内涵、框架与实施路径',authors:['蔡迎春','张静蓓','虞晨琳','王健'],year:2024,container:'中国图书馆学报',volume:'50',issue:'4',pages:'71-84',doi:'10.13530/j.cnki.jlis.2024030',type:'journal-article'},
+      {source:'《中国电化教育》正式题录',sourceUrl:'https://zdjy.cbpt.cnki.net/portal/journal/portal/client/paper/75e7535193def56ba7216fbdeadee721',title:'北美地区学生信息素养研究现状及其启示',authors:['李毅','何莎薇','邱兰欢','刘明'],year:2018,container:'中国电化教育',volume:'',issue:'8',pages:'67-72',type:'journal-article'},
+      {source:'《图书与情报》官网题录',sourceUrl:'https://tsyqb.gslib.com.cn/CN/volumn/volumn_1222.shtml',title:'泛信息素养的概念内涵及其内容要素解析',authors:['刘慧'],year:2020,container:'图书与情报',volume:'40',issue:'4',pages:'67-73',doi:'10.11968/tsyqb.1003-6938.2020063',type:'journal-article'},
+      {source:'公开学术题录',sourceUrl:'https://xueshu.baidu.com/s?wd=%E5%9B%BD%E5%86%85%E5%A4%96%E4%BF%A1%E6%81%AF%E7%B4%A0%E5%85%BB%E8%AF%84%E4%BB%B7%E6%A0%87%E5%87%86%E6%AF%94%E8%BE%83%E7%A0%94%E7%A9%B6',title:'国内外信息素养评价标准比较研究',authors:['马艳霞'],year:2010,container:'图书馆学研究',volume:'',issue:'2',pages:'85-92',type:'journal-article'},
+      {source:'《图书馆论坛》官网题录',sourceUrl:'https://tsglt.zslib.com.cn/CN/lexeme/showArticleByLexeme.do?articleID=8774',title:'人工智能素养的概念、框架与教育',authors:['施雨','茆意宏'],year:2024,container:'图书馆论坛',volume:'44',issue:'11',pages:'90-100',type:'journal-article'},
+      {source:'《大学图书馆学报》原文记录',sourceUrl:'https://ccj.pku.edu.cn/Article/DownLoad?id=292864366&type=ArticleFile',title:'北京地区高校信息素质能力指标体系研究',authors:['曾晓牧','孙平','王梦丽','杜慰纯'],year:2006,container:'大学图书馆学报',volume:'24',issue:'3',pages:'64-67',type:'journal-article'},
+      {source:'高等教育出版社正式书目',sourceUrl:'https://xuanshu.hep.com.cn/front/book/bookSearch?searchType=book&wd=%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E7%B4%A0%E5%85%BB',title:'人工智能素养',authors:['许彪','毕树沙','蒋阳飞'],year:2025,container:'高等教育出版社',volume:'',issue:'',pages:'',isbn:'9787040658194',type:'book'},
+      {source:'高等教育出版社正式书目',sourceUrl:'https://xuanshu.hep.com.cn/front/h5Mobile/bookDetails?bookId=683f2aa5e119ac97298fb4db',title:'人工智能素养',authors:['葛宇','韩鸿宇','郭亚钢','张永来','崔冬霞','吴倩'],year:2025,container:'高等教育出版社',volume:'',issue:'',pages:'',isbn:'9787040650068',type:'book'},
+      {source:'浙江大学出版社正式书目',sourceUrl:'https://libweb.zju.edu.cn/jzqd/list105.psp',title:'大学生人工智能素养红皮书（2024年版）',alternateTitles:['大学生人工智能素养白皮书','大学生人工智能素养红皮书'],authors:['浙江大学人工智能教育教学研究中心'],year:2024,container:'浙江大学出版社',volume:'',issue:'',pages:'',isbn:'9787308255936',type:'book'},
+      {source:'高等教育出版社正式书目',sourceUrl:'https://xuanshu.hep.com.cn/front/book/bookSearch?searchType=book&wd=%E7%94%9F%E6%88%90%E5%BC%8F%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%8A%80%E6%9C%AF%E4%B8%8E%E7%B4%A0%E5%85%BB',title:'生成式人工智能技术与素养',authors:['向文娟','袁云立'],year:2025,container:'高等教育出版社',volume:'',issue:'',pages:'',isbn:'9787040654073',type:'book'},
+      {source:'高校图书馆书目记录',sourceUrl:'https://lib.buaa.edu.cn/engine2/general/more?t=6E7E493C098ECA7C341C092184033DA440A50586DC4EB39E5FFE77492EB61D83AE0AD77971CD432A36F87843C5A08D82',title:'信息素养通识教程',authors:['潘燕桃','肖鹏'],year:2019,container:'高等教育出版社',volume:'',issue:'',pages:'',isbn:'9787040515442',type:'book'},
+      {source:'人民邮电出版社正式书目',sourceUrl:'https://m.ryjiaoyu.com/book/details/53151',title:'数字素养与技能导论（慕课版）',alternateTitles:['数字素养与技能导论'],authors:['黄如花','李白杨','黄雨婷'],year:2025,container:'人民邮电出版社',volume:'',issue:'',pages:'',isbn:'9787115663092',type:'book'},
+      {source:'高校图书馆书目记录',sourceUrl:'https://libnlis.ldu.edu.cn/mspace/searchDetailLocal/m9d236e8105f6826b2d913b45fcb42ab3',title:'信息素养与信息检索',authors:['周建芳'],year:2021,container:'科学出版社',volume:'',issue:'',pages:'',isbn:'9787030690890',type:'book'},
+      {source:'《大学图书馆学报》原文',sourceUrl:'https://ccj.pku.edu.cn/Article/DownLoad?id=292857233&type=ArticleFile',title:'大学图书馆国际交流与合作的新趋势',authors:['张红扬'],year:2002,container:'大学图书馆学报',volume:'20',issue:'2',pages:'58-60',type:'journal-article'},
+      {source:'公开学术题录',sourceUrl:'https://xueshu.baidu.com/s?wd=%E5%9B%BE%E4%B9%A6%E9%A6%86%E5%9B%BD%E9%99%85%E5%90%88%E4%BD%9C%E4%B8%8E%E5%AD%A6%E6%9C%AF%E4%BA%A4%E6%B5%81%E7%AD%96%E7%95%A5%E5%88%9D%E6%8E%A2',title:'图书馆国际合作与学术交流策略初探',authors:['聂建霞'],year:2008,container:'农业图书情报学刊',volume:'20',issue:'6',pages:'9-11',type:'journal-article'},
+      {source:'Purdue e-Pubs（IATUL 官方会议库）',sourceUrl:'https://docs.lib.purdue.edu/iatul/2012/papers/23/',title:'International Cooperation Towards the Development of Technology in University Libraries',authors:['Paul Nieuwenhuysen'],year:2012,container:'Proceedings of the IATUL Conferences',volume:'',issue:'',pages:'',type:'proceedings-article'},
+      {source:'ScienceDirect 正式题录',sourceUrl:'https://doi.org/10.1016/j.serrev.2009.02.002',title:'Bridges to China: Developing Partnerships Between Serials Librarians in the United States and China',authors:['Allan Scherlen','Xiaorong Shao','Elizabeth Cramer'],year:2009,container:'Serials Review',volume:'35',issue:'2',pages:'75-79',doi:'10.1016/j.serrev.2009.02.002',type:'journal-article'},
+      {source:'University of Pretoria 机构知识库',sourceUrl:'https://repository.up.ac.za/items/8ed7a628-0aa0-4865-b17d-a9f5b1b1bcb2',title:'Critical Reflections on International Librarianship',authors:['Peter Johan Lor'],year:2008,container:'Mousaion',volume:'26',issue:'1',pages:'1-15',type:'journal-article'},
+      {source:'Emerald 正式题录',sourceUrl:'https://doi.org/10.1108/EUM0000000005499',title:'Library Cooperation on Overseas Chinese Studies: From Resource Sharing to the Development of Library Collections',authors:['Sheau-yueh J. Chao'],year:2001,container:'Collection Building',volume:'20',issue:'3',pages:'123-130',doi:'10.1108/EUM0000000005499',type:'journal-article'},
+      {source:'万方正式期刊题录',sourceUrl:'https://c.wanfangdata.com.cn/magazine/fxj?isSync=0&issueNum=3&page=1&publishYear=2015&tabId=article',title:'我国刑事证据能力之理论归纳及思考',authors:['纵博'],year:2015,container:'法学家',volume:'',issue:'3',pages:'72-85',type:'journal-article'},
+      {source:'维普正式期刊题录',sourceUrl:'https://dianda.cqvip.com/Qikan/Article/Detail?from=Qikan_Article_Detail&id=668904657',title:'“热”与“冷”:非法证据排除规则适用的实证研究',authors:['左卫民'],year:2015,container:'法商研究',volume:'32',issue:'3',pages:'151-160',type:'journal-article'},
+      {source:'CNKI 期刊参考文献题录',sourceUrl:'https://scjg.cbpt.cnki.net/portal/journal/portal/client/paper/ed6c597b0cd8e8b4f22b331463d39e7d',title:'论侦查中心主义',authors:['陈瑞华'],year:2017,container:'政法论坛',volume:'35',issue:'2',pages:'3-19',type:'journal-article'},
+      {source:'公开期刊引证题录',sourceUrl:'https://www.hanspub.org/journal/paperinformation?paperid=83687',title:'《关于全面推进以审判为中心的刑事诉讼制度改革的实施意见》的理解与适用',authors:['戴长林','刘静坤'],year:2017,container:'人民司法(应用)',volume:'',issue:'10',pages:'22-34',type:'journal-article'},
+      {source:'公开期刊引证题录',sourceUrl:'https://www.hanspub.org/journal/paperinformation?paperid=99277',title:'中国法语境中的“排除合理怀疑”',authors:['龙宗智'],year:2012,container:'中外法学',volume:'24',issue:'6',pages:'1124-1144',type:'journal-article'},
+      {source:'《中国法学》正式题录',sourceUrl:'https://clsjp.chinalaw.org.cn/portal/article/index/id/8874.html',title:'刑事证据审查的基本制度结构',authors:['吴洪淇'],year:2017,container:'中国法学',volume:'',issue:'6',pages:'167-186',type:'journal-article'},
+      {source:'《法律科学》编辑部期次目录',sourceUrl:'https://flkx.nwupl.edu.cn/jkdt/56274.htm',title:'“不得作为定案根据”条款的学理解析',authors:['纵博'],year:2014,container:'法律科学(西北政法大学学报)',volume:'32',issue:'4',pages:'',partialFields:['页码'],type:'journal-article'},
+      {source:'《现代法学》公开期刊题录',sourceUrl:'https://lawdata.com.tw/tw/detail.aspx?no=254930',title:'论无证据能力的证据——兼评我国的证据能力规则',authors:['万毅'],year:2014,container:'现代法学',volume:'36',issue:'4',pages:'131-145',type:'journal-article'},
+      {source:'维普正式期刊题录',sourceUrl:'https://dianda.cqvip.com/Qikan/Article/Detail?from=Qikan_Article_Detail&id=32114080',title:'西方自我宽恕模型研究进展',authors:['刘凌','马旭颖','沈悦'],year:2013,container:'辽宁师范大学学报(社会科学版)',volume:'36',issue:'2',pages:'211-215',type:'journal-article'},
+      {source:'《法学研究》正式期次题录',sourceUrl:'https://zgfxqk.chinalaw.org.cn/portal/article/index/id/3145.html',title:'证据属性层次论——基于证据规则结构体系的理论反思',authors:['郑飞'],year:2021,container:'法学研究',volume:'43',issue:'2',pages:'123-137',type:'journal-article'},
+      {source:'Springer 正式书目',sourceUrl:'https://link.springer.com/book/10.1007/978-1-4614-3597-6',title:'Models, Methods, Concepts & Applications of the Analytic Hierarchy Process',authors:['Thomas L. Saaty','Luis G. Vargas'],year:2012,container:'Springer',volume:'',issue:'',pages:'',doi:'10.1007/978-1-4614-3597-6',isbn:'9781461435976',type:'book'}
+    ,
+{"source": "《图书情报知识》官网", "sourceUrl": "https://dik.whu.edu.cn/jwk3/tsqbzs/CN/10.13366/j.dik.2024.06.094", "title": "人工智能赋能智慧图书馆发展的作用机制", "authors": ["王曦"], "year": 2024, "container": "图书情报知识", "volume": "41", "issue": "6", "pages": "94-101, 165", "doi": "10.13366/j.dik.2024.06.094", "type": "journal-article"},
+{"source": "《图书情报工作》官网", "sourceUrl": "https://www.lis.ac.cn/CN/10.13266/j.issn.0252-3116.2024.13.006", "title": "生成式AI背景下的图书馆员：角色、技能与进路", "authors": ["郭亚军", "冯思倩", "寇旭颍", "刘振阳"], "year": 2024, "container": "图书情报工作", "volume": "68", "issue": "13", "pages": "69-77", "doi": "10.13266/j.issn.0252-3116.2024.13.006", "type": "journal-article"},
+{"source": "《图书情报工作》官网", "sourceUrl": "https://www.lis.ac.cn/CN/10.13266/j.issn.0252-3116.2022.23.005", "title": "数字化转型中的高校图书馆数字化服务能力影响因素研究", "authors": ["时莹", "王铮"], "year": 2022, "container": "图书情报工作", "volume": "66", "issue": "23", "pages": "41-50", "doi": "10.13266/j.issn.0252-3116.2022.23.005", "type": "journal-article"},
+{"source": "SAGE / Crossref 正式出版题录", "sourceUrl": "https://journals.sagepub.com/doi/10.1177/09610006221142029", "title": "Defining artificial intelligence for librarians", "authors": ["Andrew M. Cox", "Suvodeep Mazumdar"], "year": 2024, "container": "Journal of Librarianship and Information Science", "volume": "56", "issue": "2", "pages": "330-340", "doi": "10.1177/09610006221142029", "type": "journal-article"},
+{"source": "《图书情报知识》官网", "sourceUrl": "https://dik.whu.edu.cn/jwk3/tsqbzs/CN/10.13366/j.dik.2023.05.097", "title": "ChatGPT类生成式AI对高校图书馆数字素养教育的影响探析", "authors": ["龚芙蓉"], "year": 2023, "container": "图书情报知识", "volume": "40", "issue": "5", "pages": "97-106, 156", "doi": "10.13366/j.dik.2023.05.097", "type": "journal-article"},
+{"source": "CNKI 分类题录（公开镜像）", "sourceUrl": "https://cnki.istiz.org.cn/kcms/detail/frame/list.aspx?cat=G251.6&curdbcode=cjfd&dbcode=CJFD&dbname=CJFD2002&filename=tsgl200205038&page=3&reftype=9", "title": "高校图书馆馆员生成式人工智能胜任力测度研究", "authors": ["吴爱红"], "year": 2025, "container": "情报科学", "volume": "", "issue": "8", "pages": "", "type": "journal-article", "partialFields": ["卷号", "页码"]}
 ];
 
 function compatibleFetch(...args) {
@@ -544,170 +201,89 @@ function normalizeDate(value) {
   return `${year}-${month}-${String(Number(match[3])).padStart(2, "0")}`;
 }
 
-function parseReference(reference) {
-  const raw = String(reference).replace(/\s+/g, " ").trim();
-  const work = raw
-    .replace(
-      /^\s*(?:\[\s*\d+\s*\]|[\(（]\s*\d{1,3}\s*[\)）]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)]|(?!(?:18|19|20)\d{2}\b)\d{1,3}\s+(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff]))\s*/,
-      ""
-    )
-    .trim();
-  const doi = extractDoi(work);
-  const isbn = extractIsbn(work);
-  const pmid = extractPmid(work);
-  const arxivId = extractArxivId(work);
-  const standardNumber = extractStandardNumber(work);
-  const patentNumber = extractPatentNumber(work);
-  const urlMatch = extractUrl(work);
-  const url = urlMatch.url;
-  let body = urlMatch.raw ? work.replace(urlMatch.raw, "") : work;
-  if (doi) {
-    body = body.replace(new RegExp(doi.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), "");
-  }
-  body = body
-    .replace(/(?:doi\s*[:：]?|https?:\/\/(?:dx\.)?doi\.org\/?)\s*[.,。]?\s*$/i, "")
-    .trim();
-
-  const typeMatch = body.match(/\[\s*([A-Z/]+)\s*\]/i);
-  let type = typeMatch ? typeMatch[1].toUpperCase() : "";
-  const publicationMatch = (type === "EB/OL" || url)
-    ? body.match(/\(\s*((?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2}(?:\s*[月\-/.]\s*\d{1,2}\s*日?)?)?)\s*\)/)
-    : null;
-  const accessMatch = body.match(
-    /\[\s*((?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2}(?:\s*[月\-/.]\s*\d{1,2}\s*日?)?)?)\s*\]/
-  );
-  const publicationDate = normalizeDate(publicationMatch?.[1] || "");
-  const accessDate = normalizeDate(accessMatch?.[1] || "");
-  let title = "";
-  let authors = "";
-  let container = "";
-
-  if (typeMatch) {
-    const before = body.slice(0, typeMatch.index).trim();
-    const parts = before.split(/[.。]\s*/).map(cleanValue).filter(Boolean);
-    title = parts.pop() || "";
-    authors = parts.join(". ").trim();
-    const tail = body
-      .slice(typeMatch.index + typeMatch[0].length)
-      .replace(/^[\s./／]+/, "");
-    const containerMatch = tail.match(
-      /^(.+?)(?:[,，]\s*|[.。]\s+)(?=(?:18|19|20)\d{2}\b)/
-    );
-    if (containerMatch) container = cleanValue(containerMatch[1]);
-  } else if (url) {
-    const labeledAuthor = body.match(
-      /(?:作者|author)\s*[:：]\s*(.+?)(?=\s*[;；]\s*(?:题名|标题|title)\s*[:：])/i
-    );
-    const labeledTitle = body.match(
-      /(?:题名|标题|title)\s*[:：]\s*(.+?)(?=\s*[;；]\s*(?:日期|发布时间|网址|url)\s*[:：]|\s*\(?\s*(?:18|19|20)\d{2})/i
-    );
-    if (labeledAuthor && labeledTitle) {
-      authors = cleanValue(labeledAuthor[1]);
-      title = cleanValue(labeledTitle[1]);
-    } else {
-      const apaWeb = body.match(
-        /^(.+?)\.\s*\(\s*((?:18|19|20)\d{2})\s*\)\s*\.\s*(.+)$/
-      );
-      if (apaWeb) {
-        authors = cleanValue(apaWeb[1]);
-        const parts = cleanValue(apaWeb[3])
-          .replace(/\[\s*(?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2}(?:\s*[月\-/.]\s*\d{1,2}\s*日?)?)?\s*\]\s*[.。]?$/, "")
-          .split(/[.。]\s+/)
-          .map(cleanValue)
-          .filter(Boolean);
-        title = parts.shift() || "";
-        container = parts.join(". ");
-      } else {
-        const beforeDate = cleanValue(
-          body.split(/\(?\s*(?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2})?/)[0]
-        );
-        const parts = beforeDate.split(/[.。]\s*/).map(cleanValue).filter(Boolean);
-        if (parts.length > 1) {
-          authors = parts.shift() || "";
-          title = parts.join(". ");
-        } else {
-          title = beforeDate;
+    function looksLikeChineseAuthorList(value){
+      const names=String(value||'').split(/\s*[;；,，、]\s*/).map(cleanValue).filter(Boolean);
+      return!!(names.length&&names.length<=20&&names.every(name=>/^[\p{Script=Han}·]{2,24}$/u.test(name.replace(/\s+/g,''))));
+    }
+    function parseReference(reference){
+      const raw=String(reference).replace(/[\u200b-\u200d\ufeff]/g,'').replace(/\s+/g,' ').trim();
+      const work=raw.replace(/^\s*(?:\[\s*\d+\s*\]|[\(（]\s*\d{1,3}\s*[\)）]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)]|(?!(?:18|19|20)\d{2}\b)\d{1,3}\s+(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff]))\s*/,'').trim();
+      const doi=extractDoi(work),isbn=extractIsbn(work),pmid=extractPmid(work),arxivId=extractArxivId(work),standardNumber=extractStandardNumber(work),patentNumber=extractPatentNumber(work),urlMatch=extractUrl(work),url=urlMatch.url;
+      let body=(urlMatch.raw?work.replace(urlMatch.raw,''):work).replace(/[（]/g,'(').replace(/[）]/g,')').replace(/[［]/g,'[').replace(/[］]/g,']');
+      body=doi?body.replace(new RegExp(doi.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),''):body;
+      body=body.replace(/(?:doi\s*[:：]?|https?:\/\/(?:dx\.)?doi\.org\/?)\s*[.,。]?\s*$/i,'').trim();
+      const typeMatch=body.match(/\[\s*([A-Z/]+)\s*\]/i);let type=typeMatch?typeMatch[1].toUpperCase():'';
+      const publicationMatch=(type==='EB/OL'||url)?body.match(/\(\s*((?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2}(?:\s*[月\-/.]\s*\d{1,2}\s*日?)?)?)\s*\)/):null;
+      const accessMatch=body.match(/\[\s*((?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2}(?:\s*[月\-/.]\s*\d{1,2}\s*日?)?)?)\s*\]/);
+      const publicationDate=normalizeDate(publicationMatch?.[1]||''),accessDate=normalizeDate(accessMatch?.[1]||'');
+      let title='',authors='',container='',cnkiTitleFirst=false;
+      if(typeMatch){
+        const before=body.slice(0,typeMatch.index).trim();
+        const tail=body.slice(typeMatch.index+typeMatch[0].length).replace(/^[\s./／]+/,'');
+        const authorStop=tail.search(/[.。]/),possibleAuthors=authorStop>0?cleanValue(tail.slice(0,authorStop)):'',afterAuthors=authorStop>0?tail.slice(authorStop+1).replace(/^\s+/,''):'';
+        const cnkiContainerMatch=afterAuthors.match(/^(.+?)(?:[,，]\s*|[.。]\s+)(?=(?:18|19|20)\d{2}\b)/);
+        if(authorStop>0&&looksLikeChineseAuthorList(possibleAuthors)&&cnkiContainerMatch){
+          title=cleanValue(before);authors=possibleAuthors;container=cleanValue(cnkiContainerMatch[1]);cnkiTitleFirst=true;
+        }else{
+          const head=before.replace(/\b([A-Z])\.(?=\s+[A-Z][a-z]+[,;.])/g,'$1').replace(/\b([A-Z])\.(?=\s*[A-Z]\.|\s*[,;&])/g,'$1'),boundary=head.search(/[.。]/);
+          title=boundary<0?cleanValue(head):cleanValue(head.slice(boundary+1));authors=boundary<0?'':cleanValue(head.slice(0,boundary));
+          const containerMatch=tail.match(/^(.+?)(?:[,，]\s*|[.。]\s+)(?=(?:18|19|20)\d{2}\b)/);
+          if(containerMatch)container=cleanValue(containerMatch[1]);
+        }
+      }else if(/^.+?\.\s*\(\s*(?:18|19|20)\d{2}[a-z]?\s*\)\s*\./i.test(body)){
+        const apa=body.match(/^(.+?)\.\s*\(\s*((?:18|19|20)\d{2})[a-z]?\s*\)\s*\.\s*(.+)$/i);authors=cleanValue(apa[1]);
+        const text=apa[3],strongCut=text.search(/[.。]\s+(?=[^,]+,\s*(?:\d+|$))/),cut=strongCut<0?text.search(/[.。]\s+/):strongCut;title=cleanValue(cut<0?text:text.slice(0,cut));container=cut<0?'':cleanValue(text.slice(cut+1).split(/,\s*\d/)[0]);
+      }else if(url){
+        const authorLabel=body.match(/(?:作者|author)\s*[:：]\s*(.+?)(?=\s*[;；]\s*(?:题名|标题|title)\s*[:：])/i),titleLabel=body.match(/(?:题名|标题|title)\s*[:：]\s*(.+?)(?=\s*[;；]\s*(?:日期|发布时间|网址|url)\s*[:：]|\s*\(?\s*(?:18|19|20)\d{2})/i);
+        if(authorLabel&&titleLabel){authors=cleanValue(authorLabel[1]);title=cleanValue(titleLabel[1])}
+        else{
+          const apaWeb=body.match(/^(.+?)\.\s*\(\s*((?:18|19|20)\d{2})\s*\)\s*\.\s*(.+)$/);
+          if(apaWeb){
+            authors=cleanValue(apaWeb[1]);
+            const parts=cleanValue(apaWeb[3]).replace(/\[\s*(?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2}(?:\s*[月\-/.]\s*\d{1,2}\s*日?)?)?\s*\]\s*[.。]?$/,'').split(/[.。]\s+/).map(cleanValue).filter(Boolean);
+            title=parts.shift()||'';container=parts.join('. ');
+          }else{
+            const beforeDate=cleanValue(body.split(/\(?\s*(?:18|19|20)\d{2}(?:\s*[年\-/.]\s*\d{1,2})?/)[0]),parts=beforeDate.split(/[.。]\s*/).map(cleanValue).filter(Boolean);
+            if(parts.length>1){authors=parts.shift()||'';title=parts.join('. ')}else title=beforeDate;
+          }
+        }
+      }else{
+        const conventionalYear=body.match(/[,，]\s*((?:18|19|20)\d{2})(?=\s*[,，.。(（]|$)/);
+        if(conventionalYear){
+          const prefix=cleanValue(body.slice(0,conventionalYear.index)).replace(/[,，]\s*$/,''),parts=prefix.split(/[.。]\s*/).map(cleanValue).filter(Boolean);
+          if(parts.length>=3){authors=parts.shift()||'';container=parts.pop()||'';title=parts.join('. ')}
+          else if(parts.length>=2){authors=parts.shift()||'';title=parts.join('. ')}
+        }else{
+          const yearMarker=body.match(/\(?((?:18|19|20)\d{2})[a-z]?\)?\s*[.,，。]/i);
+          if(yearMarker){
+            authors=cleanValue(body.slice(0,yearMarker.index));
+            const after=body.slice(yearMarker.index+yearMarker[0].length).trim(),parts=after.split(/[.。]\s+/).map(cleanValue).filter(Boolean);
+            title=parts.shift()||'';container=parts.join('. ');
+          }
         }
       }
-    }
-  } else {
-    const conventionalYear = body.match(
-      /[,，]\s*((?:18|19|20)\d{2})(?=\s*[,，.。]|$)/
-    );
-    if (conventionalYear) {
-      const prefix = cleanValue(body.slice(0, conventionalYear.index))
-        .replace(/[,，]\s*$/, "");
-      const parts = prefix.split(/[.。]\s*/).map(cleanValue).filter(Boolean);
-      if (parts.length >= 3) {
-        authors = parts.shift() || "";
-        container = parts.pop() || "";
-        title = parts.join(". ");
-      } else if (parts.length >= 2) {
-        authors = parts.shift() || "";
-        title = parts.join(". ");
+      const yearSearchBody=(typeMatch?body.slice(typeMatch.index+typeMatch[0].length):body).replace(/\bISBN(?:-1[03])?\s*[:：]?\s*(?:97[89][\s-]?)?[\dXx][\dXx\s-]{8,20}/ig,' ');
+      const years=[...yearSearchBody.matchAll(/(?:18|19|20)\d{2}/g)].map(x=>Number(x[0])),year=publicationDate?Number(publicationDate.slice(0,4)):years.length?years[0]:null;
+      const volIssue=body.match(/(?:18|19|20)\d{2}\s*[,，]\s*([A-Za-z]?\d+[A-Za-z]?)\s*(?:\(\s*([^)]+?)\s*\))?/ )||body.match(/,\s*(\d+)\s*\(([^)]+)\)\s*[,：:]/);
+      const issueWithoutVolume=!volIssue?body.match(/(?:18|19|20)\d{2}\s*[\(（]\s*([^)）]+?)\s*[\)）]/):null;
+      const pageMatches=[...body.matchAll(/[:：]\s*([A-Za-z]?\d+(?:\s*[-–—]\s*[A-Za-z]?\d+)?(?:\s*[,，]\s*[A-Za-z]?\d+(?:\s*[-–—]\s*[A-Za-z]?\d+)?)*)(?=\s*(?:[.。;；]|$))/g)];
+      if(!pageMatches.length){const apaPages=body.match(/\d+\s*\([^)]+\)\s*,\s*([A-Za-z]?\d+(?:\s*[-–—]\s*[A-Za-z]?\d+)?(?:\s*,\s*\d+)*)[.。]?\s*$/);if(apaPages)pageMatches.push(apaPages)}
+      const pages=pageMatches.at(-1)?.[1]?.replace(/\s*[-–—]\s*/g,'-').replace(/\s*[,，]\s*/g,', ')||'';
+      if(!type){
+        if(/\b(?:proceedings|conference)\b/i.test(container))type='C';
+        else if(volIssue?.[1]||volIssue?.[2]||pages)type='J';
+        else if(/\b(?:press|springer|wiley|publisher)\b/i.test(body)||/出版社/.test(body))type='M';
       }
-    } else {
-      const yearMarker = body.match(/\(?((?:18|19|20)\d{2})[a-z]?\)?\s*[.,，。]/i);
-      if (yearMarker) {
-        authors = cleanValue(body.slice(0, yearMarker.index));
-        const after = body.slice(yearMarker.index + yearMarker[0].length).trim();
-        const parts = after.split(/[.。]\s+/).map(cleanValue).filter(Boolean);
-        title = parts.shift() || "";
-        container = parts.join(". ");
-      }
+      return{raw,work,doi,isbn,pmid,arxivId,standardNumber,patentNumber,url,type,title,authors,container,year,publicationDate,accessDate,volume:volIssue?.[1]||'',issue:volIssue?.[2]||issueWithoutVolume?.[1]||'',pages,cnkiTitleFirst};
     }
-  }
-
-  const years = [...body.matchAll(/(?:18|19|20)\d{2}/g)].map((match) => Number(match[0]));
-  const year = publicationDate
-    ? Number(publicationDate.slice(0, 4))
-    : years.length
-      ? years[years.length - 1]
-      : null;
-  const volIssue = body.match(
-    /(?:18|19|20)\d{2}\s*[,，]\s*([A-Za-z]?\d+[A-Za-z]?)\s*(?:\(\s*([^)]+?)\s*\))?/
-  );
-  const pageMatches = [...body.matchAll(
-    /[:：]\s*([A-Za-z]?\d+(?:\s*[-–—]\s*[A-Za-z]?\d+)?)(?=\s*(?:[.,，。;；]|$))/g
-  )];
-  const pages = pageMatches[pageMatches.length - 1]?.[1]
-    ?.replace(/\s*[–—]\s*/g, "-") || "";
-  if (!type) {
-    if (/\b(?:proceedings|conference)\b/i.test(container)) {
-      type = "C";
-    } else if (volIssue?.[1] || volIssue?.[2] || pages) {
-      type = "J";
-    } else if (
-      /\b(?:press|springer|wiley|publisher)\b/i.test(body) ||
-      /出版社/.test(body)
-    ) {
-      type = "M";
+    function conventionalReference(parsed){
+      if(!parsed?.cnkiTitleFirst)return parsed?.raw||'';
+      let value=`${parsed.authors}. ${parsed.title}[${parsed.type}]. ${parsed.container}`;
+      if(parsed.year)value+=`, ${parsed.year}`;
+      if(parsed.volume)value+=`, ${parsed.volume}${parsed.issue?`(${parsed.issue})`:''}`;else if(parsed.issue)value+=`(${parsed.issue})`;
+      if(parsed.pages)value+=`:${parsed.pages}`;
+      return`${value}.`;
     }
-  }
-
-  return {
-    raw,
-    work,
-    doi,
-    isbn,
-    pmid,
-    arxivId,
-    standardNumber,
-    patentNumber,
-    url,
-    type,
-    title,
-    authors,
-    container,
-    year,
-    publicationDate,
-    accessDate,
-    volume: volIssue?.[1] || "",
-    issue: volIssue?.[2] || "",
-    pages
-  };
-}
-
 function splitSubmittedAuthors(value) {
   return String(value || "")
     .replace(/\bet\s+al\.?/ig, "")
@@ -1138,8 +714,14 @@ function queryVerifiedReferenceIndex(parsed) {
         record.year &&
         Number(parsed.year) === Number(record.year)
       );
+      const sourceUrlExact = Boolean(
+        parsed.url &&
+        record.sourceUrl &&
+        comparableUrl(parsed.url) === comparableUrl(record.sourceUrl)
+      );
       const authorSupported = !submittedAuthorKeys.length ||
         directAuthorMatch ||
+        (sourceUrlExact && titleMatch >= 0.98) ||
         (weakInitialAuthors && titleMatch >= 0.98 && (sourceSupported || yearSupported));
       return titleMatch >= 0.9 && authorSupported && (
         !parsed.url ||
@@ -1161,7 +743,7 @@ function queryVerifiedReferenceIndex(parsed) {
 }
 
 async function queryCrossref(parsed) {
-  const fields = "DOI,title,author,published,container-title,type,URL,page,volume,issue";
+  const fields = "DOI,title,author,published-print,published-online,issued,published,container-title,type,URL,page,volume,issue";
   const jobs = [];
   if (parsed.doi) {
     jobs.push({
@@ -1169,9 +751,22 @@ async function queryCrossref(parsed) {
       url: `https://api.crossref.org/works/${encodeURIComponent(parsed.doi)}`
     });
   }
+  const titleQuery = new URL("https://api.crossref.org/works");
+  titleQuery.searchParams.set(
+    "query.title",
+    cleanValue(parsed.title) || cleanValue(parsed.work)
+  );
+  const firstAuthor = splitSubmittedAuthors(parsed.authors)[0];
+  if (firstAuthor) titleQuery.searchParams.set("query.author", firstAuthor);
+  if (parsed.container) {
+    titleQuery.searchParams.set("query.container-title", parsed.container);
+  }
+  titleQuery.searchParams.set("rows", "5");
+  titleQuery.searchParams.set("select", fields);
+  titleQuery.searchParams.set("mailto", "linhu@scu.edu.cn");
   jobs.push({
     exact: false,
-    url: `https://api.crossref.org/works?query.bibliographic=${encodeURIComponent(parsed.work)}&rows=5&select=${fields}&mailto=linhu%40scu.edu.cn`
+    url: titleQuery.href
   });
 
   const settled = await Promise.allSettled(jobs.map((job) => fetchJson(job.url)));
@@ -1370,13 +965,17 @@ function buildVerificationPlan(parsed) {
   };
   const type = baseReferenceType(parsed.type);
 
+  if(officialJournalUrls(parsed).length)add("official-journal");
+  // 通用网页检索覆盖旧刊、地方刊、会议论文和没有 DOI 的文献，必须作为
+  // 第一发现通道。结构化数据库仍并行参与二次确认与字段纠错，但不再是
+  // “能否确认真实存在”的前置门槛。
+  add("search-engine");
   if (parsed.pmid) add("pubmed");
   if (parsed.arxivId) add("arxiv");
 
   if (parsed.isbn) {
     add("open-library");
     add("crossref");
-    add("search-engine");
     return providers;
   }
   if (type === "M") {
@@ -1385,11 +984,9 @@ function buildVerificationPlan(parsed) {
     add("open-library");
     add("crossref");
     add("openalex");
-    add("search-engine");
     return providers;
   }
   if (["S", "P", "N", "EB", "DB", "CP"].includes(type)) {
-    add("search-engine");
     return providers;
   }
 
@@ -1403,18 +1000,70 @@ function buildVerificationPlan(parsed) {
   if (type === "J" && hasHan(parsed.title)) {
     if (parsed.container && parsed.year && parsed.issue) add("doi-registry");
     add("openalex");
-    add("search-engine");
     return providers;
   }
 
   if (!hasHan(parsed.title)) add("semantic-scholar");
   add("crossref");
   add("openalex");
-  add("search-engine");
   return providers;
 }
 
+function officialJournalUrls(parsed) {
+  const doi = String(parsed.doi || '').toLowerCase();
+  if (doi.startsWith('10.13366/j.dik.')) return [`https://dik.whu.edu.cn/jwk3/tsqbzs/CN/${doi}`];
+  if (doi.startsWith('10.13266/j.issn.0252-3116.')) return [`https://www.lis.ac.cn/CN/${doi}`];
+  const start = String(parsed.pages || '').match(/^\d+/)?.[0];
+  if (!parsed.doi && parsed.year && parsed.volume && parsed.issue && start) {
+    const base = normalizeText(parsed.container) === normalizeText('图书情报知识')
+      ? 'https://dik.whu.edu.cn/jwk3/tsqbzs' : normalizeText(parsed.container) === normalizeText('图书情报工作')
+        ? 'https://www.lis.ac.cn' : '';
+    if (base) return [`${base}/CN/Y${parsed.year}/V${parsed.volume}/I${Number(parsed.issue)}/${start}`];
+  }
+  return [];
+}
+
+function officialJournalCandidate(html, sourceUrl, parsed) {
+  const $ = cheerio.load(html);
+  const meta = (name) => pageValues($, [`meta[name="${name}"]`]);
+  const title = meta('citation_title')[0] || cleanWebField($('h1,h2,h3').filter((_, e) => diceSimilarity($(e).text(), parsed.title) > .93).first().text());
+  if (!title || diceSimilarity(title, parsed.title) < .72) return null;
+  const text = cleanWebField($('body').text());
+  // Publisher's own citation paragraph; never read one of its reference-list entries.
+  const titleKey = normalizeText(title);
+  let citation = null;
+  $('p,div,td').each((_, el) => {
+    if (citation) return;
+    const own = $(el).clone();own.children('p,div,table,ul,ol').remove();
+    const value = cleanWebField(own.text());
+    if (value.length > 1500 || !/\[J\]/i.test(value)) return;
+    const item = parseReference(value);
+    if (normalizeText(item.title) === titleKey && item.container && item.year) citation = item;
+  });
+  const authors = citation ? splitSubmittedAuthors(citation.authors) : meta('citation_author');
+  const container = citation?.container || meta('citation_journal_title')[0] || '';
+  const year = citation?.year || Number(normalizeDate(meta('citation_publication_date')[0]).slice(0,4)) || null;
+  const first = meta('citation_firstpage')[0] || '', last = meta('citation_lastpage')[0] || '';
+  const pages = citation?.pages || (first ? first + (last && last !== first ? '-'+last : '') : '');
+  const doi = extractDoi(meta('citation_doi')[0] || citation?.doi || '');
+  if (!authors.length || !container) return null;
+  return {source:'期刊官网题录',sources:['期刊官网题录'],sourceUrl,title,authors,authorKeys:authors.map(authorKey),year,container,
+    volume:citation?.volume || meta('citation_volume')[0] || '',issue:citation?.issue || meta('citation_issue')[0] || '',pages,
+    doi,type:'journal-article',exactDoi:!!(doi && doi === parsed.doi),trustedIndex:true};
+}
+
+async function queryOfficialJournal(parsed) {
+  const candidates = [];
+  for (const url of officialJournalUrls(parsed)) {
+    const html = await fetchText(url);
+    const candidate = officialJournalCandidate(html, url, parsed);
+    if (candidate) candidates.push(candidate);
+  }
+  return {source:'期刊官网题录',candidates};
+}
+
 function providerJob(provider, parsed) {
+  if(provider === "official-journal")return {source:"期刊官网题录",promise:queryOfficialJournal(parsed)};
   if (provider === "crossref") {
     return { source: "Crossref", promise: queryCrossref(parsed) };
   }
@@ -1451,7 +1100,59 @@ function sourceTerms(value) {
   ].map(normalizeText).filter((term) => term.length >= 2))];
 }
 
-function searchSnippetCandidate(parsed, sourceUrl, observedTitle = "", evidenceText = "") {
+const SEARCH_PROVIDERS = [
+  {
+    name: "百度学术",
+    buildUrl: (query) => `https://xueshu.baidu.com/s?wd=${encodeURIComponent(query)}`,
+    selectors: ".sc_default_result, .sc_result, .result, .c-container",
+    exactPhrase: false,
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36"
+  },
+  {
+    name: "百度搜索",
+    buildUrl: (query) => `https://m.baidu.com/s?word=${encodeURIComponent(query)}`,
+    selectors: ".result, .c-result, .c-container, .c-result-content",
+    exactPhrase: false,
+    userAgent: "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/126 Mobile Safari/537.36"
+  },
+  {
+    name: "360 搜索",
+    buildUrl: (query) => `https://m.so.com/s?q=${encodeURIComponent(query)}`,
+    selectors: ".res-list, .result, .vrwrap, .g-card, li.res-list",
+    exactPhrase: false,
+    userAgent: "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/126 Mobile Safari/537.36"
+  },
+  {
+    name: "必应搜索",
+    buildUrl: (query) => `https://cn.bing.com/search?q=${encodeURIComponent(query)}`,
+    selectors: "li.b_algo, .b_algo",
+    exactPhrase: true,
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36"
+  }
+];
+// 个人版云函数最长执行 3 秒。搜索请求必须和其他来源一样在 1.8 秒内
+// 主动结束，给冷启动、HTML 解析、证据评分和序列化返回预留约 1 秒。
+const SEARCH_REQUEST_TIMEOUT = REQUEST_TIMEOUT;
+
+function absoluteSearchUrl(value, searchUrl) {
+  const raw = cleanValue(value);
+  if (!raw) return searchUrl;
+  try {
+    return new URL(raw, searchUrl).href;
+  } catch (error) {
+    return searchUrl;
+  }
+}
+
+function searchSnippetCandidate(
+  parsed,
+  providerName,
+  sourceUrl,
+  observedTitle = "",
+  evidenceText = "",
+  supportCount = 0,
+  exactTitle = false
+) {
   const block = normalizeText(evidenceText);
   const authors = splitSubmittedAuthors(parsed.authors).filter((author) =>
     block.includes(normalizeText(author))
@@ -1463,10 +1164,12 @@ function searchSnippetCandidate(parsed, sourceUrl, observedTitle = "", evidenceT
     ? parsed.year
     : null;
   return {
-    source: "搜索引擎结果摘要",
-    sources: ["搜索引擎结果摘要"],
+    source: `搜索引擎（${providerName}）`,
+    sources: [`搜索引擎（${providerName}）`],
     exactDoi: false,
     evidenceStrength: "search-snippet",
+    searchSupportCount: supportCount,
+    searchExactTitle: exactTitle,
     title: observedTitle,
     authors,
     authorKeys: authors.map(authorKey).filter(Boolean),
@@ -1481,61 +1184,256 @@ function searchSnippetCandidate(parsed, sourceUrl, observedTitle = "", evidenceT
   };
 }
 
-async function querySearchEngineEvidence(parsed) {
+function searchResultNodes($, provider) {
+  const elements = $(provider.selectors).toArray();
+  if (elements.length) return elements;
+  const fallback = [];
+  $("h3, h2").each((_, heading) => {
+    const card = $(heading).closest("article, li, section, div").get(0);
+    if (card && !fallback.includes(card)) fallback.push(card);
+  });
+  return fallback.slice(0, 20);
+}
+
+function decodeSearchEscapes(value) {
+  return String(value || "")
+    .replace(/\\u([0-9a-f]{4})/gi, (_, code) =>
+      String.fromCharCode(Number.parseInt(code, 16))
+    )
+    .replace(/\\x([0-9a-f]{2})/gi, (_, code) =>
+      String.fromCharCode(Number.parseInt(code, 16))
+    )
+    .replace(/\\\//g, "/")
+    .replace(/\\(?:r|n|t)/g, " ")
+    .replace(/\\"/g, '"')
+    .replace(/\\'/g, "'");
+}
+
+function searchableDocumentText(html) {
+  // 移动版搜索页经常只返回页面外壳，把真正的结果放在 script 中的
+  // JSON/Unicode 转义数据里。body.text() 读不到或无法还原这些内容，
+  // 因而会出现“搜索页成功返回，但一条结果也没解析到”的假阴性。
+  const decoded = decodeSearchEscapes(html);
+  const withoutTags = decoded
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ");
+  return cleanWebField(
+    cheerio.load(`<div>${withoutTags}</div>`).root().text()
+  ).slice(0, 600000);
+}
+
+function searchIdentitySupport(parsed, evidenceText) {
+  const block = normalizeText(evidenceText);
+  const authorTerms = splitSubmittedAuthors(parsed.authors)
+    .map(normalizeText)
+    .filter((value) => value.length >= 2);
+  const containerTerms = sourceTerms(parsed.container);
+  const yearTerm = parsed.year ? String(parsed.year) : "";
+  const authorHit = authorTerms.some((term) => block.includes(term));
+  const containerHit = containerTerms.some((term) => block.includes(term));
+  const yearHit = Boolean(yearTerm && block.includes(yearTerm));
+  return {
+    authorHit,
+    containerHit,
+    yearHit,
+    supportCount: [authorHit, containerHit, yearHit].filter(Boolean).length
+  };
+}
+
+function parseSearchProviderHtml(parsed, provider, searchUrl, html) {
+  const $ = cheerio.load(html);
   const title = cleanValue(parsed.title);
-  if (normalizeText(title).length < 6) {
-    return { source: "搜索引擎结果摘要", candidates: [] };
+  const titleKey = normalizeText(title);
+  const candidates = [];
+  let diagnosticText = "";
+
+  for (const element of searchResultNodes($, provider)) {
+    const node = $(element);
+    const evidenceText = cleanWebField(node.text());
+    const block = normalizeText(evidenceText);
+    const heading = cleanWebField(node.find("h3, h2").first().text());
+    const headingScore = diceSimilarity(title, heading);
+    const blockContainsTitle = Boolean(titleKey && block.includes(titleKey));
+    const { supportCount } = searchIdentitySupport(parsed, evidenceText);
+
+    // 题名必须高度一致。题名逐字出现时另需一个身份字段；只有近似题名时，
+    // 至少要求两个身份字段，防止搜索页中的推荐词或同名文献被误判为证据。
+    if (!blockContainsTitle && headingScore < 0.86) continue;
+    if (supportCount < (blockContainsTitle ? 1 : 2)) continue;
+
+    const sourceUrl = absoluteSearchUrl(
+      node.attr("mu") ||
+      node.find("h3 a, h2 a").first().attr("href") ||
+      node.find("a").first().attr("href"),
+      searchUrl
+    );
+    candidates.push(searchSnippetCandidate(
+      parsed,
+      provider.name,
+      sourceUrl,
+      blockContainsTitle ? title : heading,
+      evidenceText,
+      supportCount,
+      blockContainsTitle
+    ));
   }
 
-  const terms = [
-    `"${title}"`,
-    splitSubmittedAuthors(parsed.authors)[0] || "",
-    parsed.container || ""
-  ].filter(Boolean).join(" ");
-  const searchUrl = `https://www.baidu.com/s?wd=${encodeURIComponent(terms)}`;
+  // 新版结果页不一定再使用 h2/h3，有的把题名直接放在普通链接或
+  // data-* 容器中。逐个检查链接，并从就近的父容器收集摘要字段。
+  if (!candidates.length) {
+    $("a").each((_, anchor) => {
+      if (candidates.length >= 5) return;
+      const link = $(anchor);
+      const linkTitle = cleanWebField(
+        link.text() || link.attr("title") || link.attr("aria-label")
+      );
+      if (diceSimilarity(title, linkTitle) < 0.86) return;
+      let evidenceNode = link;
+      for (let level = 0; level < 5; level += 1) {
+        const parent = evidenceNode.parent();
+        if (!parent.length) break;
+        evidenceNode = parent;
+        if (cleanWebField(evidenceNode.text()).length >= title.length + 12) break;
+      }
+      const evidenceText = cleanWebField(evidenceNode.text());
+      const { supportCount } = searchIdentitySupport(parsed, evidenceText);
+      if (supportCount < 1) return;
+      candidates.push(searchSnippetCandidate(
+        parsed,
+        provider.name,
+        absoluteSearchUrl(link.attr("href"), searchUrl),
+        title,
+        evidenceText,
+        supportCount,
+        true
+      ));
+    });
+  }
+
+  // 搜索引擎会频繁调整结果卡片的 class，尤其移动版页面可能不再使用
+  // h2/h3 或传统 result 容器。若卡片级选择器没有命中，就在整页可见
+  // 文本中寻找“完整篇名 + 至少两个身份字段”。查询词只包含篇名，因此
+  // 作者、来源和年份不会仅因搜索框回显而被计为支持证据。
+  if (!candidates.length) {
+    const visiblePage = $("body").clone();
+    visiblePage.find("script, style, noscript, form, nav, header, footer").remove();
+    const pageText = cleanWebField(visiblePage.text());
+    diagnosticText = pageText;
+    const pageBlock = normalizeText(pageText);
+    const pageTitleHit = Boolean(titleKey && pageBlock.includes(titleKey));
+    const { supportCount } = searchIdentitySupport(parsed, pageText);
+    if (pageTitleHit && supportCount >= 2) {
+      let sourceUrl = searchUrl;
+      $("a").each((_, anchor) => {
+        if (sourceUrl !== searchUrl) return;
+        const anchorText = normalizeText($(anchor).text());
+        if (anchorText.includes(titleKey)) {
+          sourceUrl = absoluteSearchUrl($(anchor).attr("href"), searchUrl);
+        }
+      });
+      candidates.push(searchSnippetCandidate(
+        parsed,
+        provider.name,
+        sourceUrl,
+        title,
+        pageText,
+        supportCount,
+        true
+      ));
+    }
+  }
+
+  // 最后的通用兜底读取整份响应，包括搜索引擎嵌入 script 的预加载结果。
+  // 查询参数只有篇名，因此作者、来源和年份中的至少两个字段仍是独立证据，
+  // 不会把搜索框自身的回显误当成文献记录。
+  if (!candidates.length) {
+    const documentText = searchableDocumentText(html);
+    diagnosticText = documentText;
+    const documentBlock = normalizeText(documentText);
+    const titleHit = Boolean(titleKey && documentBlock.includes(titleKey));
+    const { supportCount } = searchIdentitySupport(parsed, documentText);
+    if (titleHit && supportCount >= 2) {
+      candidates.push(searchSnippetCandidate(
+        parsed,
+        provider.name,
+        searchUrl,
+        title,
+        documentText,
+        supportCount,
+        true
+      ));
+    }
+  }
+  const diagnosticIdentity = candidates.length
+    ? {
+        supportCount: Math.max(
+          ...candidates.map((candidate) => candidate.searchSupportCount || 0)
+        )
+      }
+    : searchIdentitySupport(parsed, diagnosticText);
+  return {
+    candidates,
+    diagnostic: {
+      provider: provider.name,
+      titlePresent: candidates.length > 0 ||
+        normalizeText(diagnosticText).includes(titleKey),
+      identitySupportCount: diagnosticIdentity.supportCount
+    }
+  };
+}
+
+async function querySingleSearchProvider(parsed, provider) {
+  const title = cleanValue(parsed.title);
+  const query = provider.exactPhrase ? `"${title}"` : title;
+  const searchUrl = provider.buildUrl(query);
   const response = await fetchWithTimeout(searchUrl, {
     headers: {
       accept: "text/html,application/xhtml+xml",
-      "accept-language": "zh-CN,zh;q=0.9"
+      "accept-language": "zh-CN,zh;q=0.9,en;q=0.7",
+      "user-agent": provider.userAgent
     }
-  });
-  const html = await response.text();
-  const $ = cheerio.load(html);
-  const titleKey = normalizeText(title);
-  const supportTerms = [
-    ...splitSubmittedAuthors(parsed.authors),
-    ...sourceTerms(parsed.container),
-    parsed.year ? String(parsed.year) : ""
-  ].map(normalizeText).filter((value) => value.length >= 2);
-  let evidenceUrl = "";
-  let evidenceText = "";
-  let observedTitle = "";
+  }, SEARCH_REQUEST_TIMEOUT);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  const html = decodeHtml(bytes, response.headers.get("content-type") || "");
+  const parsedPage = parseSearchProviderHtml(parsed, provider, searchUrl, html);
+  return {
+    provider: provider.name,
+    candidates: parsedPage.candidates,
+    diagnostic: {
+      ...parsedPage.diagnostic,
+      responseBytes: bytes.length,
+    }
+  };
+}
 
-  $(".result, .c-container").each((_, element) => {
-    if (evidenceUrl) return;
-    const node = $(element);
-    const block = normalizeText(node.text());
-    const heading = cleanWebField(node.find("h3").first().text());
-    const headingScore = diceSimilarity(title, heading);
-    const blockContainsTitle = block.includes(titleKey);
-    if (!blockContainsTitle && headingScore < 0.82) return;
-    const supportHits = supportTerms.filter((term) => block.includes(term)).length;
-    if (!supportHits) return;
-    evidenceText = node.text();
-    observedTitle = heading || title;
-    evidenceUrl = cleanValue(
-      node.attr("mu") ||
-      node.find("h3 a").first().attr("href") ||
-      node.find("a").first().attr("href") ||
-      searchUrl
-    );
-  });
+async function querySearchEngineEvidence(parsed) {
+  const title = cleanValue(parsed.title);
+  if (normalizeText(title).length < 6) {
+    return { source: "搜索引擎", candidates: [] };
+  }
+
+  // 英文期刊通常可由 Crossref、OpenAlex、Semantic Scholar 等结构化
+  // 元数据稳定确认。只保留两个搜索入口作补充，避免四份大型 HTML 在
+  // 3 秒云函数窗口内争抢 CPU。中文旧刊仍保留三个常用搜索入口。
+  const providers = hasHan(title)
+    ? SEARCH_PROVIDERS.filter((provider) => provider.name !== "百度学术")
+    : SEARCH_PROVIDERS.filter((provider) =>
+        ["百度学术", "必应搜索"].includes(provider.name)
+      );
+  const settled = await Promise.allSettled(
+    providers.map((provider) => querySingleSearchProvider(parsed, provider))
+  );
+  const fulfilled = settled
+    .filter((item) => item.status === "fulfilled")
+    .map((item) => item.value);
+  if (!fulfilled.length) throw new Error("搜索引擎均未在限时内返回");
 
   return {
-    source: "搜索引擎结果摘要",
-    candidates: evidenceUrl
-      ? [searchSnippetCandidate(parsed, evidenceUrl, observedTitle, evidenceText)]
-      : []
+    source: fulfilled.length
+      ? fulfilled.map((item) => item.provider).join("、")
+      : "搜索引擎",
+    candidates: fulfilled.flatMap((item) => item.candidates),
+    diagnostics: fulfilled.map((item) => item.diagnostic)
   };
 }
 
@@ -1766,7 +1664,12 @@ function scoreCandidate(parsed, candidate) {
   const exactIdentifiers = identifierPairs.filter(([, submitted, verified]) =>
     normalizeText(submitted) === normalizeText(verified)
   );
-  const identifierExact = exactIdentifiers.length > 0;
+  const sourceUrlExact = Boolean(
+    parsed.url &&
+    candidate.sourceUrl &&
+    comparableUrl(parsed.url) === comparableUrl(candidate.sourceUrl)
+  );
+  const identifierExact = exactIdentifiers.length > 0 || sourceUrlExact;
   const identifierMismatch = identifierPairs.length > 0 && !identifierExact;
 
   const weights = [];
@@ -1783,6 +1686,12 @@ function scoreCandidate(parsed, candidate) {
   const strongTextIdentity = titleScore >= 0.94 &&
     (authorCorroborates || containerCorroborates);
   const hasCorroboration = identifierExact || authorCorroborates || containerCorroborates;
+  const submittedIdentityFieldCount = [
+    parsed.title,
+    parsed.authors,
+    parsed.container,
+    parsed.doi || parsed.isbn || parsed.pmid || parsed.arxivId || parsed.url
+  ].filter(Boolean).length;
 
   if (identifierExact && (!parsed.title || titleScore >= 0.72)) {
     score = Math.max(score, 0.97);
@@ -1798,6 +1707,9 @@ function scoreCandidate(parsed, candidate) {
     score = Math.min(score, 0.64);
   }
   if (!hasCorroboration && !candidate.trustedIndex) score = Math.min(score, 0.79);
+  // 只有篇名一个身份字段时，即使命中本地权威索引，也只能判为待复核。
+  // 年份、卷期页和文献类型用于检查著录准确性，不能替代第二个身份字段。
+  if (submittedIdentityFieldCount < 2) score = Math.min(score, 0.79);
   if (titleScore < 0.58 && parsed.title) score = Math.min(score, 0.62);
   if (
     parsed.authors &&
@@ -1811,10 +1723,29 @@ function scoreCandidate(parsed, candidate) {
   if (candidate.evidenceStrength === "search-snippet") score = Math.min(score, 0.9);
 
   const basis = [];
-  if (identifierExact) basis.push(`标识符一致（${exactIdentifiers.map(([name]) => name.toUpperCase()).join("、")}）`);
+  if (identifierExact) {
+    const labels = [
+      ...exactIdentifiers.map(([name]) => name.toUpperCase()),
+      ...(sourceUrlExact ? ["URL"] : [])
+    ];
+    basis.push(`标识符一致（${labels.join("、")}）`);
+  }
   if (titleScore >= 0.86) basis.push("篇名高度一致");
   if (authorCorroborates) basis.push("作者信息支持");
   if (containerCorroborates) basis.push("来源信息支持");
+  const searchSourceCount = (candidate.sources || [])
+    .filter((source) => source.startsWith("搜索引擎（"))
+    .length;
+  if (
+    candidate.evidenceStrength === "search-snippet" &&
+    candidate.searchExactTitle &&
+    candidate.searchSupportCount >= 2
+  ) {
+    basis.push("搜索结果中至少两个身份字段支持");
+  }
+  if (searchSourceCount >= 2) {
+    basis.push(`${searchSourceCount} 个搜索来源交叉支持`);
+  }
   if (candidate.trustedIndex) basis.push("权威来源记录");
   if (candidate.evidenceStrength === "search-snippet") basis.push("搜索结果摘要证据");
 
@@ -1849,48 +1780,33 @@ function gtAuthor(name) {
   return `${family.toUpperCase()}${initials ? ` ${initials}` : ""}`;
 }
 
-function canonicalCitation(candidate, parsed) {
-  const names = (candidate.authors || []).map(gtAuthor).filter(Boolean);
-  const chinese = names.some(hasHan);
-  let authors = names.slice(0, 3).join(chinese ? "，" : ", ");
-  if (names.length > 3) authors += chinese ? "，等" : ", et al.";
-  const candidateType = String(candidate.type || "").toLowerCase();
-  const type = /book/.test(candidateType)
-    ? "M"
-    : /proceedings|conference/.test(candidateType)
-      ? "C"
-      : /report/.test(candidateType)
-        ? (candidate.online || parsed?.url ? "R/OL" : "R")
-        : parsed?.type || "J";
-  const submittedTitle = cleanValue(parsed?.title);
-  const verifiedTitle = cleanValue(candidate.title);
-  const submittedNorm = normalizeText(submittedTitle);
-  const verifiedNorm = normalizeText(verifiedTitle);
-  const title = submittedNorm && verifiedNorm && submittedNorm.includes(verifiedNorm)
-    ? submittedTitle
-    : verifiedTitle;
-  const container = cleanValue(candidate.container || parsed?.container);
-  const year = candidate.year || parsed?.year;
-  const isReport = /report/.test(candidateType);
-  const volume = isReport ? "" : cleanValue(candidate.volume || parsed?.volume);
-  const issue = isReport ? "" : cleanValue(candidate.issue || parsed?.issue);
-  const pages = isReport ? "" : cleanValue(candidate.pages || parsed?.pages);
-
-  let citation = `${authors ? `${authors}. ` : ""}${title}[${type}]`;
-  if (container) citation += type === "C" ? `//${container}` : `. ${container}`;
-  if (year) citation += `${container ? ", " : ". "}${year}`;
-  if (volume) citation += `, ${volume}${issue ? `(${issue})` : ""}`;
-  else if (issue) citation += `(${issue})`;
-  if (pages) citation += `: ${pages}`;
-  citation += ".";
-  if (candidate.doi) citation += ` DOI:${candidate.doi}.`;
-  if (type === "M" && candidate.isbn) citation += ` ISBN:${candidate.isbn}.`;
-  if (type.includes("/OL") && candidate.sourceUrl) {
-    citation += ` ${candidate.sourceUrl}.`;
-  }
-  return citation.replace(/\.\./g, ".");
-}
-
+    function candidateGbType(candidate){
+      const type=String(candidate?.type||'').toLowerCase();
+      if(/book/.test(type))return'M';
+      if(/proceedings|conference/.test(type))return'C';
+      if(/dissertation|thesis/.test(type))return'D';
+      if(/report|preprint/.test(type))return candidate?.online?'R/OL':'R';
+      if(/standard/.test(type))return'S';
+      if(/patent/.test(type))return'P';
+      if(/newspaper/.test(type))return'N';
+      if(/article|journal/.test(type))return'J';
+      return'';
+    }
+    function canonicalCitation(candidate,parsed){
+      const names=(candidate.authors||[]).map(gtAuthor).filter(Boolean),hasChinese=names.some(hasHan);
+      let authors=names.slice(0,3).join(', ');if(names.length>3)authors+=hasChinese?', 等':', et al.';
+      const candidateType=String(candidate.type||'').toLowerCase();let type=candidateGbType(candidate)||parsed?.type||'J';if(type==='R'&&parsed?.url)type='R/OL';
+      const submittedTitle=cleanValue(parsed?.title),verifiedTitle=cleanValue(candidate.title),submittedNorm=normalizeText(submittedTitle),verifiedNorm=normalizeText(verifiedTitle);
+      const title=submittedNorm&&verifiedNorm&&submittedNorm.includes(verifiedNorm)?submittedTitle:verifiedTitle;
+      const container=cleanValue(candidate.container||parsed?.container),year=candidate.year||parsed?.year,isReport=/report|preprint/.test(candidateType),volume=isReport?'':cleanValue(candidate.volume||parsed?.volume),issue=isReport?'':cleanValue(candidate.issue||parsed?.issue),pages=isReport?'':cleanValue(candidate.pages||parsed?.pages);
+      let citation=`${authors?`${authors}. `:''}${title}[${type}]`;
+      if(container)citation+=type==='C'?`//${container}`:`. ${container}`;
+      if(year)citation+=`${container?', ':'. '}${year}`;
+      if(volume)citation+=`, ${volume}${issue?`(${issue})`:''}`;else if(issue)citation+=`(${issue})`;
+      if(pages)citation+=`:${pages}`;
+      citation+='.';if(candidate.doi)citation+=` DOI:${candidate.doi}.`;if(type==='M'&&candidate.isbn)citation+=` ISBN:${candidate.isbn}.`;if(type.includes('/OL')&&candidate.sourceUrl)citation+=` ${candidate.sourceUrl}.`;
+      return citation;
+    }
 function missingMetadataFields(parsed, candidate) {
   const fields = [];
   const candidateType = String(candidate.type || "").toLowerCase();
@@ -1906,96 +1822,20 @@ function missingMetadataFields(parsed, candidate) {
   return fields;
 }
 
-function academicDifferences(parsed, candidate, metrics) {
-  const output = [];
-  const add = (field, submitted, verified) => output.push({
-    field,
-    submitted: submitted || "未提供",
-    verified: verified || "未提供"
-  });
-  const same = (first, second) => normalizeText(first) === normalizeText(second);
-  const sameNumberField = (first, second) => {
-    const left = cleanValue(first);
-    const right = cleanValue(second);
-    if (/^\d+$/.test(left) && /^\d+$/.test(right)) {
-      return Number(left) === Number(right);
+    function academicDifferences(parsed,candidate,metrics){
+      const out=[],add=(field,submitted,verified)=>out.push({field,submitted:submitted||'未提供',verified:verified||'未提供'}),same=(a,b)=>normalizeText(a)===normalizeText(b),sameNumberField=(a,b)=>{const left=cleanValue(a),right=cleanValue(b);return/^\d+$/.test(left)&&/^\d+$/.test(right)?Number(left)===Number(right):same(left,right)};
+      const submittedTitle=normalizeText(parsed.title),verifiedTitle=normalizeText(candidate.title),canonicalTitleScore=diceSimilarity(parsed.title,candidate.title),oneContainsOther=submittedTitle&&verifiedTitle&&(submittedTitle.includes(verifiedTitle)||verifiedTitle.includes(submittedTitle));
+      if(parsed.title&&candidate.title&&canonicalTitleScore<.96&&canonicalTitleScore>.58&&!oneContainsOther)add('篇名',parsed.title,candidate.title);
+      if(parsed.authors&&candidate.authors?.length&&metrics.titleScore>.88&&(metrics.authorScore<.55||(!candidate.partialFields?.includes('其余作者')&&splitSubmittedAuthors(parsed.authors).some(name=>!candidate.authors.some(actual=>authorKey(name)===authorKey(actual)||diceSimilarity(name,actual)>.86)))))add('作者',parsed.authors,candidate.authors.map(displayName).join('，'));
+      if(parsed.year&&candidate.year&&parsed.year!==candidate.year)add('年份',parsed.year,candidate.year);
+      if(parsed.container&&candidate.container&&metrics.containerScore<.76&&metrics.titleScore>.86)add('刊名/来源',parsed.container,candidate.container);
+      if(candidate.volume&&!parsed.volume)add('卷号','未提供',candidate.volume);else if(parsed.volume&&candidate.volume&&!sameNumberField(parsed.volume,candidate.volume))add('卷号',parsed.volume,candidate.volume);
+      if(candidate.issue&&!parsed.issue)add('期号','未提供',candidate.issue);else if(parsed.issue&&candidate.issue&&!sameNumberField(parsed.issue,candidate.issue))add('期号',parsed.issue,candidate.issue);
+      if(candidate.pages&&!parsed.pages)add('页码','未提供',candidate.pages);else if(parsed.pages&&candidate.pages&&!same(parsed.pages.replace(/[–—]/g,'-'),candidate.pages.replace(/[–—]/g,'-')))add('页码',parsed.pages,candidate.pages);
+      if(parsed.doi&&candidate.doi&&parsed.doi!==candidate.doi)add('DOI',parsed.doi,candidate.doi);
+      let verifiedType=candidateGbType(candidate);if(verifiedType==='R'&&parsed.url)verifiedType='R/OL';if(parsed.type&&verifiedType&&parsed.type!==verifiedType)add('文献类型',`[${parsed.type}]`,`[${verifiedType}]`);
+      return out;
     }
-    return same(left, right);
-  };
-  const submittedTitle = normalizeText(parsed.title);
-  const verifiedTitle = normalizeText(candidate.title);
-  const canonicalTitleScore = diceSimilarity(parsed.title, candidate.title);
-  const oneContainsOther = submittedTitle && verifiedTitle &&
-    (submittedTitle.includes(verifiedTitle) || verifiedTitle.includes(submittedTitle));
-
-  if (
-    parsed.title &&
-    candidate.title &&
-    canonicalTitleScore < 0.96 &&
-    canonicalTitleScore > 0.58 &&
-    !oneContainsOther
-  ) {
-    add("篇名", parsed.title, candidate.title);
-  }
-  if (
-    parsed.authors &&
-    candidate.authors?.length &&
-    metrics.authorScore < 0.55 &&
-    metrics.titleScore > 0.88
-  ) {
-    add("作者", parsed.authors, candidate.authors.map(displayName).join("，"));
-  }
-  if (parsed.year && candidate.year && parsed.year !== candidate.year) {
-    add("年份", parsed.year, candidate.year);
-  }
-  if (
-    parsed.container &&
-    candidate.container &&
-    metrics.containerScore < 0.76 &&
-    metrics.titleScore > 0.86
-  ) {
-    add("刊名/来源", parsed.container, candidate.container);
-  }
-  if (
-    parsed.volume &&
-    candidate.volume &&
-    !sameNumberField(parsed.volume, candidate.volume)
-  ) {
-    add("卷号", parsed.volume, candidate.volume);
-  }
-  if (
-    parsed.issue &&
-    candidate.issue &&
-    !sameNumberField(parsed.issue, candidate.issue)
-  ) {
-    add("期号", parsed.issue, candidate.issue);
-  }
-  if (
-    parsed.pages &&
-    candidate.pages &&
-    !same(parsed.pages.replace(/[–—]/g, "-"), candidate.pages.replace(/[–—]/g, "-"))
-  ) {
-    add("页码", parsed.pages, candidate.pages);
-  }
-  if (parsed.doi && candidate.doi && parsed.doi !== candidate.doi) {
-    add("DOI", parsed.doi, candidate.doi);
-  }
-  const candidateType = String(candidate.type || "").toLowerCase();
-  const verifiedType = /book/.test(candidateType)
-    ? "M"
-    : /proceedings|conference/.test(candidateType)
-      ? "C"
-      : /report/.test(candidateType)
-        ? (candidate.online || parsed.url ? "R/OL" : "R")
-        : /article|journal/.test(candidateType)
-          ? "J"
-          : "";
-  if (parsed.type && verifiedType && parsed.type !== verifiedType) {
-    add("文献类型", `[${parsed.type}]`, `[${verifiedType}]`);
-  }
-  return output;
-}
-
 function pageValues($, selectors) {
   const values = [];
   selectors.forEach((selector) => {
@@ -2439,9 +2279,12 @@ async function verifyWebReference(reference, parsed) {
 
 async function verifyAcademicReference(reference, parsed) {
   const trusted = queryVerifiedReferenceIndex(parsed);
-  const jobs = trusted.candidates.length
-    ? [{ source: trusted.source, promise: Promise.resolve(trusted) }]
-    : buildVerificationPlan(parsed).map((provider) => providerJob(provider, parsed));
+  const jobs = [
+    ...(trusted.candidates.length
+      ? [{ source: trusted.source, promise: Promise.resolve(trusted) }]
+      : []),
+    ...(trusted.candidates.length ? [] : buildVerificationPlan(parsed).map((provider) => providerJob(provider, parsed)))
+  ];
   const checks = await Promise.allSettled(jobs.map((job) => job.promise));
   const available = checks
     .filter((item) => item.status === "fulfilled")
@@ -2455,6 +2298,11 @@ async function verifyAcademicReference(reference, parsed) {
     .sort((a, b) => b.metrics.score - a.metrics.score);
 
   const checked = [...new Set(available)];
+  const searchDiagnostics = checks.flatMap((item) =>
+    item.status === "fulfilled" && Array.isArray(item.value.diagnostics)
+      ? item.value.diagnostics
+      : []
+  );
   const evidenceBase = scholarlyEvidenceLinks(parsed, parsed.doi);
   if (!checked.length) {
     return {
@@ -2468,12 +2316,18 @@ async function verifyAcademicReference(reference, parsed) {
     };
   }
   if (!candidates.length) {
+    const titleReturned = searchDiagnostics
+      .filter((item) => item.titlePresent)
+      .map((item) => item.provider);
+    const searchDetail = titleReturned.length
+      ? `其中 ${titleReturned.join("、")} 的返回页面出现了篇名，但没有同时提供足够的作者、来源或年份字段，`
+      : "";
     return {
       status: "unverified",
       confidence: 0,
       submitted: reference,
       differences: [],
-      note: `已查询 ${checked.join("、")}，未检出可自动确认的记录。未收录不等于虚假，请使用复核链接继续核对。`,
+      note: `已查询 ${checked.join("、")}，${searchDetail}未检出可自动确认的记录。未收录不等于虚假，请使用复核链接继续核对。`,
       checkedSources: checked,
       evidenceLinks: evidenceBase
     };
@@ -2557,7 +2411,7 @@ async function verifyReference(reference) {
   const type = String(parsed.type || "").toUpperCase();
   const trusted = queryVerifiedReferenceIndex(parsed);
   if (
-    !trusted.candidates.length && (
+    !trusted.candidates.length && !parsed.arxivId && !parsed.pmid && (
       type.includes("/OL") ||
       (parsed.url && !parsed.doi && (
         !type ||
@@ -2568,7 +2422,9 @@ async function verifyReference(reference) {
     return verifyWebReference(reference, parsed);
   }
   try {
-    return await verifyAcademicReference(reference, parsed);
+    const result = await verifyAcademicReference(reference, parsed);
+    if(result.canonical && baseReferenceType(parsed.type) === 'J')result.canonicalStandard = 'GB/T 7714—2015';
+    return result;
   } catch (error) {
     return {
       status: "error",
@@ -2587,5 +2443,6 @@ module.exports = {
   parseReference,
   buildVerificationPlan,
   diceSimilarity,
-  normalizeText
+  normalizeText,
+  _test: {officialJournalCandidate,officialJournalUrls}
 };

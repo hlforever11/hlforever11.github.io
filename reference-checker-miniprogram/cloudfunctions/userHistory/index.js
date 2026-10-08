@@ -3,6 +3,8 @@ const cloud = require("wx-server-sdk");
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
+const {createVisitRecorder} = require("./visits");
+const recordVisit = createVisitRecorder(db);
 const USERS = "reference_users";
 const HISTORY = "verification_history";
 const MAX_HISTORY = 50;
@@ -85,6 +87,7 @@ exports.main = async (event = {}) => {
   const action = text(event.action, 30);
 
   try {
+    if(action === "visit" || action === "visitRead")return await recordVisit(owner,event);
     if (action === "login") {
       await ensureUser(owner, context.APPID || "");
       const records = await recordsFor(owner);

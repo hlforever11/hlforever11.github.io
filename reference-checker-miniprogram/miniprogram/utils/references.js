@@ -76,7 +76,7 @@ function splitReferences(value) {
     .replace(/^\s*(?:参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?\s*/i, "")
     .trim();
 
-  if (!clean) return [];
+  if (!clean || !clean.replace(/\[\s*\d+\s*\]/g, "").trim()) return [];
 
   const starts = new Set([0]);
   inlineNumberedMarkers(clean).forEach((marker) => starts.add(marker.index));
@@ -92,14 +92,14 @@ function splitReferences(value) {
   const positions = [...starts].sort((a, b) => a - b);
   const segmented = positions
     .map((start, index) => normalizeReferenceChunk(clean.slice(start, positions[index + 1] ?? clean.length)))
-    .filter(Boolean);
+    .filter(value => value && !/^\s*(?:\[\s*\d+\s*\]|[（(]\d+[）)]|[①②③④⑤⑥⑦⑧⑨⑩]|\d+[.、)])\s*$/.test(value));
 
   if (segmented.length > 1) return segmented;
 
-  const paragraphs = clean.split(/\n\s*\n+/).map(normalizeReferenceChunk).filter(Boolean);
+  const paragraphs = clean.split(/\n\s*\n+/).map(normalizeReferenceChunk).filter(value => value && !/^\s*(?:\[\s*\d+\s*\]|[（(]\d+[）)]|[①②③④⑤⑥⑦⑧⑨⑩]|\d+[.、)])\s*$/.test(value));
   if (paragraphs.length > 1) return paragraphs;
 
-  const lines = clean.split("\n").map(normalizeReferenceChunk).filter(Boolean);
+  const lines = clean.split("\n").map(normalizeReferenceChunk).filter(value => value && !/^\s*(?:\[\s*\d+\s*\]|[（(]\d+[）)]|[①②③④⑤⑥⑦⑧⑨⑩]|\d+[.、)])\s*$/.test(value));
   if (lines.length > 1 && lines.every((line) => looksLikeReferenceStart(line) || bibliographicCue(line))) {
     return lines;
   }

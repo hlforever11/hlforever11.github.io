@@ -15,7 +15,9 @@ const typeBlock=between('    function candidateGbType','    function scoreCandid
 const citationBlock=between('    function displayName','    function missingMetadataFields');
 const differenceBlock=between('    function differences','    async function verifyOneLocal');
 const cacheBlock=between('    const TRUSTED_REFERENCE_CACHE=',';\n    const $=');
-const api=new Function(`${parserBlock}\n${typeBlock}\n${citationBlock}\n${differenceBlock}\n${cacheBlock};return{parseReference,conventionalReference,canonicalCitation,differences,TRUSTED_REFERENCE_CACHE};`)();
+const authorBlock=between('    function splitSubmittedAuthors','    function scholarlyEvidenceLinks');
+const authorKeyBlock=between('    function authorKey','    function crossrefCandidate');
+const api=new Function(`${parserBlock}\n${authorBlock}\n${authorKeyBlock}\n${typeBlock}\n${citationBlock}\n${differenceBlock}\n${cacheBlock};return{parseReference,conventionalReference,canonicalCitation,differences,TRUSTED_REFERENCE_CACHE};`)();
 
 const cases=[
   {raw:'[1] 我国刑事证据能力之理论归纳及思考[J]. 纵博.法学家,2015(03)',title:'我国刑事证据能力之理论归纳及思考',authors:'纵博',container:'法学家',year:2015,issue:'3',canonical:'纵博. 我国刑事证据能力之理论归纳及思考[J]. 法学家, 2015(3):72-85.'},
