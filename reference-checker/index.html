@@ -36,7 +36,7 @@
     <section class="history" id="history" aria-label="本机核验历史"><div class="history-head"><div><h2>本机历史记录</h2><p>免登录保存最近 20 次核验，仅存于当前浏览器；可一键载入后重新核验。</p></div><button class="history-clear hidden" id="clearHistoryBtn" type="button">清空记录</button></div><div class="history-list" id="historyList"></div></section>
     <section class="boundary" id="limits"><div class="kicker">BOUNDARIES</div><h2>“暂未证实”不等于“虚假”</h2><p>真实性置信度只依据篇名、作者、来源、永久标识和原始网址等作品身份字段及证据强度计算。年份、卷期页、文献类型和格式差异会在确认是同一作品后单独列为著录准确性问题，不会反向降低真实性。若来源暂时不可访问或未被数据库收录，系统只会标记为“暂未证实”，并保留官网与搜索引擎复核入口。</p></section>
   </main>
-  <footer><div>系统优先检索公开题录，再由专业来源与原始网页复核。重要用途请以出版者原始记录为准。</div><div class="footer-meta"><a class="author-email" href="mailto:linhu@scu.edu.cn" aria-label="网站联系邮箱">linhu@scu.edu.cn</a><span class="site-counter" id="siteCounter" aria-live="polite" title="文证网站累计访问量（仅本页面）"><span class="dot" aria-hidden="true">·</span><span>累计访问 <span class="site-counter-value" id="busuanzi_page_pv">—</span> 次</span></span></div></footer>
+  <footer><div>系统优先检索公开题录，再由专业来源与原始网页复核。重要用途请以出版者原始记录为准。</div><div class="footer-meta"><a class="author-email" href="mailto:linhu@scu.edu.cn" aria-label="网站联系邮箱">linhu@scu.edu.cn</a><span class="site-counter" id="siteCounter" aria-live="polite" title="沿用原站点历史累计访问次数"><span class="dot" aria-hidden="true">·</span><span>累计访问 <span class="site-counter-value" id="busuanzi_site_pv">—</span> 次</span></span></div></footer>
   <script src="./vendor/mammoth.browser.min.js"></script>
   <script>window.WENZHENG_API_URL="https://cloud1-d6gtx1retbc8754fa-1457855977.ap-shanghai.app.tcloudbase.com/api/verify-reference";</script>
   <script defer src="./counter.js"></script>
@@ -95,7 +95,7 @@
 {"source": "CNKI 分类题录（公开镜像）", "sourceUrl": "https://cnki.istiz.org.cn/kcms/detail/frame/list.aspx?cat=G251.6&curdbcode=cjfd&dbcode=CJFD&dbname=CJFD2002&filename=tsgl200205038&page=3&reftype=9", "title": "高校图书馆馆员生成式人工智能胜任力测度研究", "authors": ["吴爱红"], "year": 2025, "container": "情报科学", "volume": "", "issue": "8", "pages": "", "type": "journal-article", "partialFields": ["卷号", "页码"]}
 ];
     const $=s=>document.querySelector(s), input=$('#input'), counter=$('#counter'), clearBtn=$('#clearBtn'), verifyBtn=$('#verifyBtn'), fileInput=$('#fileInput'), drop=$('#dropZone'), msg=$('#fileMessage');
-    const visitCounter=$('#siteCounter'),visitValue=$('#busuanzi_page_pv');
+    const visitCounter=$('#siteCounter'),visitValue=$('#busuanzi_site_pv');
     function revealVisitCounter(){
       const raw=String(visitValue?.textContent||'').replace(/[,，\s]/g,'');if(!/^\d+$/.test(raw))return false;
       visitValue.textContent=Number(raw).toLocaleString('zh-CN');visitCounter.classList.add('ready');visitCounter.setAttribute('aria-label',`文证网站累计访问 ${raw} 次`);return true;

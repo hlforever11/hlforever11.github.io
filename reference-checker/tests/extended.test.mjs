@@ -117,6 +117,6 @@ test('PDF worker版本与解析器一致且资源完整',()=>{
  assert.match(pdf,/pdfjsVersion = 6\.1\.200/);assert.match(worker,/pdfjsVersion = 6\.1\.200/);assert.ok(worker.length>1000000);
 });
 test('网站与小程序使用独立计数',()=>{
- const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.match(html,/id="busuanzi_page_pv"/);assert.doesNotMatch(html,/busuanzi_site_pv/);
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.match(html,/id="busuanzi_site_pv"/);assert.doesNotMatch(html,/busuanzi_page_pv/);
  const wxml=readFileSync(new URL('../../reference-checker-miniprogram/miniprogram/pages/index/index.wxml',import.meta.url),'utf8');assert.doesNotMatch(wxml,/历史累计用户/);assert.match(wxml,/新版累计访问/);
 });
