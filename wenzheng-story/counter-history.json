@@ -1,0 +1,11 @@
+{
+  "page": "https://hlforever11.github.io/wenzheng-story/",
+  "service": "busuanzi.cc",
+  "endpoint": "https://cdn.busuanzi.cc/api.php",
+  "originalOffset": 3,
+  "lastVerifiedTotal": 2,
+  "verifiedOn": "2026-08-08",
+  "evidence": "The owner's saved conversation quotes the footer as 累计访问 2 次. Source commit 844abd5 records offset 3.",
+  "fullHistoryRecovered": false,
+  "recoveryStatus": "Original statistics request fails; public statistics dashboard returned HTTP 502 on 2026-10-09. Preserve the checkpoint and read the original service when available."
+}
