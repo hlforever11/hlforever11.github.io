@@ -51,11 +51,11 @@
     try{localStorage.setItem(key,String(last))}catch(error){}
   }
   (async()=>{
-    try{publish(await request('hit',7000),true)}
+    try{publish(await request('hit',20000),true)}
     catch(error){
       // A timed-out hit may already have reached the server. Read only;
       // never retry the increment or invent a local +1.
-      try{publish(await request('get',4000),false)}
+      try{publish(await request('get',12000),false)}
       catch(readError){show(last,'unavailable');console.warn('访问统计读取失败：',readError.message)}
     }
   })();
