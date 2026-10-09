@@ -211,7 +211,7 @@
   <footer>
     <div class="shell footer-inner">
       <div>“文证”人机协作开发实录 · 教学分享版</div>
-      <div><a href="mailto:linhu@scu.edu.cn">linhu@scu.edu.cn</a> · <span id="storyVisitCounter" aria-live="polite" title="最近已确认记录；最新历史量待原服务同步">累计访问 <span id="pageVisitCount">2</span> 次 <span class="visit-status" id="storyVisitStatus">（历史记录同步中）</span></span></div>
+      <div><a href="mailto:linhu@scu.edu.cn">linhu@scu.edu.cn</a> · <span id="storyVisitCounter" aria-live="polite" title="已确认访问量的下限；完整历史待恢复">累计访问至少 <span id="pageVisitCount">2</span> 次 <span class="visit-status" id="storyVisitStatus">（更新中，历史待恢复）</span></span></div>
     </div>
   </footer>
   <button id="backtop" class="backtop" type="button" aria-label="返回顶部">↑</button>
@@ -347,6 +347,6 @@
     buildFilters();render();
     const back=$("#backtop");addEventListener("scroll",()=>back.style.display=scrollY>900?"block":"none",{passive:true});back.onclick=()=>scrollTo({top:0,behavior:"smooth"});
   </script>
-  <script defer src="./counter.js?v=20261009-counter-fix"></script>
+  <script defer src="./counter.js?v=20261009-counter-resume1"></script>
 </body>
 </html>
