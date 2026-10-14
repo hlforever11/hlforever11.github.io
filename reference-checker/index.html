@@ -38,13 +38,55 @@
     <section class="boundary" id="limits"><div class="kicker">BOUNDARIES</div><h2>“暂未证实”不等于“虚假”</h2><p>真实性置信度只依据篇名、作者、来源、永久标识和原始网址等作品身份字段及证据强度计算。年份、卷期页、文献类型和格式差异会在确认是同一作品后单独列为著录准确性问题，不会反向降低真实性。若来源暂时不可访问或未被数据库收录，系统只会标记为“暂未证实”，并保留官网与搜索引擎复核入口。</p></section>
   </main>
   <footer><div>系统优先检索公开题录，再由专业来源与原始网页复核。重要用途请以出版者原始记录为准。</div><div class="footer-meta"><a class="author-email" href="mailto:linhu@scu.edu.cn" aria-label="网站联系邮箱">linhu@scu.edu.cn</a><span class="site-counter ready" id="siteCounter" aria-live="polite" title="最近已确认记录；起始基数1000，与小程序分别计数"><span class="dot" aria-hidden="true">·</span><span>累计访问 <span class="site-counter-value" id="websiteVisitCount">1,012</span> 次 <span class="visit-status" id="websiteVisitStatus">（更新中）</span></span></span></div></footer>
-  <script src="./vendor/mammoth.browser.min.js"></script>
+  <meta name="wenzheng-build" content="2026.10.14-stability1">
   <script>window.WENZHENG_API_URL="https://cloud1-d6gtx1retbc8754fa-1457855977.ap-shanghai.app.tcloudbase.com/api/verify-reference";</script>
   <script defer src="./counter.js?v=20261009-counter-fix2"></script>
   <script type="module">
-    import * as pdfjsLib from './vendor/pdf.min.mjs';
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://hlforever11.github.io/reference-checker/vendor/pdf.worker.min.mjs';
     const MAX=20,MAX_SIZE=15*1024*1024,REQUEST_TIMEOUT=9000,CLOUD_VERIFY_ENDPOINT=String(window.WENZHENG_API_URL||'').trim();
+    function operationError(message,name='AbortError'){const error=Error(message);error.name=name;return error}
+    function checkActive(signal){if(signal?.aborted)throw operationError('操作已停止')}
+    async function withDeadline(operation,timeout,signal){
+      checkActive(signal);
+      const controller=new AbortController();let timer,onAbort;
+      const stop=new Promise((resolve,reject)=>{
+        onAbort=()=>{controller.abort();reject(operationError('操作已停止'))};
+        signal?.addEventListener('abort',onAbort,{once:true});
+        timer=setTimeout(()=>{controller.abort();reject(operationError('等待超时，请重试或通过来源链接复核','TimeoutError'))},timeout);
+      });
+      try{return await Promise.race([Promise.resolve().then(()=>{checkActive(controller.signal);return operation(controller.signal)}),stop])}
+      finally{clearTimeout(timer);signal?.removeEventListener('abort',onAbort)}
+    }
+    async function fetchResource(url,options={},timeout=REQUEST_TIMEOUT,read=response=>response.json()){
+      return withDeadline(async signal=>{
+        const response=await fetch(url,{cache:'no-store',...options,signal});
+        if(!response.ok)throw Error(`HTTP ${response.status}`);
+        return read(response);
+      },timeout,options.signal);
+    }
+    let mammothLibraryPromise,pdfLibraryPromise;
+    async function loadMammothLibrary(){
+      if(window.mammoth?.extractRawText)return window.mammoth;
+      if(!mammothLibraryPromise){
+        let script;
+        const pending=withDeadline(()=>new Promise((resolve,reject)=>{
+          script=document.createElement('script');script.src='./vendor/mammoth.browser.min.js';
+          script.onload=()=>window.mammoth?.extractRawText?resolve(window.mammoth):reject(Error('Word读取组件暂不可用，请重试或直接粘贴参考文献。'));
+          script.onerror=()=>reject(Error('Word读取组件暂不可用，请重试或直接粘贴参考文献。'));
+          document.head.appendChild(script);
+        }),15000);
+        mammothLibraryPromise=pending.catch(error=>{script?.remove();if(mammothLibraryPromise===saved)mammothLibraryPromise=null;throw error});
+        const saved=mammothLibraryPromise;
+      }
+      return mammothLibraryPromise;
+    }
+    async function loadPdfLibrary(){
+      if(!pdfLibraryPromise){
+        const pending=withDeadline(()=>import('./vendor/pdf.min.mjs'),15000).then(library=>{library.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdf.worker.min.mjs',location.href).href;return library});
+        pdfLibraryPromise=pending.catch(error=>{if(pdfLibraryPromise===saved)pdfLibraryPromise=null;throw Error('PDF读取组件暂不可用，请重试或直接粘贴参考文献。')});
+        const saved=pdfLibraryPromise;
+      }
+      return pdfLibraryPromise;
+    }
     const TRUSTED_REFERENCE_CACHE=[
       {source:'《图书馆论坛》官网',sourceUrl:'https://tsglt.zslib.com.cn/CN/Y2023/V43/I5/104',title:'ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战',authors:['李书宁','刘一鸣'],year:2023,container:'图书馆论坛',volume:'43',issue:'5',pages:'104-110',type:'journal-article'},
       {source:'《现代情报》正式题录（DOI）',sourceUrl:'https://doi.org/10.3969/j.issn.1008-0821.2023.04.001',title:'从ChatGPT看生成式AI对情报学研究与实践的影响',authors:['曹树金','曹茹烨'],year:2023,container:'现代情报',volume:'43',issue:'4',pages:'3-10',doi:'10.3969/j.issn.1008-0821.2023.04.001',type:'journal-article'},
@@ -124,7 +166,7 @@
       return markers.length>=2?markers:[];
     }
     function refs(value){
-      let clean=String(value||'').replace(/\r/g,'').replace(/^\s*(?:参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?\s*/i,'').trim();if(!clean||!clean.replace(/\[\s*\d+\s*\]/g,'').trim())return[];
+      let clean=normalizeReferenceInput(value).replace(/\r/g,'').replace(/^\s*(?:参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?\s*/i,'').trim();if(!clean||!clean.replace(/\[\s*\d+\s*\]/g,'').trim())return[];
       const starts=new Set([0]);inlineNumberedMarkers(clean).forEach(marker=>starts.add(marker.index));
       for(const lineBreak of clean.matchAll(/\n+/g)){
         const index=lineBreak.index+lineBreak[0].length,nextLine=(clean.slice(index).split('\n',1)[0]||'').trim();
@@ -136,30 +178,140 @@
       const lines=clean.split('\n').map(normalizeReferenceChunk).filter(value=>value&&!/^\s*(?:\[\s*\d+\s*\]|[（(]\d+[）)]|[①②③④⑤⑥⑦⑧⑨⑩]|\d+[.、)])\s*$/.test(value));if(lines.length>1&&lines.every(line=>looksLikeReferenceStart(line)||bibliographicCue(line)))return lines;
       return[normalizeReferenceChunk(clean)];
     }
-    let verifying=false;
-    function update(){const n=refs(input.value).length;counter.innerHTML=`<strong>${Math.min(n,MAX)}</strong> / 20${n>MAX?` <span>（共 ${n} 条）</span>`:''}`;counter.classList.remove('over');verifyBtn.disabled=verifying||!n;clearBtn.disabled=verifying||!input.value.trim();input.disabled=verifying;$('#sampleBtn').disabled=verifying;$('#chooseBtn').disabled=verifying;fileInput.disabled=verifying}
-    function clearInput(){input.value='';fileInput.value='';msg.textContent='';msg.className='message hidden';$('#results').classList.add('hidden');$('#cards').innerHTML='';$('#summary').innerHTML='';$('#progress').textContent='';verifyBtn.textContent='开始核验';update();input.focus()}
-    input.addEventListener('input',update);clearBtn.onclick=clearInput;$('#sampleBtn').onclick=()=>{input.value=sample;update();input.focus()};$('#chooseBtn').onclick=()=>fileInput.click();fileInput.onchange=()=>fileInput.files[0]&&handleFile(fileInput.files[0]);
-    ['dragenter','dragover'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.add('drag')}));['dragleave','drop'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.remove('drag')}));drop.addEventListener('drop',e=>e.dataTransfer.files[0]&&handleFile(e.dataTransfer.files[0]));
+    let verifying=false,activeBatch=null,fileReading=false,fileVersion=0,fileController=null;
+    function cancelFileRead(){fileVersion++;fileController?.abort();fileController=null;fileReading=false}
+    function update(){
+      const n=refs(input.value).length;
+      counter.innerHTML=`<strong>${Math.min(n,MAX)}</strong> / 20${n>MAX?` <span>（共 ${n} 条）</span>`:''}`;
+      counter.classList.remove('over');verifyBtn.disabled=!verifying&&(fileReading||!n);
+      clearBtn.disabled=verifying||(!input.value.trim()&&!fileReading);input.disabled=verifying;
+      $('#sampleBtn').disabled=verifying;$('#chooseBtn').disabled=verifying;fileInput.disabled=verifying;
+    }
+    function resetResults(){
+      $('#results').classList.add('hidden');$('#cards').innerHTML='';$('#summary').innerHTML='';$('#progress').textContent='';verifyBtn.textContent='开始核验';
+    }
+    function clearInput(){if(verifying)return;cancelFileRead();input.value='';fileInput.value='';msg.textContent='';msg.className='message hidden';resetResults();update();input.focus()}
+    input.addEventListener('input',()=>{if(verifying)return;cancelFileRead();msg.className='message hidden';resetResults();update()});
+    clearBtn.onclick=clearInput;
+    $('#sampleBtn').onclick=()=>{if(verifying)return;cancelFileRead();input.value=sample;msg.className='message hidden';resetResults();update();input.focus()};
+    $('#chooseBtn').onclick=()=>fileInput.click();fileInput.onchange=()=>fileInput.files[0]&&handleFile(fileInput.files[0]);
+    ['dragenter','dragover'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.add('drag')}));
+    ['dragleave','drop'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.remove('drag')}));
+    drop.addEventListener('drop',e=>e.dataTransfer.files[0]&&handleFile(e.dataTransfer.files[0]));
     function fileState(text,kind=''){msg.className=`message ${kind}`;msg.textContent=text;msg.classList.remove('hidden')}
-    function extractReferences(text){const normalized=text.replace(/\s*(参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?\s*/gi,'\n$1\n').replace(/\s+(?=\[\s*\d+\s*\]\s*)/g,'\n').replace(/([。.;；])\s+(?=(?!(?:18|19|20)\d{2}\b)\d{1,3}\s+[A-Za-z\u00c0-\u024f\u3400-\u9fff])/g,'$1\n');const lines=normalized.replace(/\r/g,'').replace(/\u00a0/g,' ').split('\n').map(x=>x.replace(/\s+/g,' ').trim());let heading=-1;lines.forEach((x,i)=>{/^(?:参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?$/i.test(x)&&(heading=i)});const source=(heading>=0?lines.slice(heading+1):lines).filter(Boolean),out=[];let current='';if(source.some(x=>numberedReferenceStart.test(x))){source.forEach(x=>{if(numberedReferenceStart.test(x)||looksLikeReferenceStart(x)){if(current)out.push(current.trim());current=x}else if(current)current+=' '+x});if(current)out.push(current.trim())}else{source.forEach(x=>{if(looksLikeReferenceStart(x)){if(current)out.push(current.trim());current=x}else if(current)current+=' '+x});if(current)out.push(current.trim());if(!out.length)out.push(...source.filter(x=>bibliographicCue(x)&&(/[.。]/.test(x)||/10\.\d{4,9}\//i.test(x))))}if(!out.length)throw Error('未识别出参考文献。请确认文档含“参考文献”标题及完整条目，扫描版 PDF 请先做文字识别。');return out}
-    async function handleFile(file){if(verifying)return;try{if(file.size>MAX_SIZE)throw Error('文件不能超过 15 MB。');const ext=file.name.split('.').pop().toLowerCase();if(!['docx','pdf','txt'].includes(ext))throw Error('暂只支持 DOCX、文字版 PDF 和 TXT。');fileState('正在本地读取文档…');let text='';if(ext==='txt')text=new TextDecoder('utf-8').decode(await file.arrayBuffer());else if(ext==='docx'){if(!window.mammoth)throw Error('DOCX 解析组件加载失败，请刷新后重试。');text=(await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()})).value}else{const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;if(pdf.numPages>100)throw Error('PDF 超过 100 页，请只保留参考文献部分。');const pages=[];for(let n=1;n<=pdf.numPages;n++){const content=await(await pdf.getPage(n)).getTextContent();pages.push(content.items.map(i=>i.str+(i.hasEOL?'\n':' ')).join(''))}text=pages.join('\n')};const list=extractReferences(text),shown=list.slice(0,MAX);input.value=shown.join('\n');update();fileState(`从 ${file.name} 识别出 ${list.length} 条参考文献，已载入${list.length>MAX?'前 20 条':'待核验区'}。`,'success')}catch(e){fileState(e.message||'读取文档失败。','error')}finally{fileInput.value=''}}
+    function extractReferences(text){
+      const normalized=normalizeReferenceInput(text).replace(/\r\n?/g,'\n')
+        .replace(/(^|\n)\s*(参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?\s*(?=\n|$|\[\s*\d+\s*\])/gi,'$1$2\n')
+        .replace(/\s+(?=\[\s*\d+\s*\]\s*)/g,'\n')
+        .replace(/([。.;；])\s+(?=(?!(?:18|19|20)\d{2}\b)\d{1,3}\s+[A-Za-z\u00c0-\u024f\u3400-\u9fff])/g,'$1\n');
+      const lines=normalized.replace(/\u00a0/g,' ').split('\n').map(x=>x.replace(/\s+/g,' ').trim());
+      let heading=-1;lines.forEach((x,i)=>{/^(?:参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?$/i.test(x)&&(heading=i)});
+      const tail=heading>=0?lines.slice(heading+1):lines;
+      const end=tail.findIndex(x=>/^(?:致谢|附录(?:\s*[A-Z0-9一二三四五六七八九十])?|acknowledg(?:e)?ments|appendi(?:x(?:\s+[A-Z0-9])?|ces))\s*[:：]?$/i.test(x));
+      const source=(end>=0?tail.slice(0,end):tail).filter(Boolean),out=[];let current='';
+      if(source.some(x=>numberedReferenceStart.test(x))){
+        source.forEach(x=>{if(numberedReferenceStart.test(x)||looksLikeReferenceStart(x)){if(current)out.push(current.trim());current=x}else if(current)current+=' '+x});
+        if(current)out.push(current.trim());
+      }else{
+        source.forEach(x=>{if(looksLikeReferenceStart(x)){if(current)out.push(current.trim());current=x}else if(current)current+=' '+x});
+        if(current)out.push(current.trim());
+        if(!out.length)out.push(...source.filter(x=>bibliographicCue(x)&&(/[.。]/.test(x)||/10\.\d{4,9}\//i.test(x))));
+      }
+      if(!out.length)throw Error('未识别出参考文献。请确认文档含“参考文献”标题及完整条目，扫描版 PDF 请先做文字识别。');
+      return out;
+    }
+    function decodeDocumentText(buffer){
+      const bytes=new Uint8Array(buffer);
+      if(bytes[0]===255&&bytes[1]===254)return new TextDecoder('utf-16le',{fatal:true}).decode(bytes);
+      if(bytes[0]===254&&bytes[1]===255)return new TextDecoder('utf-16be',{fatal:true}).decode(bytes);
+      try{return new TextDecoder('utf-8',{fatal:true}).decode(bytes)}
+      catch(error){return new TextDecoder('gb18030',{fatal:true}).decode(bytes)}
+    }
+    async function readPdf(file,signal,libraryPromise=loadPdfLibrary()){
+      const library=await libraryPromise;checkActive(signal);
+      const data=new Uint8Array(await file.arrayBuffer());checkActive(signal);
+      const task=library.getDocument({data});let disposed=false;
+      const dispose=()=>{if(disposed)return;disposed=true;try{Promise.resolve(task.destroy()).catch(()=>{})}catch(error){}};
+      signal?.addEventListener('abort',dispose,{once:true});
+      try{
+        const pdf=await task.promise;checkActive(signal);
+        if(pdf.numPages>100)throw Error('PDF 超过 100 页，请只保留参考文献部分。');
+        const pages=[];
+        for(let n=1;n<=pdf.numPages;n++){
+          checkActive(signal);const page=await pdf.getPage(n),content=await page.getTextContent();checkActive(signal);
+          pages.push(content.items.map(i=>i.str+(i.hasEOL?'\n':' ')).join(''));page.cleanup?.();
+        }
+        return pages.join('\n');
+      }finally{signal?.removeEventListener('abort',dispose);dispose()}
+    }
+    async function handleFile(file){
+      if(verifying)return;cancelFileRead();const version=fileVersion;
+      fileController=new AbortController();fileReading=true;update();
+      try{
+        if(!file||!Number.isFinite(file.size)||file.size<=0)throw Error('文件为空或无法读取，请重新选择。');
+        if(file.size>MAX_SIZE)throw Error('文件不能超过 15 MB。');
+        const ext=String(file.name||'').split('.').pop().toLowerCase();
+        if(!['docx','pdf','txt'].includes(ext))throw Error('暂只支持 DOCX、文字版 PDF 和 TXT。');
+        fileState('正在本地读取文档…');
+        const text=await withDeadline(async signal=>{
+          if(ext==='pdf')return readPdf(file,signal);
+          const data=await file.arrayBuffer();checkActive(signal);
+          if(ext==='txt')return decodeDocumentText(data);
+          const library=await loadMammothLibrary();checkActive(signal);
+          const result=await library.extractRawText({arrayBuffer:data});checkActive(signal);return result.value;
+        },45000,fileController.signal);
+        if(version!==fileVersion)return;
+        const list=extractReferences(String(text||'')),shown=list.slice(0,MAX);
+        input.value=shown.join('\n');resetResults();
+        fileState(`从 ${file.name} 识别出 ${list.length} 条参考文献，已载入${list.length>MAX?'前 20 条':'待核验区'}。`,'success');
+      }catch(error){
+        if(version===fileVersion&&error.name!=='AbortError')fileState(error.name==='TimeoutError'?'文档读取超时，请缩小文件或复制参考文献直接粘贴。':error.message||'读取文档失败，请重试。','error');
+      }finally{if(version===fileVersion){fileReading=false;fileController=null;fileInput.value='';update()}}
+    }
     const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
     const meta={verified:['已确认真实，著录一致','✓'],partial:['已确认真实，部分字段待复核','✓'],corrected:['已确认真实，著录需修正','!'],review:['真实性需人工复核','?'],unverified:['暂未证实','—'],error:['核验失败','×']};
-    function numberedCanonical(citation,index,submitted=''){const value=String(citation||'').replace(/^\[\s*\d+\s*\]\s*/,'').trim();return value?`[${String(submitted).match(/^\s*\[\s*(\d+)\s*\]/)?.[1]||index+1}] ${value}`:''}
-    function card(r,i){
-      const m=meta[r.status]||meta.error,diffs=(r.differences||[]).map(d=>`<div class="diff"><b>${esc(d.field)}</b><span>提交：${esc(d.submitted)}</span><span>核实：${esc(d.verified)}</span></div>`).join('');
-      const links=(r.evidenceLinks||[]).map(link=>`<a target="_blank" rel="noopener" href="${esc(link.url)}">${esc(link.label)} ↗</a>`).join('');
-      const citationLabel=r.canonicalStandard==='GB/T 7714—2015'?'建议著录（GB/T 7714—2015）':'建议著录（GB/T 7714 风格）';
-      return `<article class="result"><div class="result-top"><span class="status ${r.status==='error'?'error-status':r.status}">${m[1]} ${m[0]}</span><span class="confidence">第 ${(r.position??i)+1} 条 · 真实性置信度 ${Math.round((r.authenticityConfidence??r.confidence??0)*100)}%</span></div><p class="submitted">${esc(r.submitted)}</p><p class="note">${esc(r.note)}</p>${diffs?`<div class="diffs">${diffs}</div>`:''}${r.canonical?`<div class="canonical"><b>${citationLabel}</b>${esc(numberedCanonical(r.canonical,r.position??i,r.submitted))}</div>`:''}${r.sourceUrl?`<a class="source" target="_blank" rel="noopener" href="${esc(r.sourceUrl)}">查看 ${esc(r.source||'来源')} 原始记录 ↗</a>`:''}${links?`<div class="evidence-links">${links}</div>`:''}</article>`
+    function safeHttpUrl(value){try{const url=new URL(String(value||''));return /^https?:$/.test(url.protocol)&&!url.username&&!url.password?url.href:''}catch(error){return''}}
+    function numberedCanonical(citation,index,submitted=''){
+      const value=String(citation||'').replace(/^\[\s*\d+\s*\]\s*/,'').trim(),original=normalizeReferenceInput(submitted);
+      const sequence=original.match(/^\s*(?:\[\s*(\d+)\s*\]|[（(]\s*(\d+)\s*[）)]|(\d+)[.、)]|(?!(?:18|19|20)\d{2}\b)(\d+)\s)/);
+      const circled='①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'.indexOf(original.trim()[0])+1,number=sequence?.slice(1).find(Boolean)||circled||index+1;
+      return value?`[${number}] ${value}`:'';
     }
+    function card(r,i){
+      const status=Object.prototype.hasOwnProperty.call(meta,r?.status)?r.status:'error',m=meta[status];
+      const diffs=(Array.isArray(r.differences)?r.differences:[]).filter(d=>d&&typeof d==='object').map(d=>`<div class="diff"><b>${esc(d.field)}</b><span>提交：${esc(d.submitted)}</span><span>核实：${esc(d.verified)}</span></div>`).join('');
+      const links=(Array.isArray(r.evidenceLinks)?r.evidenceLinks:[]).filter(link=>link&&safeHttpUrl(link.url)).map(link=>`<a target="_blank" rel="noopener" href="${esc(safeHttpUrl(link.url))}">${esc(link.label)} ↗</a>`).join('');
+      const sourceUrl=safeHttpUrl(r.sourceUrl),confidence=Number(r.authenticityConfidence??r.confidence??0),percentage=Number.isFinite(confidence)?Math.round(Math.max(0,Math.min(1,confidence))*100):0;
+      const citationLabel=r.canonicalStandard==='GB/T 7714—2015'?'建议著录（GB/T 7714—2015）':'建议著录（GB/T 7714 风格）';
+      return `<article class="result"><div class="result-top"><span class="status ${status==='error'?'error-status':status}">${m[1]} ${m[0]}</span><span class="confidence">第 ${(r.position??i)+1} 条 · 真实性置信度 ${percentage}%</span></div><p class="submitted">${esc(r.submitted)}</p><p class="note">${esc(r.note)}</p>${diffs?`<div class="diffs">${diffs}</div>`:''}${r.canonical?`<div class="canonical"><b>${citationLabel}</b>${esc(numberedCanonical(r.canonical,r.position??i,r.submitted))}</div>`:''}${sourceUrl?`<a class="source" target="_blank" rel="noopener" href="${esc(sourceUrl)}">查看 ${esc(r.source||'来源')} 原始记录 ↗</a>`:''}${links?`<div class="evidence-links">${links}</div>`:''}</article>`;
+    }
+
     function render(all){const counts={verified:0,partial:0,corrected:0,review:0,unverified:0,error:0};all.forEach(x=>counts[x.status]=(counts[x.status]||0)+1);$('#summary').innerHTML=[['已确认真实',counts.verified+counts.partial],['真实但需修正',counts.corrected],['需人工复核',counts.review],['暂未证实/失败',counts.unverified+counts.error]].map(x=>`<div><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');$('#cards').innerHTML=all.map(card).join('')}
     const HISTORY_KEY='wenzheng-verification-history-v1',HISTORY_LIMIT=20,historyList=$('#historyList'),clearHistoryBtn=$('#clearHistoryBtn');
-    const VERIFY_CACHE_KEY='wenzheng-success-cache-v3',VERIFY_CACHE_TTL=180*24*60*60*1000,VERIFY_CACHE_LIMIT=120;
-    function verificationCacheKey(reference){const value=String(reference||''),normalized=typeof value.normalize==='function'?value.normalize('NFKC'):value;return normalized.toLowerCase().replace(/[\s\u3000.,，。;；:：'"“”‘’()[\]（）【】{}<>《》\-–—_/\\]+/g,'')}
-    function readVerificationCache(){try{const value=JSON.parse(localStorage.getItem(VERIFY_CACHE_KEY)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch(e){return{}}}
-    function cachedVerification(reference){const key=verificationCacheKey(reference),cache=readVerificationCache(),item=cache[key];if(!item)return null;if(Date.now()-Number(item.storedAt||0)>VERIFY_CACHE_TTL){delete cache[key];try{localStorage.setItem(VERIFY_CACHE_KEY,JSON.stringify(cache))}catch(e){}return null}return{...item.result,submitted:reference,cacheHit:true,note:`已使用本机最近一次成功核验的公开书目证据。${item.result.note||''}`}}
-    function rememberVerification(reference,result){const confidence=Number(result?.authenticityConfidence??result?.confidence??0);if(!['verified','partial','corrected'].includes(result?.status)||confidence<.8)return;const cache=readVerificationCache(),key=verificationCacheKey(reference);cache[key]={storedAt:Date.now(),result:{...result,submitted:''}};const kept=Object.fromEntries(Object.entries(cache).sort((a,b)=>Number(b[1]?.storedAt||0)-Number(a[1]?.storedAt||0)).slice(0,VERIFY_CACHE_LIMIT));try{localStorage.setItem(VERIFY_CACHE_KEY,JSON.stringify(kept))}catch(e){}}
+    const VERIFY_CACHE_KEY='wenzheng-success-cache-v4',VERIFY_CACHE_TTL=180*24*60*60*1000,VERIFY_CACHE_LIMIT=120;
+    function verificationCacheKey(reference){return normalizeReferenceInput(reference).replace(numberedReferenceStart,'').normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim()}
+    function validVerificationResult(result){
+      if(!result||typeof result!=='object'||Array.isArray(result)||!Object.prototype.hasOwnProperty.call(meta,result.status))return false;
+      const score=Number(result.authenticityConfidence??result.confidence);
+      return Number.isFinite(score)&&score>=0&&score<=1&&(!('differences'in result)||Array.isArray(result.differences)&&result.differences.every(item=>item&&typeof item==='object'))&&(!('evidenceLinks'in result)||Array.isArray(result.evidenceLinks)&&result.evidenceLinks.every(item=>item&&typeof item==='object'));
+    }
+    function readVerificationCache(){try{const value=JSON.parse(localStorage.getItem(VERIFY_CACHE_KEY)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch(error){return{}}}
+    function cachedVerification(reference){
+      const key=verificationCacheKey(reference),cache=readVerificationCache();if(!Object.prototype.hasOwnProperty.call(cache,key))return null;
+      const item=cache[key],age=Date.now()-Number(item?.storedAt),result=item?.result;
+      if(!Number.isFinite(age)||age<0||age>VERIFY_CACHE_TTL||!validVerificationResult(result)||!['verified','partial','corrected'].includes(result.status)||Number(result.authenticityConfidence??result.confidence)<.8){
+        delete cache[key];try{localStorage.setItem(VERIFY_CACHE_KEY,JSON.stringify(cache))}catch(error){}return null;
+      }
+      return{...result,submitted:reference,cacheHit:true,note:`已使用本机最近一次成功核验的公开书目证据。${result.note||''}`};
+    }
+    function rememberVerification(reference,result){
+      if(!validVerificationResult(result)||!['verified','partial','corrected'].includes(result.status)||Number(result.authenticityConfidence??result.confidence)<.8)return;
+      const cache=readVerificationCache(),key=verificationCacheKey(reference);if(!key)return;
+      cache[key]={storedAt:Date.now(),result:{...result,submitted:''}};
+      const kept=Object.fromEntries(Object.entries(cache).filter(([,item])=>item&&Number.isFinite(Number(item.storedAt))).sort((a,b)=>Number(b[1].storedAt)-Number(a[1].storedAt)).slice(0,VERIFY_CACHE_LIMIT));
+      try{localStorage.setItem(VERIFY_CACHE_KEY,JSON.stringify(kept))}catch(error){}
+    }
+
     function resultQuality(result){const rank={verified:6,partial:5,corrected:5,review:3,unverified:2,error:1}[result?.status]||0;return rank*10+Number(result?.authenticityConfidence??result?.confidence??0)}
     function resultCounts(results){
       const counts={verified:0,partial:0,corrected:0,review:0,unverified:0,error:0};
@@ -168,17 +320,22 @@
     }
     function readHistory(){
       try{
-        const value=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
-        return Array.isArray(value)?value.filter(item=>Array.isArray(item.references)&&item.references.length).slice(0,HISTORY_LIMIT):[];
-      }catch(e){return[]}
+        const value=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');if(!Array.isArray(value))return[];
+        return value.filter(item=>item&&typeof item==='object'&&typeof item.id==='string'&&Array.isArray(item.references)).map(item=>{
+          const references=item.references.filter(ref=>typeof ref==='string'&&ref.trim()).slice(0,MAX),counts={};
+          for(const state of Object.keys(meta)){const n=Number(item.counts?.[state]);counts[state]=Number.isSafeInteger(n)&&n>=0&&n<=references.length?n:0}
+          return{...item,references,counts};
+        }).filter(item=>item.references.length).slice(0,HISTORY_LIMIT);
+      }catch(error){return[]}
     }
+
     function writeHistory(entries){
       try{localStorage.setItem(HISTORY_KEY,JSON.stringify(entries.slice(0,HISTORY_LIMIT)));return true}catch(e){return false}
     }
     function saveHistory(references,results){
       const entry={id:`${Date.now()}-${Math.random().toString(36).slice(2,8)}`,createdAt:new Date().toISOString(),references:[...references],counts:resultCounts(results)};
       const prior=readHistory().filter(item=>item.references.join('\n')!==entry.references.join('\n'));
-      writeHistory([entry,...prior]);renderHistory();
+      const saved=writeHistory([entry,...prior]);renderHistory();return saved;
     }
     function historyTime(value){
       const date=new Date(value);if(Number.isNaN(date.getTime()))return'时间未知';
@@ -196,16 +353,23 @@
       const button=event.target.closest('button[data-history-action]');if(!button)return;
       const entries=readHistory(),entry=entries.find(item=>item.id===button.dataset.historyId);if(!entry)return;
       if(button.dataset.historyAction==='delete'){writeHistory(entries.filter(item=>item.id!==entry.id));renderHistory();return}
-      input.value=entry.references.join('\n');update();fileState(`已载入 ${entry.references.length} 条历史记录，可直接重新核验。`,'success');$('#tool').scrollIntoView({behavior:'smooth',block:'start'});input.focus();
+      cancelFileRead();input.value=entry.references.join('\n');resetResults();update();fileState(`已载入 ${entry.references.length} 条历史记录，可直接重新核验。`,'success');$('#tool').scrollIntoView({behavior:'smooth',block:'start'});input.focus();
     });
     clearHistoryBtn.addEventListener('click',()=>{
       if(!confirm('确定清空当前浏览器中的全部核验历史吗？'))return;
-      try{localStorage.removeItem(HISTORY_KEY)}catch(e){}
+      try{localStorage.removeItem(HISTORY_KEY)}catch(error){fileState('当前浏览器未能清空历史记录，请检查存储权限。','error');return}
       renderHistory();
     });
     renderHistory();
     const normalizeText=value=>String(value??'').normalize('NFKC').toLowerCase().replace(/[\s\u3000\p{P}\p{S}]+/gu,'');
     const cleanValue=value=>String(value??'').replace(/^[\s.,，。;；:：/／]+|[\s.,，。;；:：]+$/g,'').trim();
+    function normalizeReferenceInput(value){
+      return String(value??'').replace(/[\u200b-\u200d\ufeff]/g,'').replace(/[０-９Ａ-Ｚａ-ｚ［］（）．－]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0));
+    }
+    function sameIdentifier(kind,left,right){
+      const normalize=value=>kind==='isbn'?String(value||'').replace(/[\s-]/g,'').toUpperCase():String(value||'').trim().toLowerCase();
+      return normalize(left)===normalize(right);
+    }
     function diceSimilarity(a,b){
       a=normalizeText(a);b=normalizeText(b);
       if(!a||!b)return 0;
@@ -259,7 +423,7 @@
       return!!(names.length&&names.length<=20&&names.every(name=>/^[\p{Script=Han}·]{2,24}$/u.test(name.replace(/\s+/g,''))));
     }
     function parseReference(reference){
-      const raw=String(reference).replace(/[\u200b-\u200d\ufeff]/g,'').replace(/\s+/g,' ').trim();
+      const raw=normalizeReferenceInput(reference).replace(/\s+/g,' ').trim();
       const work=raw.replace(/^\s*(?:\[\s*\d+\s*\]|[\(（]\s*\d{1,3}\s*[\)）]|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]|\d{1,3}[.、)]|(?!(?:18|19|20)\d{2}\b)\d{1,3}\s+(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff]))\s*/,'').trim();
       const doi=extractDoi(work),isbn=extractIsbn(work),pmid=extractPmid(work),arxivId=extractArxivId(work),standardNumber=extractStandardNumber(work),patentNumber=extractPatentNumber(work),urlMatch=extractUrl(work),url=urlMatch.url;
       let body=(urlMatch.raw?work.replace(urlMatch.raw,''):work).replace(/[（]/g,'(').replace(/[）]/g,')').replace(/[［]/g,'[').replace(/[］]/g,']');
@@ -408,35 +572,33 @@
       const publicationDate=normalizeDate(rawDate);
       return{source:`原始网页（${sourceName}）`,sources:[`原始网页（${sourceName}）`],title,authors,authorKeys:authors.map(name=>normalizeText(name)).filter(Boolean),year:publicationDate?Number(publicationDate.slice(0,4)):null,publicationDate,container:sourceName,type:'webpage',sourceUrl:finalUrl,url:finalUrl};
     }
-    async function fetchWebCandidate(parsed){
-      const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),14000);
-      try{
-        const response=await fetch(parsed.url,{method:'GET',headers:{accept:'text/html,application/xhtml+xml'},mode:'cors',credentials:'omit',redirect:'follow',cache:'no-store',signal:controller.signal});
-        if(!response.ok)throw Error(`原始网页返回 HTTP ${response.status}`);
+    async function fetchWebCandidate(parsed,signal){
+      return fetchResource(parsed.url,{method:'GET',headers:{accept:'text/html,application/xhtml+xml'},mode:'cors',credentials:'omit',redirect:'follow',signal},14000,async response=>{
         const size=Number(response.headers.get('content-length')||0);if(size>5*1024*1024)throw Error('原始网页超过 5 MB，浏览器未自动读取');
         const buffer=await response.arrayBuffer();if(buffer.byteLength>5*1024*1024)throw Error('原始网页超过 5 MB，浏览器未自动读取');
         const candidate=parseWebPage(decodeWebHtml(buffer,response.headers.get('content-type')||''),response.url||parsed.url);
-        if(!candidate.title)throw Error('网页可访问，但未能提取页面题名');
-        return candidate;
-      }finally{clearTimeout(timer)}
+        if(!candidate.title)throw Error('网页可访问，但未能提取页面题名');return candidate;
+      });
     }
+
     function englishTextDate(value){
       const months={january:'01',february:'02',march:'03',april:'04',may:'05',june:'06',july:'07',august:'08',september:'09',october:'10',november:'11',december:'12'},match=String(value||'').match(/\b(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+((?:18|19|20)\d{2})\b/i);
       return match?`${match[3]}-${months[match[2].toLowerCase()]}-${String(Number(match[1])).padStart(2,'0')}`:'';
     }
-    async function fetchUnesdocCandidate(parsed){
+    async function fetchUnesdocCandidate(parsed,signal){
       const ark=unesdocArk(parsed.url);if(!ark)throw Error('不是可识别的 UNESDOC ARK 地址');
-      const query=async recordUrl=>{const endpoint=new URL('https://data.unesco.org/api/explore/v2.1/catalog/datasets/doc001/records');endpoint.searchParams.set('where',`url="${recordUrl}"`);endpoint.searchParams.set('limit','5');return fetchJson(endpoint.href)};
+      const query=async recordUrl=>{const endpoint=new URL('https://data.unesco.org/api/explore/v2.1/catalog/datasets/doc001/records');endpoint.searchParams.set('where',`url="${recordUrl}"`);endpoint.searchParams.set('limit','5');return fetchJson(endpoint.href,signal)};
       let data=await query(ark.recordUrl),record=(data.results||[]).find(item=>comparableUrl(item.url)===comparableUrl(ark.recordUrl));
       if(!record&&ark.recordUrl!==ark.baseUrl){data=await query(ark.baseUrl);record=(data.results||[]).find(item=>comparableUrl(item.url)===comparableUrl(ark.baseUrl))}
       if(!record)throw Error('UNESCO 官方目录中未检出该 ARK 记录');
       const catalogYear=String((Array.isArray(record.year)?record.year[0]:record.year)||''),adoptionDate=englishTextDate(record.description),creator=cleanWebField(record.creator||'UNESCO'),publicationDate=normalizeDate(catalogYear),acceptedPublicationDates=[publicationDate,adoptionDate].filter(Boolean);
       return{source:'UNESCO DataHub（UNESDOC 官方目录）',sources:['UNESCO DataHub（UNESDOC 官方目录）'],title:cleanWebField(record.title),authors:creator?[creator]:[],authorKeys:creator?[normalizeText(creator)]:[],year:publicationDate?Number(publicationDate.slice(0,4)):null,publicationDate,citationDate:adoptionDate?adoptionDate.slice(0,4):publicationDate,acceptedPublicationDates,container:'United Nations Educational, Scientific and Cultural Organization',type:'report',sourceUrl:record.url||ark.recordUrl,url:record.url||ark.recordUrl,officialRecord:true,adoptionDate,catalogYear:publicationDate,recordCode:cleanWebField(record.ref_code)};
     }
-    async function resolvedWebCandidate(parsed){
-      const ark=unesdocArk(parsed.url);if(!ark)return fetchWebCandidate(parsed);
-      try{return await fetchUnesdocCandidate(parsed)}catch(catalogError){
-        try{return await fetchWebCandidate(parsed)}catch(pageError){throw Error(`${catalogError.message}；${pageError.message||'原页面禁止跨域读取'}`)}
+    async function resolvedWebCandidate(parsed,signal){
+      const ark=unesdocArk(parsed.url);if(!ark)return fetchWebCandidate(parsed,signal);
+      try{return await fetchUnesdocCandidate(parsed,signal)}catch(catalogError){
+        checkActive(signal);
+        try{return await fetchWebCandidate(parsed,signal)}catch(pageError){throw Error(`${catalogError.message}；${pageError.message||'原页面禁止跨域读取'}`)}
       }
     }
     function webTitleAgreement(submitted,verified){
@@ -462,11 +624,11 @@
       let citation=`${authors?`${authors}. `:''}${title}[${type}]`;
       if(publicationDate)citation+=`. (${publicationDate})`;if(accessDate)citation+=`[${accessDate}]`;citation+=`. ${candidate.sourceUrl||parsed.url}`;return`${citation.replace(/\.\./g,'.')}.`;
     }
-    async function verifyWebReference(reference,parsed){
+    async function verifyWebReference(reference,parsed,signal){
       const evidenceLinks=webEvidenceLinks(parsed);
       if(!parsed.url)return{status:'unverified',confidence:0,submitted:reference,differences:[],note:'识别为网络文献，但未提取到可访问的 http/https 网址，无法读取原始页面。',checkedSources:[],evidenceLinks};
       try{
-        const candidate=await resolvedWebCandidate(parsed),titleScore=webTitleAgreement(parsed.title,candidate.title),authorScore=webAuthorAgreement(parsed.authors,candidate.authors),dateScore=webDateAgreement(parsed.publicationDate,candidate),weights=[[1,.3],[titleScore,.55]];
+        const candidate=await resolvedWebCandidate(parsed,signal),titleScore=webTitleAgreement(parsed.title,candidate.title),authorScore=webAuthorAgreement(parsed.authors,candidate.authors),dateScore=webDateAgreement(parsed.publicationDate,candidate),weights=[[1,.3],[titleScore,.55]];
         if(authorScore!==null)weights.push([authorScore,.15]);
         const confidence=Math.min(.98,weights.reduce((sum,[value,weight])=>sum+value*weight,0)/weights.reduce((sum,[,weight])=>sum+weight,0)),diffs=[],add=(field,submitted,verified)=>diffs.push({field,submitted:submitted||'未提供',verified:verified||'未提供'});
         const submittedTitle=normalizeText(parsed.title),verifiedTitle=normalizeText(candidate.title);
@@ -493,22 +655,21 @@
       }
     }
     let chineseJournalIndexPromise;
-    async function loadChineseJournalIndex(){
-      if(!chineseJournalIndexPromise)chineseJournalIndexPromise=fetch('./cn-journals.json',{cache:'force-cache'}).then(response=>{if(!response.ok)throw Error('中文期刊名录加载失败');return response.json()}).then(rows=>{
-        const index=new Map();
-        rows.forEach(row=>{const key=normalizeText(row.title);if(!key||!row.issn)return;const values=index.get(key)||[];values.includes(row.issn)||values.push(row.issn);index.set(key,values)});
-        return{rows,index};
-      });
-      return chineseJournalIndexPromise.catch(error=>{chineseJournalIndexPromise=null;throw error});
+    async function loadChineseJournalIndex(signal){
+      checkActive(signal);
+      if(!chineseJournalIndexPromise){
+        const pending=fetchResource('./cn-journals.json',{cache:'force-cache',signal}).then(rows=>{
+          if(!Array.isArray(rows))throw Error('中文期刊名录格式无效');
+          const index=new Map();rows.forEach(row=>{if(!row||typeof row.title!=='string'||typeof row.issn!=='string')return;const key=normalizeText(row.title);if(!key||!row.issn)return;const values=index.get(key)||[];values.includes(row.issn)||values.push(row.issn);index.set(key,values)});
+          return{rows:rows.filter(row=>row&&typeof row.title==='string'&&typeof row.issn==='string'),index};
+        });
+        chineseJournalIndexPromise=pending.catch(error=>{if(chineseJournalIndexPromise===saved)chineseJournalIndexPromise=null;throw error});
+        const saved=chineseJournalIndexPromise;
+      }
+      return chineseJournalIndexPromise;
     }
-    async function fetchText(url,timeout=REQUEST_TIMEOUT){
-      const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
-      try{
-        const response=await fetch(url,{headers:{accept:'text/plain'},signal:controller.signal,cache:'no-store'});
-        if(!response.ok)throw Error(`HTTP ${response.status}`);
-        return await response.text();
-      }finally{clearTimeout(timer)}
-    }
+    async function fetchText(url,timeout=REQUEST_TIMEOUT,signal){return fetchResource(url,{headers:{accept:'text/plain'},signal},timeout,response=>response.text())}
+
     function parseDoiCitation(text,doi,parsed){
       const raw=String(text||'').replace(/\s+/g,' ').trim(),withoutUrl=raw.replace(/\s*https?:\/\/doi\.org\/\S+\s*$/i,'').trim();
       const head=withoutUrl.match(/^(.*?)\.\s*\((\d{4})\)\.\s*(.+)$/),tail=head?.[3]?.match(/^(.+)\.\s+([^,]+),\s*([^,(]+?)(?:\(([^)]+)\))?,\s*([^.]+)\.?$/);
@@ -520,8 +681,8 @@
       partialAuthors&&partialFields.push('其余作者');partialPages&&partialFields.push('末页');
       return{source:'DOI 注册元数据',sources:['DOI 注册元数据'],exactDoi:true,title:cleanValue(tail[1]),authors,authorKeys:authors.map(authorKey).filter(Boolean),year:Number(head[2]),container:cleanValue(tail[2]),volume:cleanValue(tail[3]),issue:cleanValue(tail[4]),pages,doi:String(doi).toLowerCase(),type:'journal-article',sourceUrl:`https://doi.org/${doi}`,registryCitation:raw,partialFields};
     }
-    async function fetchDoiCitation(doi,parsed,timeout=REQUEST_TIMEOUT){
-      const url=`https://citation.doi.org/format?doi=${encodeURIComponent(doi)}&style=apa&lang=zh-CN`,text=await fetchText(url,timeout);
+    async function fetchDoiCitation(doi,parsed,timeout=REQUEST_TIMEOUT,signal){
+      const url=`https://citation.doi.org/format?doi=${encodeURIComponent(doi)}&style=apa&lang=zh-CN`,text=await fetchText(url,timeout,signal);
       return parseDoiCitation(text,doi,parsed);
     }
     function likelyArticleSequences(pages){
@@ -530,9 +691,9 @@
       [1,2,3,4,5].forEach(value=>out.includes(value)||out.push(value));
       return out.slice(0,16);
     }
-    async function inferChineseDoi(parsed){
+    async function inferChineseDoi(parsed,signal){
       if(parsed.doi||!hasHan(parsed.title)||!parsed.container||!parsed.year||!parsed.issue||parsed.type&&parsed.type!=='J')return[];
-      const catalog=await loadChineseJournalIndex(),containerKey=normalizeText(parsed.container);
+      const catalog=await loadChineseJournalIndex(signal),containerKey=normalizeText(parsed.container);
       let issns=catalog.index.get(containerKey)||[];
       if(!issns.length){
         const near=catalog.rows.map(row=>({row,score:diceSimilarity(parsed.container,row.title)})).sort((a,b)=>b.score-a.score)[0];
@@ -542,13 +703,13 @@
       const issueNumber=Number(String(parsed.issue).match(/\d+/)?.[0]);if(!issueNumber)return[];
       const sequences=likelyArticleSequences(parsed.pages),patterns=[[parsed.year,issueNumber,sequences[0]],...sequences.slice(1,5).map(sequence=>[parsed.year,issueNumber,sequence]),[parsed.year-1,issueNumber,sequences[0]],[parsed.year+1,issueNumber,sequences[0]],[parsed.year,Math.max(1,issueNumber-1),sequences[0]]];
       const dois=[...new Set(issns.slice(0,2).flatMap(issn=>patterns.map(([year,issue,sequence])=>`10.3969/j.issn.${issn}.${year}.${String(issue).padStart(2,'0')}.${String(sequence).padStart(3,'0')}`)))].slice(0,8);
-      const settled=await Promise.allSettled(dois.map(doi=>fetchDoiCitation(doi,parsed,6500))),close=[];
+      const settled=await Promise.allSettled(dois.map(doi=>fetchDoiCitation(doi,parsed,6500,signal))),close=[];
       settled.forEach(result=>{if(result.status==='fulfilled'&&result.value){const score=diceSimilarity(parsed.title,result.value.title);score>=.72&&close.push({candidate:result.value,score})}});
       return close.sort((a,b)=>b.score-a.score).slice(0,1).map(item=>item.candidate);
     }
-    async function queryDoiRegistry(parsed){
-      if(parsed.doi){const candidate=await fetchDoiCitation(parsed.doi,parsed);return{source:'DOI 注册元数据',candidates:candidate?[candidate]:[]}}
-      return{source:'DOI 注册元数据',candidates:await inferChineseDoi(parsed)};
+    async function queryDoiRegistry(parsed,signal){
+      if(parsed.doi){const candidate=await fetchDoiCitation(parsed.doi,parsed,REQUEST_TIMEOUT,signal);return{source:'DOI 注册元数据',candidates:candidate?[candidate]:[]}}
+      return{source:'DOI 注册元数据',candidates:await inferChineseDoi(parsed,signal)};
     }
     function yearFromCrossref(item){
       for(const key of ['published-print','published-online','published','issued','created']){
@@ -565,8 +726,11 @@
       return normalizeText(parts.at(-1)||value);
     }
     function crossrefCandidate(item,exactDoi=false){
-      const people=(item.author||[]).map(a=>cleanValue([a.given,a.family].filter(Boolean).join(' '))).filter(Boolean);
-      return{source:'Crossref',sources:['Crossref'],exactDoi,title:Array.isArray(item.title)?item.title[0]:item.title||'',authors:people,authorKeys:(item.author||[]).map(a=>normalizeText(a.family||authorKey([a.given,a.family].filter(Boolean).join(' ')))).filter(Boolean),year:yearFromCrossref(item),container:Array.isArray(item['container-title'])?item['container-title'][0]:item['container-title']||'',volume:item.volume||'',issue:item.issue||'',pages:item.page?.replace(/[–—]/g,'-')||'',doi:String(item.DOI||'').toLowerCase(),type:item.type||'',sourceUrl:item.DOI?`https://doi.org/${item.DOI}`:item.URL||''};
+      item=item&&typeof item==='object'?item:{};
+      const authors=Array.isArray(item.author)?item.author.filter(author=>author&&typeof author==='object'):[];
+      const people=authors.map(author=>cleanValue(author.name||(/^[\p{Script=Han}\s·]+$/u.test(String(author.given||'')+String(author.family||''))?[author.family,author.given].filter(Boolean).join(''):[author.given,author.family].filter(Boolean).join(' ')))).filter(Boolean);
+      const authorKeys=authors.map(author=>normalizeText(author.family||authorKey(author.name||[author.given,author.family].filter(Boolean).join(' ')))).filter(Boolean);
+      return{source:'Crossref',sources:['Crossref'],exactDoi,title:cleanValue(Array.isArray(item.title)?item.title[0]:item.title),authors:people,authorKeys,year:yearFromCrossref(item),container:cleanValue(Array.isArray(item['container-title'])?item['container-title'][0]:item['container-title']),volume:cleanValue(item.volume),issue:cleanValue(item.issue),pages:String(item.page||'').replace(/[–—]/g,'-'),doi:String(item.DOI||'').toLowerCase(),type:item.type||'',sourceUrl:item.DOI?`https://doi.org/${item.DOI}`:item.URL||''};
     }
     function openAlexCandidate(item,exactDoi=false){
       const people=(item.authorships||[]).map(a=>a.author?.display_name||a.raw_author_name).filter(Boolean),biblio=item.biblio||{},location=item.primary_location||{};
@@ -576,15 +740,9 @@
       const people=(item.authors||[]).map(author=>cleanValue(author?.name)).filter(Boolean),types=(item.publicationTypes||[]).filter(Boolean),externalIds=item.externalIds||{};
       return{source:'Semantic Scholar',sources:['Semantic Scholar'],exactDoi:false,title:item.title||'',authors:people,authorKeys:people.map(authorKey).filter(Boolean),year:item.year||null,container:item.venue||'',volume:'',issue:'',pages:'',doi:String(externalIds.DOI||externalIds.Doi||'').toLowerCase(),type:types.join(' '),sourceUrl:item.url||item.openAccessPdf?.url||'',semanticPaperId:item.paperId||''};
     }
-    async function fetchJson(url){
-      const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),REQUEST_TIMEOUT);
-      try{
-        const response=await fetch(url,{headers:{accept:'application/json'},signal:controller.signal,cache:'no-store'});
-        if(!response.ok)throw Error(`HTTP ${response.status}`);
-        return await response.json();
-      }finally{clearTimeout(timer)}
-    }
-    async function queryCrossref(parsed){
+    async function fetchJson(url,signal){return fetchResource(url,{headers:{accept:'application/json'},signal})}
+
+    async function queryCrossref(parsed,signal){
       const fields='DOI,title,author,published-print,published,container-title,type,URL,page,volume,issue';
       const jobs=[];
       if(parsed.doi)jobs.push({exact:true,url:`https://api.crossref.org/works/${encodeURIComponent(parsed.doi)}`});
@@ -596,52 +754,52 @@
       endpoint.searchParams.set('select',fields);
       endpoint.searchParams.set('mailto','linhu@scu.edu.cn');
       jobs.push({exact:false,url:endpoint.href});
-      const settled=await Promise.allSettled(jobs.map(x=>fetchJson(x.url))),candidates=[];
+      const settled=await Promise.allSettled(jobs.map(x=>fetchJson(x.url,signal))),candidates=[];
       settled.forEach((result,i)=>{if(result.status!=='fulfilled')return;const message=result.value?.message,items=Array.isArray(message?.items)?message.items:message?[message]:[];items.forEach(item=>candidates.push(crossrefCandidate(item,jobs[i].exact)))});
       if(settled.every(x=>x.status==='rejected'))throw Error('Crossref 无法连接');
       return{source:'Crossref',candidates};
     }
-    async function queryOpenAlex(parsed){
+    async function queryOpenAlex(parsed,signal){
       const select='id,doi,title,display_name,publication_year,type,authorships,primary_location,biblio',jobs=[];
       if(parsed.doi)jobs.push({exact:true,url:`https://api.openalex.org/works?filter=doi:${encodeURIComponent(`https://doi.org/${parsed.doi}`)}&per-page=3&select=${select}`});
       const query=parsed.title&&normalizeText(parsed.title).length>=4?parsed.title:parsed.work;
       jobs.push({exact:false,url:`https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=5&select=${select}`});
-      const settled=await Promise.allSettled(jobs.map(x=>fetchJson(x.url))),candidates=[];
+      const settled=await Promise.allSettled(jobs.map(x=>fetchJson(x.url,signal))),candidates=[];
       settled.forEach((result,i)=>{if(result.status!=='fulfilled')return;(result.value?.results||[]).forEach(item=>candidates.push(openAlexCandidate(item,jobs[i].exact)))});
       if(settled.every(x=>x.status==='rejected'))throw Error('OpenAlex 无法连接');
       return{source:'OpenAlex',candidates};
     }
-    async function querySemanticScholar(parsed){
+    async function querySemanticScholar(parsed,signal){
       const title=cleanValue(parsed.title);if(!title||normalizeText(title).length<4)return{source:'Semantic Scholar',candidates:[]};
       const endpoint=new URL('https://api.semanticscholar.org/graph/v1/paper/search/bulk');
       endpoint.searchParams.set('query',`"${title.replace(/"/g,' ')}"`);
       endpoint.searchParams.set('fields','title,authors,year,venue,publicationTypes,externalIds,url,openAccessPdf');
-      const data=await fetchJson(endpoint.href),candidates=(data?.data||[]).slice(0,10).map(semanticScholarCandidate);
+      const data=await fetchJson(endpoint.href,signal),candidates=(data?.data||[]).slice(0,10).map(semanticScholarCandidate);
       return{source:'Semantic Scholar',candidates};
     }
     function openLibraryCandidate(item,isbn=''){
       const authors=(item.authors||item.author_name||[]).map(author=>cleanValue(author?.name||author)).filter(Boolean),publishers=(item.publishers||item.publisher||[]).map(publisher=>cleanValue(publisher?.name||publisher)).filter(Boolean),publishDate=String(item.publish_date||item.first_publish_year||''),year=Number(publishDate.match(/(?:18|19|20)\d{2}/)?.[0])||null,key=item.key||'';
       return{source:'Open Library',sources:['Open Library'],exactDoi:false,title:item.title||'',authors,authorKeys:authors.map(authorKey).filter(Boolean),year,container:publishers[0]||'',volume:'',issue:'',pages:item.number_of_pages||'',doi:'',isbn:isbn||(item.isbn||[])[0]||'',type:'book',sourceUrl:key?`https://openlibrary.org${key.startsWith('/')?key:`/${key}`}`:isbn?`https://openlibrary.org/isbn/${isbn}`:''};
     }
-    async function queryOpenLibrary(parsed){
+    async function queryOpenLibrary(parsed,signal){
       if(parsed.isbn){
-        const key=`ISBN:${parsed.isbn}`,data=await fetchJson(`https://openlibrary.org/api/books?bibkeys=${encodeURIComponent(key)}&format=json&jscmd=data`),item=data?.[key];
+        const key=`ISBN:${parsed.isbn}`,data=await fetchJson(`https://openlibrary.org/api/books?bibkeys=${encodeURIComponent(key)}&format=json&jscmd=data`,signal),item=data?.[key];
         return{source:'Open Library',candidates:item?[openLibraryCandidate(item,parsed.isbn)]:[]};
       }
       const endpoint=new URL('https://openlibrary.org/search.json'),author=splitSubmittedAuthors(parsed.authors)[0];
       endpoint.searchParams.set('title',parsed.title||parsed.work);if(author)endpoint.searchParams.set('author',author);endpoint.searchParams.set('limit','5');endpoint.searchParams.set('fields','key,title,author_name,first_publish_year,publisher,isbn');
-      const data=await fetchJson(endpoint.href);return{source:'Open Library',candidates:(data?.docs||[]).map(item=>openLibraryCandidate(item))};
+      const data=await fetchJson(endpoint.href,signal);return{source:'Open Library',candidates:(data?.docs||[]).map(item=>openLibraryCandidate(item))};
     }
-    async function queryPubMed(parsed){
+    async function queryPubMed(parsed,signal){
       if(!parsed.pmid)return{source:'PubMed',candidates:[]};
       const endpoint=new URL('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi');endpoint.searchParams.set('db','pubmed');endpoint.searchParams.set('id',parsed.pmid);endpoint.searchParams.set('retmode','json');
-      const data=await fetchJson(endpoint.href),item=data?.result?.[parsed.pmid];if(!item)return{source:'PubMed',candidates:[]};
+      const data=await fetchJson(endpoint.href,signal),item=data?.result?.[parsed.pmid];if(!item)return{source:'PubMed',candidates:[]};
       const authors=(item.authors||[]).map(author=>cleanValue(author.name)).filter(Boolean),doi=(item.articleids||[]).find(entry=>entry.idtype==='doi')?.value||'';
       return{source:'PubMed',candidates:[{source:'PubMed',sources:['PubMed'],exactDoi:!!(parsed.doi&&doi&&parsed.doi===doi.toLowerCase()),title:cleanValue(item.title),authors,authorKeys:authors.map(authorKey).filter(Boolean),year:Number(String(item.pubdate||'').match(/(?:18|19|20)\d{2}/)?.[0])||null,container:cleanValue(item.fulljournalname||item.source),volume:cleanValue(item.volume),issue:cleanValue(item.issue),pages:cleanValue(item.pages).replace(/[–—]/g,'-'),doi:String(doi).toLowerCase(),pmid:parsed.pmid,type:'journal-article',sourceUrl:`https://pubmed.ncbi.nlm.nih.gov/${parsed.pmid}/`}]};
     }
-    async function queryArxiv(parsed){
+    async function queryArxiv(parsed,signal){
       if(!parsed.arxivId)return{source:'arXiv',candidates:[]};
-      const xml=await fetchText(`https://export.arxiv.org/api/query?id_list=${encodeURIComponent(parsed.arxivId)}`),doc=new DOMParser().parseFromString(xml,'application/xml'),entry=doc.querySelector('entry');if(!entry)return{source:'arXiv',candidates:[]};
+      const xml=await fetchText(`https://export.arxiv.org/api/query?id_list=${encodeURIComponent(parsed.arxivId)}`,REQUEST_TIMEOUT,signal),doc=new DOMParser().parseFromString(xml,'application/xml'),entry=doc.querySelector('entry');if(!entry)return{source:'arXiv',candidates:[]};
       const authors=[...entry.querySelectorAll('author > name')].map(node=>cleanValue(node.textContent)).filter(Boolean),published=cleanValue(entry.querySelector('published')?.textContent),doi=cleanValue(entry.querySelector('doi')?.textContent);
       return{source:'arXiv',candidates:[{source:'arXiv',sources:['arXiv'],exactDoi:false,title:cleanValue(String(entry.querySelector('title')?.textContent||'').replace(/\s+/g,' ')),authors,authorKeys:authors.map(authorKey).filter(Boolean),year:Number(published.slice(0,4))||null,container:'arXiv',volume:'',issue:'',pages:'',doi:doi.toLowerCase(),arxivId:parsed.arxivId,type:'report',sourceUrl:`https://arxiv.org/abs/${parsed.arxivId}`}]};
     }
@@ -672,14 +830,15 @@
       add('crossref');add('openalex');add('semantic-scholar');
       return providers;
     }
-    function providerJob(provider,parsed){
-      if(provider==='crossref')return{source:'Crossref',promise:queryCrossref(parsed)};
-      if(provider==='openalex')return{source:'OpenAlex',promise:queryOpenAlex(parsed)};
-      if(provider==='doi-registry')return{source:'DOI 注册元数据',promise:queryDoiRegistry(parsed)};
-      if(provider==='semantic-scholar')return{source:'Semantic Scholar',promise:querySemanticScholar(parsed)};
-      if(provider==='open-library')return{source:'Open Library',promise:queryOpenLibrary(parsed)};
-      if(provider==='pubmed')return{source:'PubMed',promise:queryPubMed(parsed)};
-      if(provider==='arxiv')return{source:'arXiv',promise:queryArxiv(parsed)};
+    function providerJob(provider,parsed,signal){
+      checkActive(signal);
+      if(provider==='crossref')return{source:'Crossref',promise:queryCrossref(parsed,signal)};
+      if(provider==='openalex')return{source:'OpenAlex',promise:queryOpenAlex(parsed,signal)};
+      if(provider==='doi-registry')return{source:'DOI 注册元数据',promise:queryDoiRegistry(parsed,signal)};
+      if(provider==='semantic-scholar')return{source:'Semantic Scholar',promise:querySemanticScholar(parsed,signal)};
+      if(provider==='open-library')return{source:'Open Library',promise:queryOpenLibrary(parsed,signal)};
+      if(provider==='pubmed')return{source:'PubMed',promise:queryPubMed(parsed,signal)};
+      if(provider==='arxiv')return{source:'arXiv',promise:queryArxiv(parsed,signal)};
       throw Error(`未知核验来源：${provider}`);
     }
     function mergeCandidates(candidates){
@@ -689,10 +848,22 @@
         const key=candidate.doi?`doi:${candidate.doi}`:`title:${normalizeText(candidate.title)}:${candidate.year||''}`;
         const prior=merged.get(key);
         if(!prior){merged.set(key,{...candidate,sources:[...candidate.sources],partialFields:[...(candidate.partialFields||[])]});continue}
+        const hadCompleteAuthors=!!prior.authors?.length&&!prior.partialFields.includes('其余作者'),hadCompletePages=!!prior.pages&&!prior.partialFields.includes('末页')&&/[-–—]/.test(String(prior.pages));
         prior.sources=[...new Set([...prior.sources,...candidate.sources])];
         prior.source=prior.sources.join(' + ');prior.exactDoi=prior.exactDoi||candidate.exactDoi;
         prior.partialFields=[...new Set([...(prior.partialFields||[]),...(candidate.partialFields||[])])];
-        for(const field of ['title','authors','authorKeys','year','container','volume','issue','pages','doi','isbn','pmid','arxivId','type','sourceUrl'])if(!prior[field]&&candidate[field])prior[field]=candidate[field];
+        for(const field of ['title','authors','authorKeys','year','container','volume','issue','pages','doi','isbn','pmid','arxivId','type','sourceUrl']){
+          const missing=Array.isArray(prior[field])?!prior[field].length:!prior[field];
+          if(missing&&candidate[field])prior[field]=candidate[field];
+        }
+        if(prior.partialFields.includes('其余作者')&&candidate.authors?.length&&!candidate.partialFields?.includes('其余作者')){
+          prior.authors=candidate.authors;prior.authorKeys=candidate.authorKeys;prior.partialFields=prior.partialFields.filter(field=>field!=='其余作者');
+        }
+        if(prior.partialFields.includes('末页')&&candidate.pages&&!candidate.partialFields?.includes('末页')&&/[-–—]/.test(String(candidate.pages))){
+          prior.pages=candidate.pages;prior.partialFields=prior.partialFields.filter(field=>field!=='末页');
+        }
+        if(hadCompleteAuthors)prior.partialFields=prior.partialFields.filter(field=>field!=='其余作者');
+        if(hadCompletePages)prior.partialFields=prior.partialFields.filter(field=>field!=='末页');
       }
       return[...merged.values()];
     }
@@ -717,7 +888,7 @@
     }
     function scoreCandidate(parsed,candidate){
       const titleScore=parsed.title?Math.max(...[candidate.title,...(candidate.alternateTitles||[])].map(title=>diceSimilarity(parsed.title,title))):(normalizeText(parsed.raw).includes(normalizeText(candidate.title))?.92:0);
-      const authorScore=authorAgreement(parsed,candidate),containerScore=parsed.container&&candidate.container?diceSimilarity(parsed.container,candidate.container):.5,identifierPairs=[['doi',parsed.doi,candidate.doi],['isbn',parsed.isbn,candidate.isbn],['pmid',parsed.pmid,candidate.pmid],['arxiv',parsed.arxivId,candidate.arxivId]].filter(([,submitted,verified])=>submitted&&verified),exactIdentifiers=identifierPairs.filter(([,submitted,verified])=>normalizeText(submitted)===normalizeText(verified)),sourceUrlExact=!!(parsed.url&&candidate.sourceUrl&&comparableUrl(parsed.url)===comparableUrl(candidate.sourceUrl)),identifierExact=exactIdentifiers.length>0||sourceUrlExact,identifierMismatch=identifierPairs.length>0&&!identifierExact;
+      const authorScore=authorAgreement(parsed,candidate),containerScore=parsed.container&&candidate.container?diceSimilarity(parsed.container,candidate.container):.5,identifierPairs=[['doi',parsed.doi,candidate.doi],['isbn',parsed.isbn,candidate.isbn],['pmid',parsed.pmid,candidate.pmid],['arxiv',parsed.arxivId,candidate.arxivId]].filter(([,submitted,verified])=>submitted&&verified),exactIdentifiers=identifierPairs.filter(([kind,submitted,verified])=>sameIdentifier(kind,submitted,verified)),sourceUrlExact=!!(parsed.url&&candidate.sourceUrl&&comparableUrl(parsed.url)===comparableUrl(candidate.sourceUrl)),identifierExact=exactIdentifiers.length>0||sourceUrlExact,identifierMismatch=identifierPairs.length>0&&!identifierExact;
       const weights=[];
       if(parsed.title||candidate.title)weights.push([titleScore,.62]);
       if(parsed.authors&&candidate.authors?.length)weights.push([authorScore,.23]);
@@ -743,6 +914,8 @@
       const value=displayName(name);
       if(/\p{Script=Han}/u.test(value))return value;
       if(/\b(?:association|organization|university|committee|institute|library|society|department|centre|center|council|academy|ministry)\b/i.test(value))return value;
+      const familyFirst=value.match(/^([^,]+),\s*((?:[A-Z]\.?(?:\s+|$)){1,6})$/)||value.match(/^([A-Z][A-Z'’\-]+)\s+((?:[A-Z]\.?(?:\s+|$)){1,6})$/);
+      if(familyFirst)return`${familyFirst[1].trim().toUpperCase()} ${familyFirst[2].replace(/\./g,'').trim().replace(/\s+/g,' ')}`;
       const parts=value.replace(/,/g,' ').split(/\s+/).filter(Boolean),family=parts.pop()||'',initials=parts.map(x=>x[0]?.toUpperCase()).filter(Boolean).join(' ');
       return`${family.toUpperCase()}${initials?` ${initials}`:''}`;
     }
@@ -787,11 +960,12 @@
       let verifiedType=candidateGbType(candidate);if(verifiedType==='R'&&parsed.url)verifiedType='R/OL';if(parsed.type&&verifiedType&&parsed.type!==verifiedType)add('文献类型',`[${parsed.type}]`,`[${verifiedType}]`);
       return out;
     }
-    async function verifyOneLocal(reference){
+    async function verifyOneLocal(reference,signal){
+      checkActive(signal);
       const parsed=parseReference(reference),type=String(parsed.type||'').toUpperCase(),trusted=queryTrustedReferenceCache(parsed);
-      if(!trusted.candidates.length&&!parsed.arxivId&&!parsed.pmid&&(type.includes('/OL')||(parsed.url&&!parsed.doi&&(!type||['EB','DB','CP','N','S','P'].includes(baseReferenceType(type))))))return verifyWebReference(reference,parsed);
+      if(!trusted.candidates.length&&!parsed.arxivId&&!parsed.pmid&&(type.includes('/OL')||(parsed.url&&!parsed.doi&&(!type||['EB','DB','CP','N','S','P'].includes(baseReferenceType(type))))))return verifyWebReference(reference,parsed,signal);
       try{
-        const jobs=trusted.candidates.length?[{source:trusted.source,promise:Promise.resolve(trusted)}]:buildVerificationPlan(parsed).map(provider=>providerJob(provider,parsed));
+        const jobs=trusted.candidates.length?[{source:trusted.source,promise:Promise.resolve(trusted)}]:buildVerificationPlan(parsed).map(provider=>providerJob(provider,parsed,signal));
         if(!jobs.length)return{status:'unverified',confidence:0,submitted:reference,differences:[],note:'已识别文献类型，但当前没有可直接调用的开放结构化目录。未能自动确认不等于文献虚假，请使用下方按类型提供的公开复核入口继续核对。',checkedSources:[],evidenceLinks:scholarlyEvidenceLinks(parsed,parsed.doi)};
         const checks=await Promise.allSettled(jobs.map(job=>job.promise)),available=checks.filter(x=>x.status==='fulfilled').map(x=>x.value.source),all=checks.flatMap(x=>x.status==='fulfilled'?x.value.candidates:[]);
         const candidates=mergeCandidates(all),ranked=candidates.map(candidate=>({candidate,metrics:scoreCandidate(parsed,candidate)})).sort((a,b)=>b.metrics.score-a.metrics.score);
@@ -811,44 +985,65 @@
         return{status:'error',confidence:0,submitted:reference,differences:[],note:`核验失败：${e.name==='AbortError'?'开放数据源连接超时':e.message||'网络错误'}。可使用下方公开检索入口继续复核。`,checkedSources:[],evidenceLinks:scholarlyEvidenceLinks(parsed,parsed.doi)};
       }
     }
-    async function callCloudVerification(reference){
-      const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
-      try{
-        const response=await fetch(CLOUD_VERIFY_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reference}),mode:'cors',credentials:'omit',signal:controller.signal});
-        if(!response.ok)throw Error(`云端核验返回 HTTP ${response.status}`);
-        let result=await response.json();
-        if(result&&typeof result.body==='string')result=JSON.parse(result.body);
-        if(!result||!result.status)throw Error('云端核验返回格式无效');
-        return result;
-      }finally{clearTimeout(timer)}
+    async function callCloudVerification(reference,signal){
+      let result=await fetchResource(CLOUD_VERIFY_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reference}),mode:'cors',credentials:'omit',signal},15000);
+      if(result&&typeof result.body==='string')result=JSON.parse(result.body);
+      if(!validVerificationResult(result))throw Error('云端核验返回格式无效');return result;
     }
-    async function verifyOne(reference){
+    async function verifyOne(reference,signal){
+      checkActive(signal);
       const parsed=parseReference(reference),cloudReference=conventionalReference(parsed);
       const cached=cachedVerification(reference);if(cached)return cached;
       let result=null,localAttempt=null;
       if(queryTrustedReferenceCache(parsed).candidates.length){
-        localAttempt=await verifyOneLocal(reference);
+        localAttempt=await verifyOneLocal(reference,signal);checkActive(signal);
         if(localAttempt.trustedSource){result={...localAttempt,browserFallback:true};rememberVerification(reference,result);return result}
       }
       if(CLOUD_VERIFY_ENDPOINT){
         try{
-          const first=await callCloudVerification(cloudReference);result={...first,submitted:reference};
+          const first=await callCloudVerification(cloudReference,signal);checkActive(signal);result={...first,submitted:reference};
           if(['review','unverified','error'].includes(first.status)){
-            await new Promise(resolve=>setTimeout(resolve,160));
-            try{const second=await callCloudVerification(cloudReference),preferred=resultQuality(second)>resultQuality(first)?second:first;result={...preferred,submitted:reference,attemptCount:2}}catch(retryError){console.warn('云端核验自动重试失败',retryError)}
+            try{const second=await callCloudVerification(cloudReference,signal);checkActive(signal);const preferred=resultQuality(second)>resultQuality(first)?second:first;result={...preferred,submitted:reference,attemptCount:2}}
+            catch(retryError){checkActive(signal);console.warn('云端核验自动重试失败',retryError)}
           }
-        }catch(error){
-          console.warn('云端核验暂不可用，回退浏览器开放数据源',error);
-        }
+        }catch(error){checkActive(signal);console.warn('云端核验暂不可用，改用公开数据源',error)}
       }
       if(!result||['review','unverified','error'].includes(result.status)){
-        const local=localAttempt||await verifyOneLocal(reference);
+        const local=localAttempt||await verifyOneLocal(reference,signal);checkActive(signal);
         if(local.trustedSource||!result||resultQuality(local)>resultQuality(result))result={...local,browserFallback:true};
       }
-      rememberVerification(reference,result);
-      return result;
+      checkActive(signal);rememberVerification(reference,result);return result;
     }
-    verifyBtn.onclick=async()=>{const all=refs(input.value),list=all.slice(0,MAX);if(!list.length||verifying)return;verifying=true;update();if(all.length>MAX)fileState(`共识别 ${all.length} 条参考文献，本次自动核验前 20 条。`,'success');verifyBtn.disabled=true;clearBtn.disabled=true;verifyBtn.innerHTML='<span class="spinner"></span>核验中';$('#results').classList.remove('hidden');$('#cards').innerHTML='';$('#summary').innerHTML='';$('#progress').textContent=`0 / ${list.length}`;const out=new Array(list.length);let next=0,done=0;async function worker(){while(next<list.length){const i=next++;try{out[i]=await verifyOne(list[i])}catch(e){out[i]={status:'error',confidence:0,submitted:list[i],differences:[],note:'本条核验暂时失败，请重试。'}}out[i].position=i;done++;$('#progress').textContent=`${done} / ${list.length}`;render(out.filter(Boolean))}}await Promise.all(Array.from({length:Math.min(2,list.length)},worker));saveHistory(list,out);verifyBtn.textContent='重新核验';verifying=false;update();$('#results').scrollIntoView({behavior:'smooth',block:'start'})};
+
+    verifyBtn.onclick=async()=>{
+      if(verifying){activeBatch?.controller.abort();return}
+      const all=refs(input.value),list=all.slice(0,MAX);if(!list.length||fileReading)return;
+      const batch={controller:new AbortController()};activeBatch=batch;verifying=true;update();
+      if(all.length>MAX)fileState(`共识别 ${all.length} 条参考文献，本次自动核验前 20 条。`,'success');
+      verifyBtn.innerHTML='<span class="spinner"></span>停止核验';$('#results').classList.remove('hidden');$('#cards').innerHTML='';$('#summary').innerHTML='';$('#progress').textContent=`0 / ${list.length}`;
+      const out=new Array(list.length);let next=0,done=0;
+      async function worker(){
+        while(next<list.length&&!batch.controller.signal.aborted){
+          const i=next++;
+          try{out[i]=await withDeadline(signal=>verifyOne(list[i],signal),30000,batch.controller.signal)}
+          catch(error){
+            if(batch.controller.signal.aborted)return;
+            out[i]={status:error.name==='TimeoutError'?'unverified':'error',confidence:0,submitted:list[i],differences:[],note:error.name==='TimeoutError'?'本条核验已超时结束，暂未证实不等于虚假。请重试或通过下方入口人工复核。':'本条核验暂时失败，请重试。',evidenceLinks:scholarlyEvidenceLinks(parseReference(list[i]))};
+          }
+          if(batch.controller.signal.aborted||activeBatch!==batch)return;
+          if(!validVerificationResult(out[i]))out[i]={status:'error',confidence:0,submitted:list[i],differences:[],note:'核验结果格式异常，请重试。'};
+          out[i].position=i;done++;$('#progress').textContent=`${done} / ${list.length}`;render(out.filter(Boolean));
+        }
+      }
+      try{
+        await Promise.all(Array.from({length:Math.min(2,list.length)},worker));
+        if(batch.controller.signal.aborted)fileState(`已停止核验，保留已完成的 ${done} 条结果；可修改内容后重新开始。`);
+        else if(!saveHistory(list,out))fileState('核验已完成；当前浏览器未能保存历史，本次结果仍可查看。');
+      }catch(error){fileState('本次核验已结束，部分结果未能显示，请重试。','error')}
+      finally{if(activeBatch===batch){activeBatch=null;verifying=false;verifyBtn.textContent=done?'重新核验':'开始核验';update()}}
+      if(done)$('#results').scrollIntoView({behavior:'smooth',block:'start'});
+    };
+
   </script>
 </body>
 </html>
