@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 function frontend(wx={},globalData={}) {
  let page;
- const context={wx,getApp:()=>({globalData}),Page:x=>{page=x},require:()=>require('../miniprogram/utils/references'),console};
+ const context={wx,getApp:()=>({globalData}),Page:x=>{page=x},require:p=>require(p.endsWith('/cloud')?'../miniprogram/utils/cloud':'../miniprogram/utils/references'),console,setTimeout,clearTimeout};
  vm.runInNewContext(fs.readFileSync(require.resolve('../miniprogram/pages/index/index.js'),'utf8')+'\nglobalThis.cacheApi={cachedVerification,rememberVerification};',context);
  return {page,api:context.cacheApi};
 }

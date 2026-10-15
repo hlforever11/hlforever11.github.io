@@ -1,4 +1,5 @@
 const app = getApp();
+const { withTimeout } = require("../../utils/cloud");
 
 Page({
   data: {
@@ -15,10 +16,7 @@ Page({
     if (!wx.cloud || !app.globalData.cloudAvailable) {
       throw new Error("云服务尚未配置。");
     }
-    const response = await wx.cloud.callFunction({
-      name: "userHistory",
-      data
-    });
+    const response = await withTimeout(()=>wx.cloud.callFunction({name:"userHistory",data}));
     return response.result || {};
   },
 
@@ -51,8 +49,7 @@ Page({
     const id = event.currentTarget.dataset.id;
     const record = this.data.records.find((item) => item._id === id);
     if (!record?.input) return;
-    wx.setStorageSync("historyReplay", record.input);
-    wx.navigateBack();
+    try{wx.setStorageSync("historyReplay",record.input);wx.navigateBack()}catch(error){wx.showToast({title:"无法载入记录，请重试",icon:"none"})}
   },
 
   deleteRecord(event) {

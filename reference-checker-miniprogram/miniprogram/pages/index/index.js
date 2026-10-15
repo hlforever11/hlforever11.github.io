@@ -4,9 +4,11 @@ const {
   extractReferencesFromDocument
 } = require("../../utils/references");
 
+const { withTimeout } = require("../../utils/cloud");
+const CLIENT_BUILD = "2026.10.15-v18";
 const MAX_REFERENCES = 20;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v3";
+const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v4";
 const VERIFICATION_CACHE_TTL = 180 * 24 * 60 * 60 * 1000;
 const VERIFICATION_CACHE_LIMIT = 120;
 const VISIT_BASE = 1000;
@@ -28,10 +30,8 @@ const STATUS_META = {
 };
 
 function normalizedVerificationKey(reference) {
-  const value = String(reference || "");
-  return (typeof value.normalize === "function" ? value.normalize("NFKC") : value)
-    .toLowerCase()
-    .replace(/[\s\u3000.,，。;；:：'"“”‘’()[\]（）【】{}<>《》\-–—_/\\]+/g, "");
+  // DOI and URL punctuation/case must not collapse into another document's key.
+  return String(reference || "").replace(/\s+/g, " ").trim();
 }
 
 function verificationCache() {
@@ -46,7 +46,7 @@ function cachedVerification(reference) {
   const cache = verificationCache();
   const item = cache[key];
   if (!item) return null;
-  if (Date.now() - Number(item.storedAt || 0) > VERIFICATION_CACHE_TTL) {
+  if (!Number.isFinite(Number(item.storedAt)) || Number(item.storedAt) > Date.now() + 60000 || Date.now() - Number(item.storedAt || 0) > VERIFICATION_CACHE_TTL || !["verified", "partial", "corrected"].includes(item.result?.status)) {
     delete cache[key];
     try { wx.setStorageSync(VERIFICATION_CACHE_KEY, cache); } catch(error) {}
     return null;
@@ -65,7 +65,7 @@ function rememberVerification(reference, result) {
   );
   if (
     !["verified", "partial", "corrected"].includes(result?.status) ||
-    confidence < 0.8
+    !Number.isFinite(confidence) || confidence < 0.8 || confidence > 1
   ) {
     return;
   }
@@ -97,6 +97,8 @@ function resultQuality(result) {
 
 Page({
   data: {
+    clientBuild: CLIENT_BUILD,
+    fileReading: false,
     inputValue: "",
     inputPlaceholder:
       "例如：\n[1] 作者. 篇名[J]. 刊名, 2024, 12(3):20-28.\n[2] Author. (2023). Title. Journal, 8(2), 10–19.",
@@ -140,10 +142,25 @@ Page({
     }catch(error){this.setData({visitNote:"统计暂不可用，显示起始基数或最近一次统计值"});}
   },
 
+  onUnload() {
+    this._documentVersion = (this._documentVersion || 0) + 1;
+    this._activeBatch?.cancel();
+    this._activeBatch = null;
+  },
+
+  cancelDocument() {
+    this._documentVersion = (this._documentVersion || 0) + 1;
+    this.setData({fileReading:false, canVerify:Boolean(this.data.count && !this.data.loading)});
+  },
+
   onShow() {
-    const replay = wx.getStorageSync("historyReplay");
+    let replay;
+    try { replay = wx.getStorageSync("historyReplay"); } catch(error) {}
+
     if (replay) {
-      wx.removeStorageSync("historyReplay");
+      try { wx.removeStorageSync("historyReplay"); } catch(error) {}
+      this.stopVerification();
+      this.cancelDocument();
       this.resetResults();
       this.updateInput(replay);
       wx.pageScrollTo({ scrollTop: 0, duration: 0 });
@@ -165,6 +182,10 @@ Page({
   },
 
   onInput(event) {
+    if(this.data.loading)return;
+    this.cancelDocument();
+    this.resetResults();
+    this.showFileMessage("", "");
     this.updateInput(event.detail.value);
   },
 
@@ -173,18 +194,21 @@ Page({
     this.setData({
       inputValue: value,
       count,
-      canVerify: Boolean(count && !this.data.loading)
+      canVerify: Boolean(count && !this.data.loading && !this.data.fileReading)
     });
   },
 
   fillSample() {
     if(this.data.loading)return;
+    this.cancelDocument();
+    this.showFileMessage("", "");
     this.resetResults();
     this.updateInput(SAMPLE);
   },
 
   clearInput() {
     if(this.data.loading)return;
+    this.cancelDocument();
     this.setData({
       inputValue: "",
       count: 0,
@@ -223,6 +247,11 @@ Page({
   },
 
   async handleDocument(file) {
+    if(this.data.loading)return;
+    const version=(this._documentVersion || 0)+1;
+    this._documentVersion=version;
+    const current=()=>this._documentVersion===version && !this.data.loading;
+    this.setData({fileReading:true,canVerify:false});
     try {
       const extension = String(file.name || "").split(".").pop().toLowerCase();
       if (!["txt", "docx", "pdf"].includes(extension)) {
@@ -236,7 +265,8 @@ Page({
       let list;
       let detectedTotal = 0;
       if (extension === "txt") {
-        const text = await this.readTextFile(file.path);
+        const text = await withTimeout(()=>this.readTextFile(file.path),15000,"TXT 文件读取超时，请重试。");
+        if(!current())return;
         list = extractReferencesFromDocument(text);
         detectedTotal = list.length;
       } else {
@@ -244,14 +274,16 @@ Page({
         const cloudPath = `temporary/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
         let fileID = "";
         try {
-          const upload = await wx.cloud.uploadFile({
-            cloudPath,
-            filePath: file.path
-          });
+          const upload = await withTimeout(()=>Promise.resolve(wx.cloud.uploadFile({cloudPath,filePath:file.path})).then(upload=>{
+            if(!current()){
+              if(upload.fileID)wx.cloud.deleteFile({fileList:[upload.fileID]}).catch(()=>{});
+              throw new Error("文档读取已取消。");
+            }
+            return upload;
+          }),30000,"文件上传超时，请重试。");
           fileID = upload.fileID;
-          const temp = await wx.cloud.getTempFileURL({
-            fileList: [fileID]
-          });
+          const temp = await withTimeout(()=>wx.cloud.getTempFileURL({fileList:[fileID]}),15000);
+          if(!current())return;
           const tempUrl = temp.fileList?.[0]?.tempFileURL;
           if (!tempUrl) throw new Error("未能生成临时文件地址。");
           const response = await this.callCloud("extractDocument", {
@@ -267,7 +299,7 @@ Page({
         } finally {
           if (fileID) {
             try {
-              await wx.cloud.deleteFile({ fileList: [fileID] });
+              await withTimeout(()=>wx.cloud.deleteFile({fileList:[fileID]}),5000);
             } catch (cleanupError) {
               console.warn("temporary file cleanup failed", cleanupError);
             }
@@ -275,6 +307,8 @@ Page({
         }
       }
 
+      if(!current())return;
+      list=Array.isArray(list)?list.filter(item=>typeof item==="string" && item.trim()):[];
       if (!list.length) throw new Error("文档中没有识别出参考文献。");
       const shown = list.slice(0, MAX_REFERENCES);
       this.resetResults();
@@ -282,7 +316,12 @@ Page({
       const suffix = detectedTotal > MAX_REFERENCES ? "，已载入前 20 条" : "";
       this.showFileMessage(`识别出 ${detectedTotal} 条参考文献${suffix}。`, "success");
     } catch (error) {
-      this.showFileMessage(error?.message || "读取文档失败。", "error");
+      if(current())this.showFileMessage(error?.message || "读取文档失败。", "error");
+    } finally {
+      if(this._documentVersion===version){
+        this._documentVersion++;
+        this.setData({fileReading:false,canVerify:Boolean(this.data.count && !this.data.loading)});
+      }
     }
   },
 
@@ -311,18 +350,21 @@ Page({
   },
 
   async callCloud(name, data) {
-    const response = await wx.cloud.callFunction({ name, data });
+    this.ensureCloudAvailable();
+    const response = await withTimeout(()=>wx.cloud.callFunction({ name, data }), name==="extractDocument"?30000:15000);
     return response.result || {};
   },
 
-  async verifyReferenceStable(reference) {
+  async verifyReferenceStable(reference, batch) {
     const cached = cachedVerification(reference);
     if (cached) return cached;
 
     const first = await this.callCloud("verifyReference", { reference });
+    if(batch?.cancelled)throw new Error("核验已停止。");
     let best = first;
     if (["review", "unverified", "error"].includes(first?.status)) {
       await new Promise((resolve) => setTimeout(resolve, 160));
+      if(batch?.cancelled)throw new Error("核验已停止。");
       try {
         const second = await this.callCloud("verifyReference", { reference });
         best = resultQuality(second) > resultQuality(first) ? second : first;
@@ -331,12 +373,14 @@ Page({
         console.warn("verifyReference retry failed", error);
       }
     }
+    if(batch?.cancelled)throw new Error("核验已停止。");
     rememberVerification(reference, best);
     return best;
   },
 
   restoreHistoryState() {
-    const historyEnabled = wx.getStorageSync("historyEnabled") === true;
+    let historyEnabled=false;
+    try{historyEnabled=wx.getStorageSync("historyEnabled")===true}catch(error){}
     this.setData({ historyEnabled });
     if (historyEnabled) this.refreshHistoryCount();
   },
@@ -408,76 +452,55 @@ Page({
     }
   },
 
+  stopVerification() {
+    const batch=this._activeBatch;
+    if(!batch)return;
+    batch.cancel();
+    this._activeBatch=null;
+    this.setData({loading:false,canVerify:Boolean(this.data.count && !this.data.fileReading),progressText:`已停止，完成 ${batch.done} / ${batch.total} 条`});
+  },
+
   async verifyAll() {
-    const allReferences = splitReferences(this.data.inputValue);
-    const references = allReferences.slice(0, MAX_REFERENCES);
-    if (!references.length) return;
-    if (allReferences.length > MAX_REFERENCES) {
-      wx.showToast({ title: "本次核验前 20 条", icon: "none" });
+    if(this.data.loading){this.stopVerification();return}
+    if(this.data.fileReading)return;
+    const references=splitReferences(this.data.inputValue).slice(0,MAX_REFERENCES);
+    if(!references.length)return;
+    if(this.data.count>MAX_REFERENCES)wx.showToast({title:"本次核验前 20 条",icon:"none"});
+    try{this.ensureCloudAvailable()}catch(error){
+      wx.showModal({title:"核验服务不可用",content:error.message,showCancel:false});return;
     }
-
-    try {
-      this.ensureCloudAvailable();
-    } catch (error) {
-      wx.showModal({
-        title: "核验服务不可用",
-        content: error.message,
-        showCancel: false
-      });
-      return;
-    }
-
-    this.setData({
-      loading: true,
-      canVerify: false,
-      showResults: true,
-      results: [],
-      summary: this.buildSummary([]),
-      progressText: `0 / ${references.length}`
-    });
-
-    const output = new Array(references.length);
-    let next = 0;
-    let done = 0;
-    const worker = async () => {
-      while (next < references.length) {
-        const index = next++;
-        try {
-          const result = await this.verifyReferenceStable(references[index]);
-          output[index] = this.prepareResult(result, references[index], index);
-        } catch (error) {
-          console.error("verifyReference cloud call failed", {
-            index,
-            reference: references[index],
-            error
-          });
-          output[index] = this.prepareResult({
-            status: "error",
-            confidence: 0,
-            note: "核验服务暂时无法连接，请稍后重试。",
-            differences: [],
-            evidenceLinks: []
-          }, references[index], index);
+    let cancel;
+    const stopped=new Promise(resolve=>{cancel=resolve});
+    const batch={cancelled:false,done:0,total:references.length,cancel(){this.cancelled=true;cancel(null)}};
+    this._activeBatch=batch;
+    const current=()=>this._activeBatch===batch && !batch.cancelled;
+    this.setData({loading:true,canVerify:false,showResults:true,results:[],summary:this.buildSummary([]),progressText:`0 / ${references.length}`});
+    const output=[];
+    try{
+      for(let index=0;index<references.length && current();index++){
+        let result;
+        try{
+          result=await Promise.race([this.verifyReferenceStable(references[index],batch),stopped]);
+        }catch(error){
+          result={status:"error",confidence:0,note:error?.message || "核验服务暂时无法连接，请稍后重试。",differences:[],evidenceLinks:[]};
         }
-        done += 1;
-        const visible = output.filter(Boolean);
-        this.setData({
-          results: visible,
-          summary: this.buildSummary(visible),
-          progressText: `${done} / ${references.length}`
-        });
+        if(!current())return;
+        output.push(this.prepareResult(result || {},references[index],index));
+        batch.done++;
+        this.setData({results:output.slice(),summary:this.buildSummary(output),progressText:`${batch.done} / ${references.length}`});
       }
-    };
-
-    // 免费体验版云函数执行窗口较短，逐条调用可避免慢查询相互争抢资源。
-    await Promise.all(Array.from({ length: Math.min(1, references.length) }, worker));
-    this.setData({
-      loading: false,
-      canVerify: true,
-      progressText: `已完成 ${references.length} 条`
-    });
-    await this.saveHistory(references, output.filter(Boolean));
-    wx.pageScrollTo({ selector: "#results", duration: 260 });
+      if(!current())return;
+      this._activeBatch=null;
+      this.setData({loading:false,canVerify:Boolean(this.data.count),progressText:`已完成 ${references.length} 条`});
+      // Copy the arrays: a subsequent batch must not mutate a pending save.
+      await this.saveHistory(references.slice(),output.slice());
+      if(!this.data.loading)wx.pageScrollTo({selector:"#results",duration:260});
+    }finally{
+      if(this._activeBatch===batch){
+        this._activeBatch=null;
+        this.setData({loading:false,canVerify:Boolean(this.data.count && !this.data.fileReading)});
+      }
+    }
   },
 
   prepareResult(result, submitted, index) {
@@ -490,7 +513,7 @@ Page({
         url: result.sourceUrl
       });
     }
-    (result.evidenceLinks || []).forEach((link) => {
+    (Array.isArray(result.evidenceLinks) ? result.evidenceLinks : []).forEach((link) => {
       if (link?.url && !links.some((item) => item.url === link.url)) links.push(link);
     });
 

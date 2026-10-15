@@ -41,9 +41,9 @@
         <text wx:if="{{count > maxReferences}}" class="counter-label">（共 {{count}} 条）</text>
       </view>
       <view class="action-buttons">
-        <button class="button-secondary clear-button" bindtap="clearInput" disabled="{{!inputValue || loading}}">清空</button>
-        <button class="button-primary verify-button" bindtap="verifyAll" loading="{{loading}}" disabled="{{!canVerify}}">
-          {{loading ? "核验中" : "开始核验"}}
+        <button class="button-secondary clear-button" bindtap="clearInput" disabled="{{(!inputValue && !fileReading) || loading}}">清空</button>
+        <button class="button-primary verify-button" bindtap="verifyAll" loading="{{loading}}" disabled="{{!loading && !canVerify}}">
+          {{loading ? "停止核验" : "开始核验"}}
         </button>
       </view>
     </view>
@@ -161,6 +161,7 @@
   <view class="footer">
     <view>重要用途请以出版者或原始网页记录为准</view>
     <navigator class="privacy-link" url="/pages/privacy/privacy">隐私说明</navigator>
+    <view class="footer-build">V18 · {{clientBuild}}</view>
     <view class="footer-email">linhu@scu.edu.cn</view>
     <view class="footer-visits">累计访问 {{visitTotal}} 次</view>
     <view wx:if="{{visitNote}}" class="footer-visit-note">{{visitNote}}</view>
