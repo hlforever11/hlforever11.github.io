@@ -4,69 +4,57 @@
   const status=document.getElementById('storyVisitStatus');
   if(!shown || !holder || window.wenzhengStoryVisitCounted)return;
   window.wenzhengStoryVisitCounted=true;
-  // Only 2 old visits are confirmed. The complete historical total is unknown.
-  // New visits use their own shared counter, independent of the tool website.
-  const checkpoint=2,offset=3,key='wenzheng-story-pv-confirmed-v1';
-  const counter='wenzheng_story_pv_20261009_5617ac9e430b';
+  // Owner-requested reset: 900 plus new shared page visits from 2026-10-15.
+  // Use a new remote counter and cache key; never merge the retired totals.
+  const base=900,key='wenzheng-story-pv-base900-20261015';
+  const counter='wenzheng_story_pv_base900_20261015_94ef6a7b113e';
   const requestId=globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-  let last=checkpoint,newState='pending',historyState='pending';
+  let last=base;
   try{
     const cached=Number(localStorage.getItem(key));
-    if(Number.isSafeInteger(cached) && cached>=0)last=Math.max(last,cached);
+    if(Number.isSafeInteger(cached) && cached>=base)last=Math.max(last,cached);
   }catch(error){}
-  function show(){
+  function show(state){
     shown.textContent=last.toLocaleString('zh-CN');
-    holder.setAttribute('aria-label',`协作实录累计访问至少 ${last} 次，完整历史待恢复`);
-    const historyNote=historyState==='available'?'历史待核对':'历史待恢复';
-    const note=newState==='pending'?`更新中，${historyNote}`:newState==='cached'?`最近记录，${historyNote}`:newState==='unavailable'?`统计暂不可用，${historyNote}`:historyNote;
-    if(status)status.textContent=`（${note}）`;
-    holder.title=newState==='live'?'新增访问已同步；当前为已确认访问量的下限，完整历史仍待恢复':'当前保留最近已确认的访问量下限；完整历史仍待恢复';
+    holder.setAttribute('aria-label',`协作实录累计访问 ${last} 次`);
+    const notes={pending:'（更新中）',live:'',cached:'（最近记录）',unavailable:'（统计暂不可用）',stale:'（统计待同步）'};
+    if(status)status.textContent=notes[state] || '';
+    holder.title=state==='live'?'起始基数900＋本实录新增访问次数（2026年10月15日重设）':state==='pending'?'正在更新；当前显示起始基数或最近已确认的访问量':state==='stale'?'计数服务返回值低于已确认记录，保留记录并等待同步':state==='cached'?'计数请求未确认，当前显示最近一次云端记录':'统计暂不可用；当前保留起始基数或最近已确认的访问量';
   }
-  function preserve(total){
+  function publish(total,counted){
+    const behind=total<last;
     last=Math.max(last,total);
     try{localStorage.setItem(key,String(last))}catch(error){}
-    show();
+    show(behind?'stale':counted?'live':'cached');
   }
-  async function request(url,options,timeout){
+  async function request(action,timeout){
     const controller=typeof AbortController==='function'?new AbortController():null;
     let timer;
     try{
-      return await Promise.race([
+      // Unique URLs prevent cached hit responses from suppressing real visits.
+      const data=await Promise.race([
         (async()=>{
-          const response=await fetch(url,{cache:'no-store',referrerPolicy:'no-referrer',...options,...(controller?{signal:controller.signal}:{})});
+          const response=await fetch(`https://countapi.mileshilliard.com/api/v1/${action}/${counter}?request=${encodeURIComponent(requestId)}-${action}`,{
+            cache:'no-store',referrerPolicy:'no-referrer',...(controller?{signal:controller.signal}:{})
+          });
           if(!response.ok)throw Error('counter unavailable');
           return response.json();
         })(),
         new Promise((resolve,reject)=>{timer=setTimeout(()=>{controller?.abort();reject(Error('counter timeout'))},timeout)})
       ]);
+      const raw=data?.value,added=Number(raw);
+      if(data?.key!==counter || raw===undefined || raw===null || !/^\d+$/.test(String(raw)) || !Number.isSafeInteger(added) || !Number.isSafeInteger(base+added))throw Error('invalid visit count');
+      return base+added;
     }finally{clearTimeout(timer)}
   }
-  const integer=value=>value!==undefined && value!==null && /^\d+$/.test(String(value)) && Number.isSafeInteger(Number(value));
-  async function newVisits(action,timeout){
-    const data=await request(`https://countapi.mileshilliard.com/api/v1/${action}/${counter}?request=${encodeURIComponent(requestId)}-${action}`,{},timeout);
-    if(data?.key!==counter || !integer(data.value) || !Number.isSafeInteger(checkpoint+Number(data.value)))throw Error('invalid new visit count');
-    return checkpoint+Number(data.value);
-  }
-  show();
+  show('pending');
   (async()=>{
-    try{const total=await newVisits('hit',20000);newState='live';preserve(total)}
+    try{publish(await request('hit',12000),true)}
     catch(error){
-      // A failed response may follow a successful increment. Only read it back.
-      try{const total=await newVisits('get',12000);newState='cached';preserve(total)}
-      catch(readError){newState='unavailable';show();console.warn('实录新增访问统计暂不可用：',readError.message)}
+      // A lost response may follow a successful hit. Read only; do not hit twice
+      // or invent a local increment when the shared service cannot be reached.
+      try{publish(await request('get',8000),false)}
+      catch(readError){show('unavailable');console.warn('实录访问统计暂不可用：',readError.message)}
     }
-  })();
-  (async()=>{
-    try{
-      // Retain the original page identity and service as a history recovery path.
-      const data=await request(`https://cdn.busuanzi.cc/api.php?request=${encodeURIComponent(requestId)}`,{
-        method:'POST',body:JSON.stringify({url:location.href,referrer:document.referrer})
-      },8000);
-      const raw=data?.busuanzi_page_pv;
-      if(!integer(raw) || Number(raw)<offset+checkpoint)throw Error('invalid history');
-      historyState='available';
-      // The two providers can contain overlapping visits. Never add both totals.
-      preserve(Number(raw)-offset);
-    }catch(error){historyState='unavailable';show();console.warn('实录历史访问统计暂不可用：',error.message)}
   })();
 })();

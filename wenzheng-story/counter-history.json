@@ -1,18 +1,31 @@
 {
   "page": "https://hlforever11.github.io/wenzheng-story/",
-  "service": "busuanzi.cc",
-  "endpoint": "https://cdn.busuanzi.cc/api.php",
-  "originalOffset": 3,
-  "lastVerifiedTotal": 2,
-  "verifiedOn": "2026-08-08",
-  "evidence": "The owner's saved conversation quotes the footer as 累计访问 2 次. Source commit 844abd5 records offset 3.",
-  "fullHistoryRecovered": false,
-  "recoveryStatus": "The original public statistics dashboard and API returned HTTP 502 on 2026-10-09. No complete backup was found. The original page identity and offset are retained for recovery.",
+  "baseline": 900,
+  "resetOn": "2026-10-15",
+  "resetReason": "Owner requested restarting the story website counter from 900.",
   "newVisits": {
     "service": "countapi.mileshilliard.com",
-    "counterKey": "wenzheng_story_pv_20261009_5617ac9e430b",
-    "startedOn": "2026-10-09",
-    "independentOf": "reference-checker website and WeChat mini-program",
-    "display": "A lower bound: the maximum of the last confirmed display, 2 plus the new shared counter, and any recovered original page count minus 3. Overlapping provider totals are never added."
+    "counterKey": "wenzheng_story_pv_base900_20261015_94ef6a7b113e",
+    "cacheKey": "wenzheng-story-pv-base900-20261015",
+    "independentOf": "reference-checker website, WeChat mini-program and all retired story counters",
+    "display": "900 plus new shared page visits after the reset. URL query parameters and fragments do not split the counter. Old local caches and retired remote counters are not imported."
+  },
+  "retired": {
+    "page": "https://hlforever11.github.io/wenzheng-story/",
+    "service": "busuanzi.cc",
+    "endpoint": "https://cdn.busuanzi.cc/api.php",
+    "originalOffset": 3,
+    "lastVerifiedTotal": 2,
+    "verifiedOn": "2026-08-08",
+    "evidence": "The owner's saved conversation quotes the footer as 累计访问 2 次. Source commit 844abd5 records offset 3.",
+    "fullHistoryRecovered": false,
+    "recoveryStatus": "The original public statistics dashboard and API returned HTTP 502 on 2026-10-09. No complete backup was found. The original page identity and offset are retained for recovery.",
+    "newVisits": {
+      "service": "countapi.mileshilliard.com",
+      "counterKey": "wenzheng_story_pv_20261009_5617ac9e430b",
+      "startedOn": "2026-10-09",
+      "independentOf": "reference-checker website and WeChat mini-program",
+      "display": "A lower bound: the maximum of the last confirmed display, 2 plus the new shared counter, and any recovered original page count minus 3. Overlapping provider totals are never added."
+    }
   }
 }
