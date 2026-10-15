@@ -38,7 +38,7 @@
     <section class="boundary" id="limits"><div class="kicker">BOUNDARIES</div><h2>“暂未证实”不等于“虚假”</h2><p>真实性置信度只依据篇名、作者、来源、永久标识和原始网址等作品身份字段及证据强度计算。年份、卷期页、文献类型和格式差异会在确认是同一作品后单独列为著录准确性问题，不会反向降低真实性。若来源暂时不可访问或未被数据库收录，系统只会标记为“暂未证实”，并保留官网与搜索引擎复核入口。</p></section>
   </main>
   <footer><div>系统优先检索公开题录，再由专业来源与原始网页复核。重要用途请以出版者原始记录为准。</div><div class="footer-meta"><a class="author-email" href="mailto:linhu@scu.edu.cn" aria-label="网站联系邮箱">linhu@scu.edu.cn</a><span class="site-counter ready" id="siteCounter" aria-live="polite" title="最近已确认记录；起始基数1000，与小程序分别计数"><span class="dot" aria-hidden="true">·</span><span>累计访问 <span class="site-counter-value" id="websiteVisitCount">1,012</span> 次 <span class="visit-status" id="websiteVisitStatus">（更新中）</span></span></span></div></footer>
-  <meta name="wenzheng-build" content="2026.10.14-stability1">
+  <meta name="wenzheng-build" content="2026.10.15-stability2">
   <script>window.WENZHENG_API_URL="https://cloud1-d6gtx1retbc8754fa-1457855977.ap-shanghai.app.tcloudbase.com/api/verify-reference";</script>
   <script defer src="./counter.js?v=20261009-counter-fix2"></script>
   <script type="module">
@@ -162,7 +162,10 @@
       const bracketed=[...clean.matchAll(/\[\s*(\d{1,3})\s*\]/g)].filter(match=>match.index===0||/[\s。.;；]/.test(clean[match.index-1]||''));
       const bare=[...clean.matchAll(/(^|[。.;；]\s*)(\d{1,3})\s+(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff])/g)]
         .map(match=>({index:match.index+match[1].length}));
-      const markers=[...bracketed,...bare].sort((a,b)=>a.index-b.index).filter((item,index,all)=>!index||item.index!==all[index-1].index);
+      const styled=[...clean.matchAll(/(^|[\s。.;；])(?:\d{1,3}[.、)]|\(\d{1,3}\)|[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳])\s*(?=[A-Za-z\u00c0-\u024f\u3400-\u9fff])/g)]
+        .filter(match=>looksLikeReferenceStart(clean.slice(match.index+match[0].length)))
+        .map(match=>({index:match.index+match[1].length}));
+      const markers=[...bracketed,...bare,...styled].sort((a,b)=>a.index-b.index).filter((item,index,all)=>!index||item.index!==all[index-1].index);
       return markers.length>=2?markers:[];
     }
     function refs(value){
@@ -208,7 +211,7 @@
       let heading=-1;lines.forEach((x,i)=>{/^(?:参考文献|主要参考文献|引用文献|references|bibliography|works cited)\s*[:：]?$/i.test(x)&&(heading=i)});
       const tail=heading>=0?lines.slice(heading+1):lines;
       const end=tail.findIndex(x=>/^(?:致谢|附录(?:\s*[A-Z0-9一二三四五六七八九十])?|acknowledg(?:e)?ments|appendi(?:x(?:\s+[A-Z0-9])?|ces))\s*[:：]?$/i.test(x));
-      const source=(end>=0?tail.slice(0,end):tail).filter(Boolean),out=[];let current='';
+      const source=(end>=0?tail.slice(0,end):tail).filter(Boolean).flatMap(line=>refs(line)),out=[];let current='';
       if(source.some(x=>numberedReferenceStart.test(x))){
         source.forEach(x=>{if(numberedReferenceStart.test(x)||looksLikeReferenceStart(x)){if(current)out.push(current.trim());current=x}else if(current)current+=' '+x});
         if(current)out.push(current.trim());
@@ -352,7 +355,7 @@
     historyList.addEventListener('click',event=>{if(verifying)return;
       const button=event.target.closest('button[data-history-action]');if(!button)return;
       const entries=readHistory(),entry=entries.find(item=>item.id===button.dataset.historyId);if(!entry)return;
-      if(button.dataset.historyAction==='delete'){writeHistory(entries.filter(item=>item.id!==entry.id));renderHistory();return}
+      if(button.dataset.historyAction==='delete'){if(!writeHistory(entries.filter(item=>item.id!==entry.id)))fileState('当前浏览器未能删除历史记录，请检查存储权限。','error');renderHistory();return}
       cancelFileRead();input.value=entry.references.join('\n');resetResults();update();fileState(`已载入 ${entry.references.length} 条历史记录，可直接重新核验。`,'success');$('#tool').scrollIntoView({behavior:'smooth',block:'start'});input.focus();
     });
     clearHistoryBtn.addEventListener('click',()=>{
@@ -499,7 +502,8 @@
       if(parsed.year)value+=`, ${parsed.year}`;
       if(parsed.volume)value+=`, ${parsed.volume}${parsed.issue?`(${parsed.issue})`:''}`;else if(parsed.issue)value+=`(${parsed.issue})`;
       if(parsed.pages)value+=`:${parsed.pages}`;
-      return`${value}.`;
+      const identifiers=[parsed.doi?`DOI:${parsed.doi}.`:'',parsed.isbn?`ISBN:${parsed.isbn}.`:'',parsed.pmid?`PMID:${parsed.pmid}.`:'',parsed.arxivId?`arXiv:${parsed.arxivId}.`:'',parsed.url||''].filter(Boolean);
+      return`${value}.${identifiers.length?' '+identifiers.join(' '):''}`;
     }
     const hasHan=value=>/\p{Script=Han}/u.test(String(value||''));
     function splitSubmittedAuthors(value){
@@ -985,10 +989,16 @@
         return{status:'error',confidence:0,submitted:reference,differences:[],note:`核验失败：${e.name==='AbortError'?'开放数据源连接超时':e.message||'网络错误'}。可使用下方公开检索入口继续复核。`,checkedSources:[],evidenceLinks:scholarlyEvidenceLinks(parsed,parsed.doi)};
       }
     }
+    let cloudRetryAfter=0;
     async function callCloudVerification(reference,signal){
-      let result=await fetchResource(CLOUD_VERIFY_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reference}),mode:'cors',credentials:'omit',signal},15000);
+      let result=await fetchResource(CLOUD_VERIFY_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reference}),mode:'cors',credentials:'omit',signal},10000);
       if(result&&typeof result.body==='string')result=JSON.parse(result.body);
-      if(!validVerificationResult(result))throw Error('云端核验返回格式无效');return result;
+      if(!validVerificationResult(result))throw Error('云端核验返回格式无效');
+      // Older cloud instances can have overly broad cache keys. Never accept an
+      // unreported identifier change as an exact verification of this input.
+      const submittedDoi=extractDoi(reference),verifiedDoi=extractDoi(result.canonical||result.sourceUrl||'');
+      if(submittedDoi&&verifiedDoi&&!sameIdentifier('doi',submittedDoi,verifiedDoi)&&!result.differences?.some(item=>item.field==='DOI'))throw Error('云端结果的DOI与本次提交不一致');
+      return result;
     }
     async function verifyOne(reference,signal){
       checkActive(signal);
@@ -999,18 +1009,20 @@
         localAttempt=await verifyOneLocal(reference,signal);checkActive(signal);
         if(localAttempt.trustedSource){result={...localAttempt,browserFallback:true};rememberVerification(reference,result);return result}
       }
-      if(CLOUD_VERIFY_ENDPOINT){
+      if(CLOUD_VERIFY_ENDPOINT&&Date.now()>=cloudRetryAfter){
         try{
           const first=await callCloudVerification(cloudReference,signal);checkActive(signal);result={...first,submitted:reference};
-          if(['review','unverified','error'].includes(first.status)){
-            try{const second=await callCloudVerification(cloudReference,signal);checkActive(signal);const preferred=resultQuality(second)>resultQuality(first)?second:first;result={...preferred,submitted:reference,attemptCount:2}}
-            catch(retryError){checkActive(signal);console.warn('云端核验自动重试失败',retryError)}
-          }
-        }catch(error){checkActive(signal);console.warn('云端核验暂不可用，改用公开数据源',error)}
+          cloudRetryAfter=0;
+        }catch(error){checkActive(signal);cloudRetryAfter=Date.now()+60000;console.warn('云端核验暂不可用，改用公开数据源',error)}
       }
       if(!result||['review','unverified','error'].includes(result.status)){
-        const local=localAttempt||await verifyOneLocal(reference,signal);checkActive(signal);
-        if(local.trustedSource||!result||resultQuality(local)>resultQuality(result))result={...local,browserFallback:true};
+        try{
+          const local=localAttempt||await withDeadline(localSignal=>verifyOneLocal(reference,localSignal),17000,signal);checkActive(signal);
+          if(local.trustedSource||!result||resultQuality(local)>resultQuality(result))result={...local,browserFallback:true};
+        }catch(error){
+          checkActive(signal);
+          if(!result)result={status:'unverified',confidence:0,submitted:reference,differences:[],note:'公开数据源未能在本次限时内返回，暂未证实不等于虚假。请重试或通过下方入口人工复核。',evidenceLinks:scholarlyEvidenceLinks(parsed,parsed.doi)};
+        }
       }
       checkActive(signal);rememberVerification(reference,result);return result;
     }
@@ -1043,6 +1055,9 @@
       finally{if(activeBatch===batch){activeBatch=null;verifying=false;verifyBtn.textContent=done?'重新核验':'开始核验';update()}}
       if(done)$('#results').scrollIntoView({behavior:'smooth',block:'start'});
     };
+    // Browsers can restore form values without firing an input event.
+    window.addEventListener?.('pageshow',update);
+    update();
 
   </script>
 </body>

@@ -1,6 +1,6 @@
-const { verifyReference, normalizeText } = require("./lib/core");
+const { verifyReference } = require("./lib/core");
 
-const FUNCTION_BUILD = "2026.10.08-12";
+const FUNCTION_BUILD = "2026.10.15-cache1";
 const RESULT_CACHE = new Map();
 const RESULT_CACHE_LIMIT = 300;
 const RESULT_CACHE_TTL = 30 * 24 * 60 * 60 * 1000;
@@ -45,7 +45,8 @@ function withBuild(result) {
 }
 
 function cacheKey(reference) {
-  return normalizeText(reference);
+  // Punctuation is part of DOI/URL identity: a.b and ab are different keys.
+  return String(reference).normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
 function cachedResult(reference) {
@@ -73,7 +74,7 @@ function rememberResult(reference, result) {
   );
   if (
     !["verified", "partial", "corrected"].includes(result?.status) ||
-    confidence < 0.8
+    !Number.isFinite(confidence) || confidence < 0.8 || confidence > 1
   ) {
     return;
   }
