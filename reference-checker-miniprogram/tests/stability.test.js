@@ -99,7 +99,10 @@ test('云请求超时后拒绝等待，迟到结果不改变已返回状态',asy
  const waiting=deferred();const job=context.module.exports.withTimeout(()=>waiting.promise,100,'超时');await tick();
  const rejection=assert.rejects(job,/超时/);for(const fn of timers.values())fn();await rejection;waiting.resolve('late');await tick();assert.equal(timers.size,0);
 });
-test('客户端显示可辨认的版本号并提供停止按钮',()=>{
+test('页脚只保留原有说明、隐私入口和邮箱，核验仍可停止',()=>{
  const html=fs.readFileSync(require.resolve('../miniprogram/pages/index/index.wxml'),'utf8');
- assert.match(html,/停止核验/);assert.match(html,/V18/);assert.match(html,/!loading && !canVerify/);
+ assert.match(html,/停止核验/);assert.match(html,/!loading && !canVerify/);
+ const footer=html.slice(html.indexOf('<view class="footer">'));
+ assert.match(footer,/重要用途请以出版者或原始网页记录为准/);assert.match(footer,/隐私说明/);assert.match(footer,/linhu@scu.edu.cn/);
+ assert.doesNotMatch(footer,/clientBuild|visitTotal|visitNote|V\d+|版本|日期|访问/);
 });

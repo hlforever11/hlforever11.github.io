@@ -5,7 +5,6 @@ const {
 } = require("../../utils/references");
 
 const { withTimeout } = require("../../utils/cloud");
-const CLIENT_BUILD = "2026.10.15-v18";
 const MAX_REFERENCES = 20;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v4";
@@ -97,7 +96,6 @@ function resultQuality(result) {
 
 Page({
   data: {
-    clientBuild: CLIENT_BUILD,
     fileReading: false,
     inputValue: "",
     inputPlaceholder:
