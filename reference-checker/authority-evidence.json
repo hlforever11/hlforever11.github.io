@@ -94,6 +94,27 @@
       "volume": "",
       "issue": "",
       "pages": ""
+    },
+    {
+      "source": "IFLA 官方声明原文（2020年理事会通过）",
+      "sourceUrl": "https://www.ifla.org/wp-content/uploads/2019/05/assets/faife/ifla_statement_on_libraries_and_artificial_intelligence.pdf",
+      "urlAliases": [
+        "https://repository.ifla.org/handle/20.500.14598/1646",
+        "https://repository.ifla.org/items/8c05d706-498b-42c2-a93a-3d47f69f7646"
+      ],
+      "title": "IFLA Statement on Libraries and Artificial Intelligence",
+      "authors": [
+        "International Federation of Library Associations and Institutions"
+      ],
+      "year": 2020,
+      "type": "report",
+      "online": true,
+      "strictIdentity": true,
+      "verifiedOn": "2026-10-22",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "evidenceNote": "原文第3页：IFLA Governing Board于2020-09-17通过；IFLA官方回顾列为2020-10发布。路径2019/05不是出版日期。FAIFE与IFLA存在上下级责任关系，不作普通缩写等价。"
     }
   ]
 }

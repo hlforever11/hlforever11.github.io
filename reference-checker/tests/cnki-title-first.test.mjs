@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {test} from 'node:test';
+import CitationPolicy from '../citation-policy.js';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const between=(startMarker,endMarker)=>{
@@ -17,7 +18,7 @@ const differenceBlock=between('    function differences','    async function ver
 const cacheBlock=between('    const TRUSTED_REFERENCE_CACHE=',';\n    const $=');
 const authorBlock=between('    function splitSubmittedAuthors','    function scholarlyEvidenceLinks');
 const authorKeyBlock=between('    function authorKey','    function crossrefCandidate');
-const api=new Function(`${parserBlock}\n${authorBlock}\n${authorKeyBlock}\n${typeBlock}\n${citationBlock}\n${differenceBlock}\n${cacheBlock};return{parseReference,conventionalReference,canonicalCitation,differences,TRUSTED_REFERENCE_CACHE};`)();
+const api=new Function('CitationPolicy',`${parserBlock}\n${authorBlock}\n${authorKeyBlock}\n${typeBlock}\n${citationBlock}\n${differenceBlock}\n${cacheBlock};return{parseReference,conventionalReference,canonicalCitation,differences,TRUSTED_REFERENCE_CACHE};`)(CitationPolicy);
 
 const cases=[
   {raw:'[1] 我国刑事证据能力之理论归纳及思考[J]. 纵博.法学家,2015(03)',title:'我国刑事证据能力之理论归纳及思考',authors:'纵博',container:'法学家',year:2015,issue:'3',canonical:'纵博. 我国刑事证据能力之理论归纳及思考[J]. 法学家, 2015(3):72-85.'},
@@ -45,7 +46,7 @@ test('识别 CNKI 篇名在前的期刊导出格式',()=>{
   }
 });
 
-test('生成 GB/T 7714—2015 期刊建议著录并指出缺项',()=>{
+test('生成 GB/T 7714—2025 期刊建议著录并指出缺项',()=>{
   for(const item of cases){
     const parsed=api.parseReference(item.raw),record=api.TRUSTED_REFERENCE_CACHE.find(candidate=>candidate.title===item.title);
     assert.ok(record,`缺少可靠题录：${item.title}`);

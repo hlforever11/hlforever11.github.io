@@ -10,7 +10,7 @@
       <text>都经得起核验</text>
     </view>
     <view class="hero-copy">
-      可粘贴或导入多条中英文参考文献，单次自动核验前 20 条。先判断文献是否真实存在，再检查著录准确性。
+      可粘贴或导入多条中英文参考文献，单次自动核验前 20 条。先判断文献是否真实存在，再核对字段。中文按 GB/T 7714—2025，英文容忍不同引用格式。
     </view>
   </view>
 
@@ -116,24 +116,33 @@
           <text class="status-mark">{{result.statusMark}}</text>
           <text>{{result.statusLabel}}</text>
         </view>
-        <view class="confidence">第 {{result.displayIndex}} 条 · 真实性 {{result.confidencePercent}}%</view>
+        <view class="confidence">第 {{result.displayIndex}} 条 · 证据匹配度 {{result.confidencePercent}}%</view>
       </view>
 
       <view class="submitted">{{result.submitted}}</view>
       <view class="result-note">{{result.note}}</view>
+      <view class="format-note">识别格式：{{result.citationStyle.label||"格式未确定"}}。仅识别格式体系，未完成完整规范审校。</view>
+      <view wx:if="{{result.observations.length}}" class="format-note">
+        <view>来源差异与补充信息（不直接判错）</view>
+        <view wx:for="{{result.observations}}" wx:key="field" wx:for-item="observation">{{observation.field}}：提交 {{observation.submitted}}；来源 {{observation.verified}}。{{observation.reason}}</view>
+      </view>
 
       <view wx:if="{{result.differences.length}}" class="differences">
         <view class="difference" wx:for="{{result.differences}}" wx:key="field" wx:for-item="difference">
           <view class="difference-field">{{difference.field}}</view>
           <view class="difference-value"><text>提交：</text>{{difference.submitted}}</view>
-          <view class="difference-value verified-value"><text>核实：</text>{{difference.verified}}</view>
+          <view class="difference-value verified-value"><text>来源记录：</text>{{difference.verified}}</view>
         </view>
       </view>
 
       <view wx:if="{{result.canonical}}" class="canonical">
-        <view class="canonical-label">建议著录（{{result.canonicalStandard||"GB/T 7714 风格"}}）</view>
+        <button class="copy-citation" size="mini" data-index="{{index}}" bindtap="toggleCanonical">{{result.canonicalOpen?"收起":"查看"}} {{result.canonicalLabel||"格式转换草稿"}}（{{result.canonicalStandard||"格式待核对"}}）</button>
+        <view wx:if="{{result.canonicalOpen}}">
         <view>{{result.canonical}}</view>
         <button class="copy-citation" size="mini" data-citation="{{result.canonical}}" bindtap="copyCitation">复制</button>
+        <view wx:for="{{result.formatChecks}}" wx:key="*this" wx:for-item="formatCheck" class="format-note">{{formatCheck}}</view>
+        <view class="format-note">依据已取得字段生成；缺项请核对原文。格式转换不等于纠错。</view>
+        </view>
       </view>
 
       <view wx:if="{{result.links.length}}" class="result-links">
@@ -154,7 +163,7 @@
     <view class="limits-kicker">BOUNDARIES</view>
     <view class="limits-title">“暂未证实”不等于“虚假”</view>
     <view class="limits-copy">
-      真实性置信度只依据作品身份字段与证据来源计算；卷期页和文献类型等著录差异不会降低真实性。若来源暂时不可访问或未被数据库收录，只会标记为“暂未证实”，并提供继续复核的线索。
+      证据匹配度依据作品身份字段与证据来源计算，未经统计校准为真实性概率。事实核对与格式检查分开；中文按 GB/T 7714—2025，英文保留可接受的引用格式。若来源暂时不可访问或未被数据库收录，只会标记为“暂未证实”，并提供继续复核的线索。
     </view>
   </view>
 

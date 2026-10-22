@@ -39,7 +39,7 @@ for(const [i,r] of records.entries()) {
    assert.equal(result.status,i===5?'partial':'verified',result.note);assert.ok(result.confidence>=.9);
    assert.match(result.canonical,/\[J\]\. .+, \d{4}, \d+\(\d+\):/);
    assert.ok(result.sourceUrl);if(i===0||i===4)assert.match(result.canonical,/, (?:165|156)\./);
-   if(i===3)assert.match(result.canonical,/COX A M, MAZUMDAR S/);
+   if(i===3)assert.match(result.canonical,/Cox A M, Mazumdar S/);
   }
  });
 }

@@ -42,3 +42,11 @@ test('建议著录保留提交序号，重复载入不会重复序号',()=>{
  assert.equal(page.prepareResult(prepared,'[29] 原著录',0).canonical,prepared.canonical);
  assert.equal(prepared.canonicalStandard,'GB/T 7714—2015');
 });
+
+test('英文国标转换默认收起，用户可展开；中文国标草稿直接展示',()=>{
+ const {page}=frontend();page.setData=values=>Object.assign(page.data,values);
+ const english=page.prepareResult({status:'verified',canonical:'Smith J. Example[M]. Press, 2024.',canonicalStandard:'GB/T 7714—2025',canonicalLabel:'可选国标格式转换（不代表原格式有误）'},'Smith, J. (2024). Example. Press.',0);
+ const chinese=page.prepareResult({status:'verified',canonical:'张三. 学习方法[M]. 北京:教育出版社, 2024.',canonicalStandard:'GB/T 7714—2025',canonicalLabel:'国标著录草稿'},'张三. 学习方法[M]. 北京:教育出版社, 2024.',1);
+ assert.equal(english.canonicalOpen,false);assert.equal(chinese.canonicalOpen,true);
+ page.data.results=[english,chinese];page.toggleCanonical({currentTarget:{dataset:{index:0}}});assert.equal(page.data.results[0].canonicalOpen,true);
+});

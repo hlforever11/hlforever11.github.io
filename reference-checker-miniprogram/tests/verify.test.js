@@ -139,12 +139,12 @@ test("中英文报告、期刊与中文图书可确认真实性并把题录差�
 
   assert.deepEqual(
     results[1].differences.map((item) => item.field).sort(),
-    ["期号", "页码"].sort()
+    ["期号"].sort()
   );
   assert.ok(results[3].differences.some((item) => item.field === "刊名/来源"));
-  assert.ok(results[11].differences.some((item) => item.field === "篇名"));
-  assert.match(results[9].canonical, /ISBN:9787040658194/);
-  assert.match(results[10].canonical, /ISBN:9787040650068/);
+  assert.ok(results[11].observations.some((item) => item.field === "篇名"));
+  assert.match(results[9].canonical, /高等教育出版社, 2025/);
+  assert.match(results[10].canonical, /高等教育出版社, 2025/);
 });
 
 test("无 ISBN 英文图书与误标为图书的 UNESCO 报告可由权威书目确认", async () => {
@@ -175,15 +175,15 @@ test("无 ISBN 英文图书与误标为图书的 UNESCO 报告可由权威书目
   assert.match(floridi.canonical, /The Ethics of Information\[M\]/);
   assert.match(floridi.canonical, /10\.1093\/acprof/);
 
-  assert.equal(gilster.status, "corrected");
+  assert.equal(gilster.status, "partial");
   assert.ok(gilster.confidence >= 0.9);
-  assert.ok(gilster.differences.some((item) =>
+  assert.ok(gilster.observations.some((item) =>
     item.field === "年份" &&
     Number(item.submitted) === 1998 &&
     Number(item.verified) === 1997
   ));
   assert.match(gilster.canonical, /1997/);
-  assert.match(gilster.canonical, /ISBN:9780471165200/);
+  assert.match(gilster.canonical, /John Wiley, 1997/);
 
   assert.equal(unesco.status, "corrected");
   assert.ok(unesco.confidence >= 0.9);
@@ -243,7 +243,7 @@ test("同一核验云函数可通过 HTTP 网关供网站调用并返回跨域�
   const result = JSON.parse(response.body);
   assert.equal(result.status, "verified");
   assert.ok(result.confidence >= 0.9);
-  assert.equal(result.build, "2026.10.22-authority1");
+  assert.equal(result.build, "2026.10.22-gb2025-1");
 });
 
 test("英文期刊优先用题名、作者和刊名查询 Crossref，并缓存成功结果", async () => {
@@ -298,7 +298,7 @@ test("英文期刊优先用题名、作者和刊名查询 Crossref，并缓存�
   assert.ok(["verified", "partial"].includes(first.status));
   assert.ok(first.confidence >= 0.8);
   assert.match(first.source, /Crossref/);
-  assert.equal(first.build, "2026.10.22-authority1");
+  assert.equal(first.build, "2026.10.22-gb2025-1");
   assert.equal(crossrefCalls, 1);
 
   global.fetch = async () => {
@@ -432,7 +432,7 @@ test("年份、卷期页和文献类型错误只影响著录准确性，不降�
     inaccurate.differences.map((item) => item.field).sort(),
     ["年份", "文献类型", "期号", "页码"].sort()
   );
-  assert.match(inaccurate.note, /不降低真实性置信度/);
+  assert.match(inaccurate.note, /不影响真实性/);
 });
 
 test("篇名相同但作者和来源均不支持时不得自动确认真实", async () => {
@@ -809,10 +809,10 @@ test("纯数字序号的中英文期刊、会议文献和图书可由权威记�
     assert.ok(result.confidence >= 0.8, `第 ${index + 1} 条置信度过低`);
     assert.ok(result.sourceUrl, `第 ${index + 1} 条缺少可追溯来源`);
   });
-  assert.ok(results[4].differences.some((item) =>
+  assert.ok(results[4].observations.some((item) =>
     item.field === "卷号" && item.submitted === "25" && item.verified === "26"
   ));
   assert.match(results[5].canonical, /10\.1108\/EUM0000000005499/i);
-  assert.ok(results[6].differences.some((item) => item.field === "作者"));
-  assert.match(results[6].canonical, /SAATY T L/);
+  assert.ok(results[6].observations.some((item) => item.field === "作者"));
+  assert.match(results[6].canonical, /Saaty T L/);
 });

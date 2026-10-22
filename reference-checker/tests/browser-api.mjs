@@ -8,6 +8,8 @@ export function browserApi(fetchImpl=async()=>{throw Error('Offline: no external
   const document={querySelector(s){if(!nodes.has(s))nodes.set(s,element());return nodes.get(s)},querySelectorAll(){return[]},addEventListener(){}};
   const context={document,window:{},pdfjsLib:{GlobalWorkerOptions:{}},console:{warn(){},error(){}},URL,Response,TextDecoder,Uint8Array,AbortController,Date,fetch:fetchImpl,localStorage:{getItem:k=>cache.get(k),setItem:(k,v)=>cache.set(k,v),removeItem:k=>cache.delete(k)},MutationObserver:class{observe(){}disconnect(){}},setTimeout:(fn,ms)=>{const timer=setTimeout(fn,ms);timer.unref();return timer},clearTimeout,alert(){},...overrides};
   vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("../citation-policy.js",import.meta.url),"utf8"),context);
+  context.window.CitationPolicy=context.CitationPolicy;
   const script=html.match(/<script type="module">([\s\S]*?)<\/script>/)[1].replace(/^\s*import .*?;\s*$/mg,'');
   vm.runInContext(script+'\nthis.api={decodeBibliographicEntities,parseWebPage,referenceEdition,structuredWebMetadata,pdfIdentityCandidate,googleBooksCandidate,queryGoogleBooks,openLibraryCandidate,buildVerificationPlan,authorKey,splitSubmittedAuthors,parseReference,conventionalReference,verifyOne,callCloudVerification,verifyOneLocal,canonicalCitation,differences,scoreCandidate,queryCrossref,yearFromCrossref,parseDoiCitation,refs,extractReferences,loadChineseJournalIndex,TRUSTED_REFERENCE_CACHE,verificationCacheKey,cachedVerification,rememberVerification,readHistory,handleFile,clearInput,gtAuthor,crossrefCandidate,card,fetchJson,VERIFY_CACHE_KEY,numberedCanonical,mergeCandidates,readPdf:typeof readPdf==="function"?readPdf:null};',context);
   return {api:context.api,context,nodes};

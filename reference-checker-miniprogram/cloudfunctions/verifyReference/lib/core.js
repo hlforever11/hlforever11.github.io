@@ -1,3 +1,4 @@
+const CitationPolicy = require("./citation-policy");
 const cheerio = require("cheerio");
 const iconv = require("iconv-lite");
 const dns = require("node:dns").promises;
@@ -11,6 +12,7 @@ const JOURNALS = require("./cn-journals.json");
 const REQUEST_TIMEOUT = 1800;
 const USER_AGENT = "ReferenceVerifierMiniProgram/1.0 (mailto:linhu@scu.edu.cn)";
     const VERIFIED_REFERENCE_INDEX=[
+{"source": "IFLA 官方声明原文（2020年理事会通过）", "sourceUrl": "https://www.ifla.org/wp-content/uploads/2019/05/assets/faife/ifla_statement_on_libraries_and_artificial_intelligence.pdf", "urlAliases": ["https://repository.ifla.org/handle/20.500.14598/1646", "https://repository.ifla.org/items/8c05d706-498b-42c2-a93a-3d47f69f7646"], "title": "IFLA Statement on Libraries and Artificial Intelligence", "authors": ["International Federation of Library Associations and Institutions"], "year": 2020, "type": "report", "online": true, "strictIdentity": true, "verifiedOn": "2026-10-22", "volume": "", "issue": "", "pages": "", "evidenceNote": "原文第3页：IFLA Governing Board于2020-09-17通过；IFLA官方回顾列为2020-10发布。路径2019/05不是出版日期。FAIFE与IFLA存在上下级责任关系，不作普通缩写等价。"},
 {"source": "ALA 官方文件（2009年通过版）", "sourceUrl": "https://www.ala.org/sites/default/files/2024-04/finalcorecompstat09.pdf", "urlAliases": ["https://www.ala.org/educationcareers/sites/ala.org.educationcareers/files/content/careers/corecomp/corecompetences/finalcorecompstat09.pdf", "https://www.ala.org/sites/default/files/educationcareers/content/careers/corecomp/corecompetences/finalcorecompstat09.pdf"], "title": "ALA’s Core Competences of Librarianship", "authors": ["American Library Association"], "year": 2009, "publicationDate": "2009-01-27", "container": "American Library Association", "type": "report", "strictIdentity": true, "verifiedOn": "2026-10-22", "volume": "", "issue": "", "pages": ""},
 {"source": "作者官网与出版者书目", "sourceUrl": "https://www.ruhabenjamin.com/race-after-technology", "evidenceUrls": ["https://www.wiley-vch.de/en/areas-interest/humanities-social-sciences/sociology-12so/population-demography-12sog/race-after-technology-978-1-5095-2639-0"], "title": "Race After Technology: Abolitionist Tools for the New Jim Code", "authors": ["Ruha Benjamin"], "year": 2019, "container": "Polity Press", "isbn": "9781509526390", "type": "book", "strictIdentity": true, "verifiedOn": "2026-10-22", "volume": "", "issue": "", "pages": ""},
 {"source": "IFLA 官方工作文件", "sourceUrl": "https://www.ifla.org/g/ai/developing-a-library-strategic-response-to-artificial-intelligence/", "urlAliases": ["https://www.ifla.org/developing-a-library-strategic-response-to-artificial-intelligence/"], "title": "Developing a library strategic response to Artificial Intelligence", "authors": ["Andrew Cox"], "year": 2023, "publicationDate": "2023-11-20", "version": "1.1", "container": "International Federation of Library Associations and Institutions", "doi": "10.15131/shef.data.24631293.v1", "type": "report", "strictIdentity": true, "verifiedOn": "2026-10-22", "volume": "", "issue": "", "pages": ""},
@@ -326,12 +328,9 @@ function pdfIdentityCandidate(text,info,parsed,sourceUrl){
       if(parsed.pages)value+=`:${parsed.pages}`;
       return`${value}.`;
     }
-function splitSubmittedAuthors(value){
-      const text=String(value||'').replace(/\bet\s+al\.?/ig,'').replace(/(?:,|，|、|;|；)?\s*等\.?\s*$/u,'');
-      if(isCorporateAuthor(text))return text.split(/\s*[;；]\s*/).map(cleanValue).filter(Boolean);
-      return text.replace(/([A-Z\u00c0-\u024f][A-Za-z\u00c0-\u024f'’\-]+),\s*((?:[A-Z]\.?(?:\s+|(?=[,;&]|$))){1,5})(?=\s*(?:[,;&]|\band\b|$))/g,'$1\ue000 $2')
-        .split(/\s*(?:,|，|、|;|；|\band\b|&)\s*/i).map(name=>cleanValue(name.replace(/\ue000/g,','))).filter(name=>name&&name!=='等');
-    }
+function splitSubmittedAuthors(value){return CitationPolicy.splitAuthors(value);}
+
+
 
 function authorKey(name) {
   const value = String(name || "").trim();
@@ -661,6 +660,7 @@ function crossrefCandidate(item, exactDoi = false) {
       .map((author) => normalizeText(author.family || authorKey([author.given, author.family].filter(Boolean).join(" "))))
       .filter(Boolean),
     year: yearFromCrossref(item),
+    acceptedYears: ["published-print","published-online","published","issued"].map(key=>item?.[key]?.["date-parts"]?.[0]?.[0]).filter(Boolean),
     container: Array.isArray(item["container-title"])
       ? item["container-title"][0]
       : item["container-title"] || "",
@@ -1686,18 +1686,8 @@ function mergeCandidates(candidates) {
   return [...merged.values()];
 }
 
-function authorAgreement(parsed, candidate) {
-  if (!parsed.authors || !candidate.authorKeys?.length) return 0.5;
-  const submitted = normalizeText(parsed.authors);
-  const keys = [...new Set(candidate.authorKeys)].filter(Boolean);
-  const hits = keys.filter(
-    (key) => key.length && (submitted.includes(key) || diceSimilarity(submitted, key) > 0.72)
-  ).length;
-  if (!hits) return 0;
-  return Math.min(1, 0.65 + (0.35 * hits) / Math.min(keys.length, 3));
-}
-
-function scoreCandidate(parsed, candidate) {
+function authorAgreement(parsed,candidate){return CitationPolicy.authorsRelation(parsed.authors,candidate.authors).score;}
+    function scoreCandidate(parsed, candidate) {
   const titleScore = parsed.title
     ? Math.max(
       ...[candidate.title, ...(candidate.alternateTitles || [])]
@@ -1708,7 +1698,7 @@ function scoreCandidate(parsed, candidate) {
       : 0;
   const authorScore = authorAgreement(parsed, candidate);
   const containerScore = parsed.container && candidate.container
-    ? diceSimilarity(parsed.container, candidate.container)
+    ? (CitationPolicy.equivalentSource(parsed.container,candidate.container)?1:diceSimilarity(parsed.container, candidate.container))
     : 0.5;
   const identifierPairs = [
     ["doi", parsed.doi, candidate.doi],
@@ -1841,32 +1831,17 @@ function gtAuthor(name) {
       if(/book/.test(type))return'M';
       if(/proceedings|conference/.test(type))return'C';
       if(/dissertation|thesis/.test(type))return'D';
-      if(/report|preprint/.test(type))return candidate?.online?'R/OL':'R';
+      if(/preprint|posted-content/.test(type))return'PP/OL';
+      if(/dataset/.test(type))return'DS/OL';
+      if(/report/.test(type))return candidate?.online?'R/OL':'R';
       if(/standard/.test(type))return'S';
       if(/patent/.test(type))return'P';
       if(/newspaper/.test(type))return'N';
       if(/article|journal/.test(type))return'J';
       return'';
     }
-    function canonicalCitation(candidate,parsed){
-      if(candidateGbType(candidate)==='EB/OL')return webCanonicalCitation(candidate,parsed);
-      const names=(candidate.authors||[]).map(gtAuthor).filter(Boolean),hasChinese=names.some(hasHan);
-      let authors=names.slice(0,3).join(', ');if(names.length>3)authors+=hasChinese?', 等':', et al.';
-      const candidateType=String(candidate.type||'').toLowerCase();let type=candidateGbType(candidate)||parsed?.type||'J';if(type==='R'&&parsed?.url)type='R/OL';
-      const submittedTitle=cleanValue(parsed?.title),verifiedTitle=cleanValue(candidate.title),submittedNorm=normalizeText(submittedTitle),verifiedNorm=normalizeText(verifiedTitle);
-      const title=submittedNorm&&verifiedNorm&&submittedNorm.includes(verifiedNorm)?submittedTitle:verifiedTitle;
-      const container=cleanValue(candidate.container||parsed?.container),year=candidate.year||parsed?.year,isReport=/report|preprint/.test(candidateType),volume=isReport?'':cleanValue(candidate.volume||parsed?.volume),issue=isReport?'':cleanValue(candidate.issue||parsed?.issue),pages=isReport?'':cleanValue(candidate.pages||parsed?.pages);
-      let citation=`${authors?`${authors}. `:''}${title}[${type}]`;
-      if(type==='M'&&(candidate.edition||parsed?.edition))citation+=`. ${cleanValue(candidate.edition||parsed.edition)}`;
-      if(type.startsWith('R')&&(candidate.version||parsed?.version))citation+=`. Version ${candidate.version||parsed.version}`;
-      if(container)citation+=type==='C'?`//${container}`:`. ${container}`;
-      if(year)citation+=`${container?', ':'. '}${year}`;
-      if(volume)citation+=`, ${volume}${issue?`(${issue})`:''}`;else if(issue)citation+=`(${issue})`;
-      if(pages)citation+=`:${pages}`;
-      citation+='.';if(candidate.doi)citation+=` DOI:${candidate.doi}.`;if(type==='M'&&candidate.isbn)citation+=` ISBN:${candidate.isbn}.`;if(type.includes('/OL')&&candidate.sourceUrl)citation+=` ${candidate.sourceUrl}.`;
-      return citation;
-    }
-function missingMetadataFields(parsed, candidate) {
+    function canonicalCitation(candidate,parsed){return CitationPolicy.formatGb2025(candidate,parsed).text;}
+    function missingMetadataFields(parsed, candidate) {
   const fields = [];
   const candidateType = String(candidate.type || "").toLowerCase();
   const journalLike = /article|journal/.test(candidateType);
@@ -1889,7 +1864,7 @@ function missingMetadataFields(parsed, candidate) {
       if(parsed.version&&candidate.version&&parsed.version!==candidate.version)add('版本',parsed.version,candidate.version);
       const submittedTitle=normalizeText(parsed.title),verifiedTitle=normalizeText(candidate.title),canonicalTitleScore=diceSimilarity(parsed.title,candidate.title),oneContainsOther=submittedTitle&&verifiedTitle&&(submittedTitle.includes(verifiedTitle)||verifiedTitle.includes(submittedTitle));
       if(parsed.title&&candidate.title&&canonicalTitleScore<.96&&canonicalTitleScore>.58&&!oneContainsOther)add('篇名',parsed.title,candidate.title);
-      if(parsed.authors&&candidate.authors?.length&&metrics.titleScore>.88&&(metrics.authorScore<.55||(!candidate.partialFields?.includes('其余作者')&&splitSubmittedAuthors(parsed.authors).some(name=>!candidate.authors.some(actual=>authorKey(name)===authorKey(actual)||diceSimilarity(name,actual)>.86)))))add('作者',parsed.authors,candidate.authors.map(displayName).join('，'));
+      if(parsed.authors&&candidate.authors?.length&&metrics.titleScore>.88&&CitationPolicy.authorsRelation(parsed.authors,candidate.authors).kind!=='equivalent')add('作者',parsed.authors,candidate.authors.map(displayName).join('，'));
       if(parsed.year&&candidate.year&&parsed.year!==candidate.year)add('年份',parsed.year,candidate.year);
       if(parsed.container&&candidate.container&&metrics.containerScore<.76&&metrics.titleScore>.86)add('刊名/来源',parsed.container,candidate.container);
       if(candidate.volume&&!parsed.volume)add('卷号','未提供',candidate.volume);else if(parsed.volume&&candidate.volume&&!sameNumberField(parsed.volume,candidate.volume))add('卷号',parsed.volume,candidate.volume);
@@ -2119,19 +2094,8 @@ function webTitleAgreement(submitted, verified) {
   return Math.max(direct, diceSimilarity(submitted, stripped));
 }
 
-function webAuthorAgreement(submitted, verified) {
-  if (!submitted || !verified?.length) return null;
-  const submittedNames = splitSubmittedAuthors(submitted);
-  if (!submittedNames.length) return null;
-  const hits = submittedNames.filter((name) => verified.some(
-    (candidate) =>
-      authorKey(name) === authorKey(candidate) ||
-      diceSimilarity(name, candidate) >= 0.76
-  )).length;
-  return hits / Math.min(submittedNames.length, Math.max(verified.length, 1));
-}
-
-function webDateAgreement(submitted, candidate) {
+function webAuthorAgreement(submitted,verified){return !submitted||!verified?.length?null:CitationPolicy.authorsRelation(submitted,verified).score;}
+    function webDateAgreement(submitted, candidate) {
   if (!submitted) return null;
   const first = normalizeDate(submitted);
   const candidates = [
@@ -2151,30 +2115,8 @@ function webDateAgreement(submitted, candidate) {
   return 0;
 }
 
-function webCanonicalCitation(candidate, parsed) {
-  const authorNames = candidate.authors?.length
-    ? candidate.authors.join(hasHan(candidate.authors.join("")) ? "，" : ", ")
-    : parsed.authors;
-  const title = candidate.title || parsed.title;
-  const date = candidate.citationDate ||
-    candidate.publicationDate ||
-    parsed.publicationDate ||
-    parsed.year ||
-    "";
-  const accessed = parsed.accessDate ? `[${parsed.accessDate}]` : "";
-  const source = candidate.container || parsed.container;
-  const type = /report/i.test(String(candidate.type || "")) ? "R/OL" : "EB/OL";
-  return [
-    authorNames ? `${authorNames}.` : "",
-    title ? `${title}[${type}].` : "",
-    source ? `${source}.` : "",
-    date ? `(${date})` : "",
-    accessed,
-    candidate.sourceUrl || parsed.url
-  ].filter(Boolean).join(" ").replace(/\s+\./g, ".");
-}
-
-async function verifyWebReference(reference, parsed) {
+function webCanonicalCitation(candidate,parsed){return CitationPolicy.formatGb2025({...candidate,type:candidate.type||'webpage',online:true},parsed).text;}
+    async function verifyWebReference(reference, parsed) {
   const evidenceLinks = webEvidenceLinks(parsed);
   try {
     const candidate = await resolveWebCandidate(parsed);
@@ -2313,6 +2255,7 @@ async function verifyWebReference(reference, parsed) {
         ...(authorScore !== null && authorScore >= 0.5 ? ["作者信息支持"] : [])
       ],
       note,
+      citationEvidence: CitationPolicy.evidence({...candidate,type:candidate.type||'webpage',online:true}),
       canonical: webCanonicalCitation(candidate, parsed),
       sourceUrl: candidate.sourceUrl,
       source: candidate.source,
@@ -2419,7 +2362,8 @@ async function verifyAcademicReference(reference, parsed) {
       differences,
       accuracyDifferences: differences,
       note: `在 ${source} 找到近似记录，但匹配度尚不足以自动确认，请人工复核。`,
-      canonical: canonicalCitation(best.candidate, parsed),
+      citationEvidence: CitationPolicy.evidence(best.candidate),
+    canonical: canonicalCitation(best.candidate, parsed),
       sourceUrl: best.candidate.sourceUrl,
       source,
       checkedSources: checked,
@@ -2458,6 +2402,7 @@ async function verifyAcademicReference(reference, parsed) {
     accuracyDifferences: differences,
     authenticityBasis: best.metrics.basis,
     note,
+    citationEvidence: CitationPolicy.evidence(best.candidate),
     canonical: canonicalCitation(best.candidate, parsed),
     sourceUrl: best.candidate.sourceUrl,
     source,
@@ -2479,12 +2424,12 @@ async function verifyReference(reference) {
       ))
     )
   ) {
-    return verifyWebReference(reference, parsed);
+    return CitationPolicy.applyResult(await verifyWebReference(reference, parsed), parsed);
   }
   try {
     const result = await verifyAcademicReference(reference, parsed);
-    if(result.canonical && baseReferenceType(parsed.type) === 'J')result.canonicalStandard = 'GB/T 7714—2015';
-    return result;
+    if(result.canonical && baseReferenceType(parsed.type) === 'J')result.canonicalStandard = 'GB/T 7714—2025';
+    return CitationPolicy.applyResult(result, parsed);
   } catch (error) {
     return {
       status: "error",

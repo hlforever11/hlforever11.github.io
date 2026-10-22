@@ -9,7 +9,7 @@ const saved=global.fetch;
 test.beforeEach(()=>{global.fetch=offline});test.afterEach(()=>{global.fetch=saved});
 test('小程序核验核心可确认五条原始题录，机构作者与个人APA缩写不会误改',async()=>{
  for(const ref of refs){const r=await core.verifyReference(ref);assert.ok(good.includes(r.status),r.note);assert.ok(r.sourceUrl);assert.equal(r.differences.some(d=>d.field==='作者'),false);}
- const k=await core.verifyReference(refs[4]),c=await core.verifyReference(refs[2]);assert.match(k.canonical,/2nd ed\./);assert.match(c.canonical,/Version 1\.1/);
+ const k=await core.verifyReference(refs[4]),c=await core.verifyReference(refs[2]);assert.match(k.canonical,/2nd ed\./);assert.match(c.canonical,/V1\.1/);
 });
 test('未预存的第三版Routledge图书可由独立目录确认',async()=>{
  global.fetch=async input=>{if(!String(input).startsWith('https://www.googleapis.com/books/'))throw Error('offline');return new Response(JSON.stringify({items:[{id:'synthetic',volumeInfo:{title:'Designing Learning Services',authors:['Alice Smith'],publisher:'Routledge',publishedDate:'2021',infoLink:'https://books.google.com/books?id=synthetic'}}]}))};

@@ -7,7 +7,7 @@ const confirmed=['verified','partial','corrected'];
 test('五条原样APA机构文件、图书和网页在外部请求全失败时仍有可追溯原始证据',async()=>{
  const {api}=browserApi();for(const raw of refs){const result=await api.verifyOne(raw);assert.ok(confirmed.includes(result.status),raw+' '+result.note);assert.ok(result.sourceUrl);assert.ok(result.confidence>=.8);assert.equal(result.differences.some(d=>d.field==='作者'),false);}
  const c=await api.verifyOne(refs[2]),k=await api.verifyOne(refs[4]),news=await api.verifyOne(refs[3]);
- assert.match(c.canonical,/Version 1\.1/);assert.match(k.canonical,/2nd ed\./);assert.doesNotMatch(k.canonical,/ed\.\./);
+ assert.match(c.canonical,/V1\.1/);assert.match(k.canonical,/2nd ed\./);assert.doesNotMatch(k.canonical,/ed\.\./);
  assert.match(news.canonical,/\[EB\/OL\]/);assert.match(news.canonical,/2023-04-07/);
 });
 test('APA版次/版本与Markdown排版不混入题名，出版社触发图书通道',()=>{

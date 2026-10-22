@@ -584,3 +584,5 @@
     margin-top: 8rpx;
   }
 }
+
+.format-note{margin-top:16rpx;color:#6d7481;font-size:23rpx;line-height:1.65;}
