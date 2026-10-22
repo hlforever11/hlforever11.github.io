@@ -1,0 +1,68 @@
+[
+  {
+    "label": "crossref-hans",
+    "kind": "crossref",
+    "url": "https://api.crossref.org/works?filter=prefix%3A10.12677%2Cfrom-pub-date%3A2023-01-01%2Cuntil-pub-date%3A2025-12-31&rows=250&select=DOI%2Ctitle%2Cauthor%2Ccontainer-title%2Cpublished%2Cpublished-print%2Cpublished-online%2Ctype%2Cvolume%2Cissue%2Cpage",
+    "cache": true,
+    "path": "crossref-hans.json",
+    "sha256": "b2f4a657409fb7a7079651cfdddd1131869da4f3769e429bd10d5574b5a0dab3"
+  },
+  {
+    "label": "crossref-china",
+    "kind": "crossref",
+    "url": "https://api.crossref.org/works?query.title=%E5%9B%BE%E4%B9%A6%E9%A6%86+%E4%BF%A1%E6%81%AF+%E6%9C%8D%E5%8A%A1+%E7%A0%94%E7%A9%B6&rows=250&select=DOI%2Ctitle%2Cauthor%2Ccontainer-title%2Cpublished%2Cpublished-print%2Cpublished-online%2Ctype%2Cvolume%2Cissue%2Cpage",
+    "cache": true,
+    "path": "crossref-china.json",
+    "sha256": "7ac565152d4eda78020a93bcc9ab1f4f61bc93d4021b271418bb45ba51b52cf1"
+  },
+  {
+    "label": "crossref-science",
+    "kind": "crossref",
+    "url": "https://api.crossref.org/works?filter=prefix%3A10.1360%2Cfrom-pub-date%3A2023-01-01%2Cuntil-pub-date%3A2025-12-31&rows=180&select=DOI%2Ctitle%2Cauthor%2Ccontainer-title%2Cpublished%2Cpublished-print%2Cpublished-online%2Ctype%2Cvolume%2Cissue%2Cpage",
+    "cache": true,
+    "path": "crossref-science.json",
+    "sha256": "2455bda6a139aa4bd8fafbce3565508b17738d864742c0514389c798f52fd006"
+  },
+  {
+    "label": "datacite-zh-formal",
+    "kind": "datacite",
+    "url": "https://api.datacite.org/dois?query=%28language%3Azh+OR+language%3Azh-CN+OR+language%3Azh-TW%29+AND+publicationYear%3A%5B2015+TO+2025%5D+AND+%28types.resourceTypeGeneral%3ADissertation+OR+types.resourceTypeGeneral%3ADataset%29&page%5Bsize%5D=200",
+    "path": "datacite-zh-formal.json",
+    "sha256": "0a1568b75042921c28110ef7481dea198690a574a95328d28a686e77926ae648",
+    "retrievedAt": "2026-10-22T02:22:47Z",
+    "seconds": 8.76
+  },
+  {
+    "label": "datacite-reports",
+    "kind": "datacite",
+    "url": "https://api.datacite.org/dois?query=types.resourceTypeGeneral%3AReport+AND+publicationYear%3A%5B2020+TO+2025%5D&page%5Bsize%5D=80",
+    "cache": true,
+    "path": "datacite-reports.json",
+    "sha256": "f243d9b127a98f43cad7ea88cae3017ab1b773668d788375bcb048e89cc44339"
+  },
+  {
+    "label": "epmc",
+    "kind": "europepmc",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=FIRST_PDATE%3A%5B2023-01-01+TO+2025-12-31%5D+AND+%28TITLE%3Aeducation+OR+TITLE%3Ainformation+OR+TITLE%3Alibrary%29+AND+HAS_DOI%3AY&format=json&resultType=core&pageSize=100",
+    "cache": true,
+    "path": "epmc.json",
+    "sha256": "79c01d54f8dd9f790dc2ac9d069bc003f4f978fcfbcf045dd94fcb72695ad2b0"
+  },
+  {
+    "label": "openlibrary",
+    "kind": "openlibrary",
+    "url": "https://openlibrary.org/search.json?q=subject%3Alibrary&limit=100&fields=key%2Ctitle%2Cauthor_name%2Cfirst_publish_year%2Cpublisher%2Cisbn",
+    "cache": true,
+    "path": "openlibrary.json",
+    "sha256": "131449c395a4c423690445c2a2cfc67cb302c4706c93fc7d65ce41033e6ae4ff"
+  },
+  {
+    "label": "epmc-reserve",
+    "kind": "europepmc",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=FIRST_PDATE%3A%5B2024-01-01+TO+2024-12-31%5D+AND+TITLE%3Atrial+AND+HAS_DOI%3AY&format=json&resultType=core&pageSize=100",
+    "path": "epmc-reserve.json",
+    "sha256": "7ce295860dd42c44c5a18bb809d0c59a94c819a1ed538243d32b9ec89cad5e9d",
+    "retrievedAt": "2026-10-22T02:39:10Z",
+    "seconds": 8.09
+  }
+]

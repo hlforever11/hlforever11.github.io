@@ -7,7 +7,7 @@ const {
 const { withTimeout } = require("../../utils/cloud");
 const MAX_REFERENCES = 20;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v6";
+const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v7";
 const VERIFICATION_CACHE_TTL = 180 * 24 * 60 * 60 * 1000;
 const VERIFICATION_CACHE_LIMIT = 120;
 const VISIT_BASE = 1000;
@@ -20,12 +20,12 @@ const SAMPLE = [
 ].join("\n");
 
 const STATUS_META = {
-  verified: { label: "已确认真实，未见明确字段冲突", mark: "✓" },
-  partial: { label: "已确认真实，部分字段待复核", mark: "✓" },
-  corrected: { label: "已确认真实，有字段差异待核对", mark: "!" },
-  review: { label: "真实性需人工复核", mark: "?" },
+  verified: { label: "已确认真实", mark: "✓" },
+  partial: { label: "已确认真实，信息待补", mark: "✓" },
+  corrected: { label: "已确认真实，部分信息需核对", mark: "!" },
+  review: { label: "需人工复核", mark: "?" },
   unverified: { label: "暂未证实", mark: "—" },
-  error: { label: "核验服务暂不可用", mark: "—" }
+  error: { label: "服务暂不可用", mark: "—" }
 };
 
 function normalizedVerificationKey(reference) {
@@ -526,7 +526,7 @@ Page({
       confidencePercent: Math.round(Number(
         result.authenticityConfidence ?? result.confidence ?? 0
       ) * 100),
-      canonicalOpen: result.canonicalLabel === "国标著录草稿",
+      canonicalOpen: false,
       differences: result.differences || [],
       links
     };

@@ -1,0 +1,29 @@
+{
+  "name": "Wenzheng external source-record benchmark v1",
+  "date": "2026-10-22",
+  "distinctWorks": 400,
+  "cases": 1000,
+  "seedOverlap": 0,
+  "labelMethod": "External bibliographic metadata; controlled variants. Not independently double-annotated by humans.",
+  "retrievalReplayWarning": "Snapshot replay measures parsing/matching, not live retrieval recall.",
+  "sourceCounts": {
+    "crossref": 170,
+    "datacite": 120,
+    "europepmc": 70,
+    "openlibrary": 40
+  },
+  "caseCounts": {
+    "identity-conflict": 100,
+    "standard": 400,
+    "style-no-identifier": 300,
+    "wrong-year": 200
+  },
+  "languages": {
+    "other": 501,
+    "zh": 499
+  },
+  "excludedSeedTitles": 52,
+  "humanAdjudicationCompleted": false,
+  "source-records.jsonl.gz_sha256": "67211393fbc08e0b837f7ea8d7846e9b77ee6b317d0200788692c12f1ea2a69f",
+  "cases.jsonl.gz_sha256": "f1addd9e08485552a48769617a24502ebef538d6298cf8ef562579fe34d4d19e"
+}

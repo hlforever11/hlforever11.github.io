@@ -10,7 +10,9 @@ export function browserApi(fetchImpl=async()=>{throw Error('Offline: no external
   vm.createContext(context);
   vm.runInContext(readFileSync(new URL("../citation-policy.js",import.meta.url),"utf8"),context);
   context.window.CitationPolicy=context.CitationPolicy;
+  vm.runInContext(readFileSync(new URL("../open-sources.js",import.meta.url),"utf8"),context);
+  context.window.WenzhengSources=context.WenzhengSources;
   const script=html.match(/<script type="module">([\s\S]*?)<\/script>/)[1].replace(/^\s*import .*?;\s*$/mg,'');
-  vm.runInContext(script+'\nthis.api={decodeBibliographicEntities,parseWebPage,referenceEdition,structuredWebMetadata,pdfIdentityCandidate,googleBooksCandidate,queryGoogleBooks,openLibraryCandidate,buildVerificationPlan,authorKey,splitSubmittedAuthors,parseReference,conventionalReference,verifyOne,callCloudVerification,verifyOneLocal,canonicalCitation,differences,scoreCandidate,queryCrossref,yearFromCrossref,parseDoiCitation,refs,extractReferences,loadChineseJournalIndex,TRUSTED_REFERENCE_CACHE,verificationCacheKey,cachedVerification,rememberVerification,readHistory,handleFile,clearInput,gtAuthor,crossrefCandidate,card,fetchJson,VERIFY_CACHE_KEY,numberedCanonical,mergeCandidates,readPdf:typeof readPdf==="function"?readPdf:null};',context);
+  vm.runInContext(script+'\nthis.api={extraSources,decodeBibliographicEntities,parseWebPage,referenceEdition,structuredWebMetadata,pdfIdentityCandidate,googleBooksCandidate,queryGoogleBooks,openLibraryCandidate,buildVerificationPlan,authorKey,splitSubmittedAuthors,parseReference,conventionalReference,verifyOne,callCloudVerification,verifyOneLocal,canonicalCitation,differences,scoreCandidate,queryCrossref,yearFromCrossref,parseDoiCitation,refs,extractReferences,loadChineseJournalIndex,TRUSTED_REFERENCE_CACHE,verificationCacheKey,cachedVerification,rememberVerification,readHistory,handleFile,clearInput,gtAuthor,crossrefCandidate,card,fetchJson,VERIFY_CACHE_KEY,numberedCanonical,mergeCandidates,readPdf:typeof readPdf==="function"?readPdf:null};',context);
   return {api:context.api,context,nodes};
 }

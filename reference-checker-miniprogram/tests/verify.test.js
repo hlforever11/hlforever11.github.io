@@ -243,7 +243,7 @@ test("同一核验云函数可通过 HTTP 网关供网站调用并返回跨域�
   const result = JSON.parse(response.body);
   assert.equal(result.status, "verified");
   assert.ok(result.confidence >= 0.9);
-  assert.equal(result.build, "2026.10.22-gb2025-1");
+  assert.equal(result.build, "2026.10.22-v22");
 });
 
 test("英文期刊优先用题名、作者和刊名查询 Crossref，并缓存成功结果", async () => {
@@ -298,7 +298,7 @@ test("英文期刊优先用题名、作者和刊名查询 Crossref，并缓存�
   assert.ok(["verified", "partial"].includes(first.status));
   assert.ok(first.confidence >= 0.8);
   assert.match(first.source, /Crossref/);
-  assert.equal(first.build, "2026.10.22-gb2025-1");
+  assert.equal(first.build, "2026.10.22-v22");
   assert.equal(crossrefCalls, 1);
 
   global.fetch = async () => {
@@ -307,7 +307,7 @@ test("英文期刊优先用题名、作者和刊名查询 Crossref，并缓存�
   const second = JSON.parse((await invoke()).body);
   assert.equal(second.status, first.status);
   assert.equal(second.cacheHit, true);
-  assert.match(second.note, /复用本云函数实例最近一次成功核验/);
+  assert.match(second.detailsNote, /复用本云函数实例最近一次成功核验/);
   assert.equal(crossrefCalls, 1);
 });
 
@@ -432,7 +432,7 @@ test("年份、卷期页和文献类型错误只影响著录准确性，不降�
     inaccurate.differences.map((item) => item.field).sort(),
     ["年份", "文献类型", "期号", "页码"].sort()
   );
-  assert.match(inaccurate.note, /不影响真实性/);
+  assert.match(inaccurate.detailsNote, /不降低真实性置信度/);assert.match(inaccurate.note, /请核对以下4项/);
 });
 
 test("篇名相同但作者和来源均不支持时不得自动确认真实", async () => {
@@ -746,7 +746,7 @@ test("网页核验拒绝访问私网和本机地址", async () => {
     "测试作者.测试页面[EB/OL].(2024-01-01)[2024-02-01]. http://127.0.0.1/internal"
   );
   assert.equal(result.status, "unverified");
-  assert.match(result.note, /非公开网络地址/);
+  assert.match(result.detailsNote, /非公开网络地址/);
 });
 
 test("中英文括号、方括号和圈号编号均可拆分为独立参考文献", () => {

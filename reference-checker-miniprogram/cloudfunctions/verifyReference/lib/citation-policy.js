@@ -5,7 +5,7 @@
   else root.CitationPolicy = api;
 })(typeof globalThis === 'object' ? globalThis : this, function () {
   'use strict';
-  const VERSION = '2026.10.22-gb2025-1';
+  const VERSION = '2026.10.22-v22';
   const norm = value => String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9\u3400-\u9fff]/g, '');
   const groups = [
     ['IFLA', 'International Federation of Library Associations and Institutions'],
@@ -30,10 +30,10 @@
     const text = String(value || '').replace(/\bet\s+al\.?/ig, '').replace(/(?:,|，|、|;|；)?\s*等\.?\s*$/, '').trim();
     if (corporate(text)) return text.split(/\s*[;；]\s*/).filter(Boolean);
     // A comma followed by initials belongs to that person, including C., & ...
-    return text.replace(/([^,;&，；]+),\s*((?:[A-ZÀ-ÖØ-Þ]\.?(?:\s*[- ]\s*|(?=[,;&]|$))){1,6})(?=\s*(?:[,;&]|\band\b|$))/g, (all,family,initials) => /^(?:[A-Z]\s*)+$/.test(family.trim()) ? all : family + '\ue000 ' + initials)
+    return text.replace(/([^,;&，；]+),\s*((?:[A-ZÀ-ÖØ-Þ]\.?(?:\s*[- ]\s*|(?=[,;&]|$))){1,6})(?=\s*(?:[,;&]|\band\b|$))/g, (all,family,initials) => /^(?:[A-Z]\s+)+[A-Z]$|^[A-Z]$/.test(family.trim()) ? all : family + '\ue000 ' + initials)
       .split(/\s*(?:[,，、;；&]|\band\b)\s*/i).map(name => name.replace(/\ue000/g, ',').trim().replace(/[.\s]+$/, '')).filter(Boolean);
   }
-  function person(value) {
+  function person(value, natural = false) {
     const text = String(value || '').trim().replace(/[’‘]/g, "'");
     if (/^[\u3400-\u9fff\s·]+$/.test(text)) return {family: norm(text), given: []};
     const comma = text.indexOf(',');
@@ -41,15 +41,15 @@
     if (comma >= 0) { family = text.slice(0, comma); given = text.slice(comma + 1); }
     else {
       const tokens = text.split(/\s+/).filter(Boolean);
-      const tail = tokens.slice(1).join(' ');
-      if (tokens.length > 1 && /^(?:[A-Z]\.?(?:[ -]|$))+$/u.test(tail)) { family = tokens[0]; given = tail; }
+      const trailing=text.match(/^(.+?)\s+((?:\p{Lu}\.?){1,6}|(?:\p{Lu}\.?(?:[ -]|$))+)$/u);
+      if (!natural && trailing) { family = trailing[1]; given = trailing[2]; }
       else {
         let start = tokens.length - 1;
         while (start > 0 && /^(?:de|del|der|den|van|von|di|du|la|le|da|dos)$/i.test(tokens[start - 1])) start--;
         family = tokens.slice(start).join(' '); given = tokens.slice(0,start).join(' ');
       }
     }
-    const givenTokens = String(given).split(/[\s.\-]+/).filter(Boolean).flatMap(token => /^[A-Z]{2,5}$/.test(token) ? token.split('') : [token]);
+    const givenTokens = String(given).split(/[\s.\-]+/).filter(Boolean).flatMap(token => /^\p{Lu}{2,6}$/u.test(token) ? token.split('') : [token]);
     return {family: norm(family), familyRaw: family, given: givenTokens.map(norm).filter(Boolean)};
   }
   function compareName(a, b) {
@@ -60,6 +60,20 @@
       if (left.root && left.root === right.root) return 'related';
       return 'conflict';
     }
+    const inverted=value=>{const comma=String(value).indexOf(',');return comma>=0?norm(String(value).slice(comma+1)+' '+String(value).slice(0,comma)):norm(value);};
+    if(inverted(a)===inverted(b))return 'equivalent';
+    const optionsA=[person(a),person(a,true)],optionsB=[person(b),person(b,true)];
+    const align=(value,known)=>{if(String(value).includes(',')||!known.familyRaw)return null;const tokens=String(value).split(/\s+/).filter(Boolean),n=known.familyRaw.trim().split(/\s+/).length;if(tokens.length<=n||norm(tokens.slice(-n).join(' '))!==known.family)return null;return person(known.familyRaw+', '+tokens.slice(0,-n).join(' '));};
+    for(const known of optionsB.slice()){const aligned=align(a,known);if(aligned)optionsA.push(aligned);}
+    for(const known of optionsA.slice()){const aligned=align(b,known);if(aligned)optionsB.push(aligned);}
+    const matches=[];
+    for(const left of optionsA)for(const right of optionsB){
+      if(!left.family||left.family!==right.family)continue;
+      if(!left.given.length||!right.given.length){matches.push('ambiguous');continue;}
+      const count=Math.min(left.given.length,right.given.length);
+      if(left.given.slice(0,count).every((l,i)=>{const r=right.given[i];return l===r||l.length===1&&r.startsWith(l)||r.length===1&&l.startsWith(r);}))matches.push(left.given.length===right.given.length?'equivalent':'ambiguous');
+    }
+    if(matches.includes('equivalent'))return 'equivalent';if(matches.includes('ambiguous'))return 'ambiguous';
     const left = person(a), right = person(b);
     if (!left.family || left.family !== right.family) return 'conflict';
     if (!left.given.length || !right.given.length) return 'ambiguous';
@@ -72,6 +86,11 @@
   }
   function authorsRelation(submitted, actual) {
     const left = splitAuthors(submitted), right = Array.isArray(actual) ? actual : splitAuthors(actual);
+    const trimmed=String(submitted||'').replace(/\bet\s+al\.?/ig,'').replace(/(?:,|，|、|;|；)?\s*等\.?\s*$/,'').trim();
+    const abbreviated=/\bet\s+al\b|等|…/i.test(String(submitted));
+    // Preserve commas inside full inverted names and organizational names when
+    // the submitted author sequence is an exact serialization of source names.
+    if(right.length&&[right.length,...(abbreviated?right.map((_,i)=>i+1):[])].some(n=>norm(trimmed)===norm(right.slice(0,n).join(', '))))return {kind:'equivalent',score:1};
     if (!left.length || !right.length) return {kind: 'unknown', score: .5};
     if (left.every(name=>!corporate(name) && /^(?:[A-Z]\s*){2,6}$/.test(name))) return {kind:'ambiguous',score:.55};
     const ordered = left.map((name, i) => i < right.length ? compareName(name, right[i]) : 'conflict');
@@ -93,7 +112,7 @@
   function evidence(candidate) {
     const source = [candidate.source, ...(candidate.sources || [])].filter(Boolean).join(' + ');
     return {
-      authority: candidate.evidenceStrength !== 'search-snippet' && (!!candidate.officialRecord || /官方|官网|原文|正式题录|DOI 注册元数据|Crossref/.test(source)),
+      authority: candidate.evidenceStrength !== 'search-snippet' && (!!candidate.officialRecord || candidate.registry===true || /官方|官网|原文|正式题录|DOI 注册元数据|Crossref/.test(source)),
       authors: candidate.authors || [],
       acceptedYears: candidate.acceptedYears || [],
       partialFields: candidate.partialFields || [],
@@ -211,21 +230,17 @@
     if (chinese) for (const d of observations.filter(item=>item.submitted==='未提供' && ['卷号','期号','页码'].includes(item.field))) formatChecks.push(`${d.field}：来源提供 ${d.verified}；按第8.5条结合实际引文页码核对补充，不据此判文献虚假`);
     if (chinese && !/\[(?:J|M|R|D|C|EB|DB|N|S|P|PP|DS)(?:\/OL)?\]/i.test(parsed.raw || '')) formatChecks.unshift('文献类型标识为必备项，请按实际文献类型补充（7.3及第8章）');
     const status = confirmed ? factual.length ? 'corrected' : observations.length || result.status === 'partial' ? 'partial' : 'verified' : result.status;
-    let note = result.note || '';
-    if (confirmed) {
-      note = `已在 ${result.source || '公开来源'} 确认文献真实存在。`;
-      if (factual.length) note += ' 原始或注册记录支持下列字段差异，建议核对；格式差异不影响真实性。';
-      if (observations.length) note += ' 另有来源差异或补充信息待您判断，系统保留原著录，不直接判错。';
-      if (equivalent.length) note += ' 已容忍姓名缩写或其他等价写法。';
-      if (!factual.length && !observations.length) note += ' 已核对字段未见明确冲突；这不代表完整格式审校。';
-      if (e.partialFields?.length) note += ` 来源未完整提供${e.partialFields.join('、')}。`;
-    }
-    if (status === 'error') note = `本次核验服务未完成，不代表文献虚假。${note.replace(/^核验失败[：:]?/, '')}`;
-    return {...result, status, note, differences: factual, accuracyDifferences: factual, observations,
+    const detailsNote = result.detailsNote || result.note || '';
+    let note = detailsNote;
+    if (confirmed) note = factual.length ? `已找到对应文献，请核对以下${factual.length}项。` : observations.length || result.status==='partial' ? `已找到对应文献，部分信息待核对。` : `已在${result.source || '公开来源'}找到对应文献。`;
+    else if(status==='review')note='找到近似记录，请核对题名和作者。';
+    else if(status==='unverified')note=result.checkedSources?.length?'暂未找到足够证据，请查看复核链接。':'核验源暂未响应，请重试或查看复核链接。';
+    else if(status==='error')note='服务暂不可用，请稍后重试。';
+    return {...result, status, note, detailsNote, displayStyle: chinese ? "" : detectStyle(parsed.raw || result.submitted).certainty==="family" ? (detectStyle(parsed.raw || result.submitted).label.startsWith("作者")?"著者—出版年制（初步识别）":"GB/T 7714式") : "未识别", differences: factual, accuracyDifferences: factual, observations,
       equivalentForms: [...new Set(equivalent)], citationStyle: detectStyle(parsed.raw || result.submitted),
       canonical: formatted.text, formatChecks,
       canonicalStandard: formatted.text ? 'GB/T 7714—2025' : '',
-      canonicalLabel: chinese ? '国标著录草稿' : '可选国标格式转换（不代表原格式有误）',
+      canonicalLabel: chinese ? '参考著录' : '可选国标格式',
       canonicalComplete: formatChecks.length === 0 && !!e.record,
       canonicalPurpose: 'optional-conversion', citationPolicy: VERSION};
   }

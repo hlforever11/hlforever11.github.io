@@ -1,0 +1,6 @@
+snapshots/
+__pycache__/
+*-progress.json
+*-results.json
+human-review.csv
+holdout/human-review.csv

@@ -21,7 +21,7 @@ test('按用户原样提交的六条题录，两端均确认存在并保留第�
  const list=web.refs(raw);assert.equal(list.length,6);
  for(const [i,reference] of list.entries())for(const api of [web,{verifyOneLocal:core.verifyReference}]){
   const r=await api.verifyOneLocal(reference);assert.equal(r.status,i===5?'partial':'verified',r.note);
-  if(i===5)assert.match(r.note,/卷号、页码/);
+  if(i===5)assert.match(r.detailsNote,/卷号、页码/);
  }
 });
 

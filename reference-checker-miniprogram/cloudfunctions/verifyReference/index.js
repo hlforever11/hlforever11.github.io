@@ -1,6 +1,6 @@
 const { verifyReference } = require("./lib/core");
 
-const FUNCTION_BUILD = "2026.10.22-gb2025-1";
+const FUNCTION_BUILD = "2026.10.22-v22";
 const RESULT_CACHE = new Map();
 const RESULT_CACHE_LIMIT = 300;
 const RESULT_CACHE_TTL = 30 * 24 * 60 * 60 * 1000;
@@ -64,7 +64,7 @@ function cachedResult(reference) {
     ...cached.result,
     submitted: reference,
     cacheHit: true,
-    note: `已复用本云函数实例最近一次成功核验的公开书目证据。${cached.result.note || ""}`
+    detailsNote: `已复用本云函数实例最近一次成功核验的公开书目证据。${cached.result.detailsNote || cached.result.note || ""}`
   };
 }
 

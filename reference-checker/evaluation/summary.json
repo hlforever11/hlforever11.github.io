@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-22",
+  "distinctWorks": 500,
+  "replayInputs": 1300,
+  "development": {
+    "total": 1000,
+    "passed": 990,
+    "byKind": {
+      "identity-conflict": {
+        "total": 100,
+        "passed": 100,
+        "confirmed": 0
+      },
+      "standard": {
+        "total": 400,
+        "passed": 396,
+        "confirmed": 400
+      },
+      "style-no-identifier": {
+        "total": 300,
+        "passed": 294,
+        "confirmed": 298
+      },
+      "wrong-year": {
+        "total": 200,
+        "passed": 200,
+        "confirmed": 200
+      }
+    }
+  },
+  "reserve": {
+    "total": 300,
+    "passed": 290,
+    "byKind": {
+      "identity-conflict": {
+        "total": 50,
+        "passed": 50,
+        "confirmed": 0
+      },
+      "standard": {
+        "total": 100,
+        "passed": 100,
+        "confirmed": 100
+      },
+      "style-no-identifier": {
+        "total": 100,
+        "passed": 90,
+        "confirmed": 91
+      },
+      "wrong-year": {
+        "total": 50,
+        "passed": 50,
+        "confirmed": 50
+      }
+    }
+  },
+  "live": {
+    "total": 100,
+    "matched": 99,
+    "development": 80,
+    "reserve": 20
+  },
+  "codeChecks": {
+    "website": 117,
+    "miniprogram": 78
+  },
+  "humanAdjudicated": false,
+  "populationAccuracyClaimed": false
+}

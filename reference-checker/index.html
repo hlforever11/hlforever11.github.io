@@ -32,7 +32,7 @@
       <div class="upload" id="dropZone"><input id="fileInput" type="file" accept=".docx,.pdf,.txt"><div class="upload-icon">↑</div><div><strong id="uploadTitle">上传整篇文档</strong><p>拖入文件，或 <button id="chooseBtn" type="button">选择文件</button>；最大 15 MB</p></div><small>DOCX · 文字版 PDF · TXT<br>扫描版 PDF 暂不支持</small></div>
       <div id="fileMessage" class="message hidden" role="status"></div>
     </section>
-    <div class="trust"><span><b>✓</b> 不把“数据库未收录”直接判为虚假</span><span><b>✓</b> 搜索发现 · 专业来源复核 · 核心字段概率判断</span></div>
+    <div class="trust"><span><b>✓</b> 不把“数据库未收录”直接判为虚假</span><span><b>✓</b> 搜索发现 · 专业来源复核 · 核心字段匹配判断</span></div>
     <section class="results hidden" id="results"><div class="results-head"><h2>核验结果</h2><div class="progress" id="progress"></div></div><div class="summary" id="summary"></div><div id="cards"></div></section>
     <section class="history" id="history" aria-label="本机核验历史"><div class="history-head"><div><h2>本机历史记录</h2><p>免登录保存最近 20 次核验，仅存于当前浏览器；可一键载入后重新核验。</p></div><button class="history-clear hidden" id="clearHistoryBtn" type="button">清空记录</button></div><div class="history-list" id="historyList"></div></section>
     <section class="boundary" id="limits"><div class="kicker">BOUNDARIES</div><h2>“暂未证实”不等于“虚假”</h2><p>证据匹配度只依据篇名、作者、来源、永久标识和原始网址等作品身份字段及证据强度计算。年份、卷期页等事实差异与格式检查分开。中文依据 GB/T 7714—2025；英文格式仅作谨慎识别，不把姓名缩写、大小写和不同引用规范直接判错。证据匹配度是系统评分，未经统计校准为真实性概率。若来源暂时不可访问或未被数据库收录，系统只会标记为“暂未证实”，并保留官网与搜索引擎复核入口。</p></section>
@@ -41,8 +41,10 @@
   <meta name="wenzheng-build" content="2026.10.15-stability2">
   <script>window.WENZHENG_API_URL="https://cloud1-d6gtx1retbc8754fa-1457855977.ap-shanghai.app.tcloudbase.com/api/verify-reference";</script>
   <script defer src="./counter.js?v=20261009-counter-fix2"></script>
-  <script src="./citation-policy.js?v=20261022-gb2025-1"></script>
+  <script src="./citation-policy.js?v=20261022-v22"></script>
+  <script src="./open-sources.js?v=20261022-v22"></script>
   <script type="module">
+    const extraSources=window.WenzhengSources.create({fetchJson,authorKey});
     const CitationPolicy=window.CitationPolicy;
     const MAX=20,MAX_SIZE=15*1024*1024,REQUEST_TIMEOUT=9000,CLOUD_VERIFY_ENDPOINT=String(window.WENZHENG_API_URL||'').trim();
     function operationError(message,name='AbortError'){const error=Error(message);error.name=name;return error}
@@ -281,7 +283,7 @@
       }finally{if(version===fileVersion){fileReading=false;fileController=null;fileInput.value='';update()}}
     }
     const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-    const meta={verified:['已确认真实，未见明确字段冲突','✓'],partial:['已确认真实，部分字段待复核','✓'],corrected:['已确认真实，有字段差异待核对','!'],review:['真实性需人工复核','?'],unverified:['暂未证实','—'],error:['核验服务暂不可用','—']};
+    const meta={verified:['已确认真实','✓'],partial:['已确认真实，信息待补','✓'],corrected:['已确认真实，部分信息需核对','!'],review:['需人工复核','?'],unverified:['暂未证实','—'],error:['服务暂不可用','—']};
     function safeHttpUrl(value){try{const url=new URL(String(value||''));return /^https?:$/.test(url.protocol)&&!url.username&&!url.password?url.href:''}catch(error){return''}}
     function numberedCanonical(citation,index,submitted=''){
       const value=String(citation||'').replace(/^\[\s*\d+\s*\]\s*/,'').trim(),original=normalizeReferenceInput(submitted);
@@ -294,16 +296,16 @@
       const diffs=(Array.isArray(r.differences)?r.differences:[]).filter(d=>d&&typeof d==='object').map(d=>`<div class="diff"><b>${esc(d.field)}</b><span>提交：${esc(d.submitted)}</span><span>来源记录：${esc(d.verified)}</span></div>`).join('');
       const links=(Array.isArray(r.evidenceLinks)?r.evidenceLinks:[]).filter(link=>link&&safeHttpUrl(link.url)).map(link=>`<a target="_blank" rel="noopener" href="${esc(safeHttpUrl(link.url))}">${esc(link.label)} ↗</a>`).join('');
       const sourceUrl=safeHttpUrl(r.sourceUrl),confidence=Number(r.authenticityConfidence??r.confidence??0),percentage=Number.isFinite(confidence)?Math.round(Math.max(0,Math.min(1,confidence))*100):0;
-      const citationLabel=`${r.canonicalLabel||'国标著录草稿'}（${r.canonicalStandard||'格式待核对'}）`;
+      const citationLabel=`${r.canonicalLabel||'参考著录'}（${r.canonicalStandard||'格式待核对'}）`;
       const formatChecks=(r.formatChecks||[]).map(note=>`<li>${esc(note)}</li>`).join('');
-      const canonical=r.canonical?`<details class="canonical" ${r.canonicalLabel==='国标著录草稿'?'open':''}><summary>${esc(citationLabel)}</summary><p>${esc(numberedCanonical(r.canonical,r.position??i,r.submitted))}</p>${formatChecks?`<ul>${formatChecks}</ul>`:''}<small>依据已取得的字段生成；缺项请核对原文。格式转换不等于纠错。</small></details>`:'';
+      const canonical=r.canonical?`<details class="canonical"><summary>${esc(citationLabel)}</summary><p>${esc(numberedCanonical(r.canonical,r.position??i,r.submitted))}</p>${formatChecks?`<ul>${formatChecks}</ul>`:''}</details>`:'';
       const observations=(r.observations||[]).map(d=>`<li>${esc(d.field)}：提交 ${esc(d.submitted)}；来源记录 ${esc(d.verified)}。${esc(d.reason)}</li>`).join('');
-      return `<article class="result"><div class="result-top"><span class="status ${status==='error'?'error-status':status}">${m[1]} ${m[0]}</span><span class="confidence">第 ${(r.position??i)+1} 条 · 证据匹配度 ${percentage}%</span></div><p class="submitted">${esc(r.submitted)}</p><p class="note">${esc(r.note)}</p><p class="style-note">识别格式：${esc(r.citationStyle?.label||'格式未确定')}。${r.citationStyle?.certainty==='family'?'仅推测格式体系，未完成规范合规审校。':''}</p>${diffs?`<div class="diffs">${diffs}</div>`:''}${observations?`<details class="observations"><summary>来源差异与补充信息（不直接判错）</summary><ul>${observations}</ul></details>`:''}${canonical}${sourceUrl?`<a class="source" target="_blank" rel="noopener" href="${esc(sourceUrl)}">查看 ${esc(r.source||'来源')} 原始记录 ↗</a>`:''}${links?`<div class="evidence-links">${links}</div>`:''}</article>`;
+      return `<article class="result"><div class="result-top"><span class="status ${status==='error'?'error-status':status}">${m[1]} ${m[0]}</span><span class="confidence">第 ${(r.position??i)+1} 条</span></div><p class="submitted">${esc(r.submitted)}</p><p class="note">${esc(r.note)}</p>${r.displayStyle&&r.displayStyle!=='未识别'?`<p class="style-note">引用格式：${esc(r.displayStyle)}</p>`:''}${diffs?`<div class="diffs">${diffs}</div>`:''}${observations?`<details class="observations"><summary>来源差异与补充信息（不直接判错）</summary><ul>${observations}</ul></details>`:''}${canonical}<details class="observations"><summary>核验详情</summary><p>证据匹配度 ${percentage}%（规则评分）。${esc(r.detailsNote||r.note)}</p>${(r.authenticityBasis||[]).length?`<p>${esc(r.authenticityBasis.join('；'))}</p>`:''}</details>${sourceUrl?`<a class="source" target="_blank" rel="noopener" href="${esc(sourceUrl)}">查看 ${esc(r.source||'来源')} 原始记录 ↗</a>`:''}${links?`<div class="evidence-links">${links}</div>`:''}</article>`;
     }
 
     function render(all){const counts={verified:0,partial:0,corrected:0,review:0,unverified:0,error:0};all.forEach(x=>counts[x.status]=(counts[x.status]||0)+1);$('#summary').innerHTML=[['已确认真实',counts.verified+counts.partial],['已确认，有字段差异',counts.corrected],['需人工复核',counts.review],['暂未证实/服务异常',counts.unverified+counts.error]].map(x=>`<div><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');$('#cards').innerHTML=all.map(card).join('')}
     const HISTORY_KEY='wenzheng-verification-history-v1',HISTORY_LIMIT=20,historyList=$('#historyList'),clearHistoryBtn=$('#clearHistoryBtn');
-    const VERIFY_CACHE_KEY='wenzheng-success-cache-v6',VERIFY_CACHE_TTL=180*24*60*60*1000,VERIFY_CACHE_LIMIT=120;
+    const VERIFY_CACHE_KEY='wenzheng-success-cache-v7',VERIFY_CACHE_TTL=180*24*60*60*1000,VERIFY_CACHE_LIMIT=120;
     function verificationCacheKey(reference){return normalizeReferenceInput(reference).replace(numberedReferenceStart,'').normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim()}
     function validVerificationResult(result){
       if(!result||typeof result!=='object'||Array.isArray(result)||!Object.prototype.hasOwnProperty.call(meta,result.status))return false;
@@ -377,7 +379,7 @@
     });
     renderHistory();
     const normalizeText=value=>String(value??'').normalize('NFKC').toLowerCase().replace(/[\s\u3000\p{P}\p{S}]+/gu,'');
-    const cleanValue=value=>String(value??'').replace(/^[\s.,，。;；:：/／]+|[\s.,，。;；:：]+$/g,'').trim();
+    const cleanValue=value=>decodeBibliographicEntities(value).replace(/^[\s.,，。;；:：/／]+|[\s.,，。;；:：]+$/g,'').trim();
     function normalizeReferenceInput(value){
       return String(value??'').replace(/[\u200b-\u200d\ufeff]/g,'').replace(/[０-９Ａ-Ｚａ-ｚ［］（）．－]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0));
     }
@@ -437,7 +439,7 @@
 
 function decodeBibliographicEntities(value){
  const named={amp:'&',quot:'"',apos:"'",nbsp:' ',lt:'<',gt:'>',lsquo:'‘',rsquo:'’',ldquo:'“',rdquo:'”',ndash:'–',mdash:'—'};
- return String(value||'').replace(/&#(x[0-9a-f]+|\d+);/ig,(all,code)=>{const n=code[0].toLowerCase()==='x'?parseInt(code.slice(1),16):Number(code);return n>0&&n<=0x10ffff?String.fromCodePoint(n):all}).replace(/&([a-z]+);/ig,(all,name)=>named[name.toLowerCase()]??all);
+ let text=String(value||'');for(let i=0;i<4;i++){const next=text.replace(/&#(x[0-9a-f]+|\d+);/ig,(all,code)=>{const n=code[0].toLowerCase()==='x'?parseInt(code.slice(1),16):Number(code);return n>0&&n<=0x10ffff?String.fromCodePoint(n):all}).replace(/&([a-z]+);/ig,(all,name)=>named[name.toLowerCase()]??all);if(next===text)break;text=next;}return text.replace(/<\/?[a-z][a-z0-9:-]*(?:\s[^>]*?)?\/?>/ig,' ').replace(/\s+/g,' ');
 }
 
 function isCorporateAuthor(value){return /\b(?:association|federation|organization|organisation|university|institute|council|committee|commission|unesco|ifla|ala)\b/i.test(String(value||''));}
@@ -491,7 +493,7 @@ function pdfIdentityCandidate(text,info,parsed,sourceUrl){
         if(authorStop>0&&looksLikeChineseAuthorList(possibleAuthors)&&cnkiContainerMatch){
           title=cleanValue(before);authors=possibleAuthors;container=cleanValue(cnkiContainerMatch[1]);cnkiTitleFirst=true;
         }else{
-          const head=before.replace(/\b([A-Z])\.(?=\s+[A-Z][a-z]+[,;.])/g,'$1').replace(/\b([A-Z])\.(?=\s*[A-Z]\.|\s*[,;&])/g,'$1'),boundary=head.search(/[.。]/);
+          const head=before.replace(/^((?:[A-Z]\.\s*)+)(?=[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*[.,;])/g,part=>part.replace(/\./g,'')).replace(/\b([A-Z])\.(?=\s+[A-Z][a-z]+[,;.])/g,'$1').replace(/\b([A-Z])\.(?=\s*[A-Z]\.|\s*[,;&])/g,'$1'),boundary=head.search(/[.。]/);
           title=boundary<0?cleanValue(head):cleanValue(head.slice(boundary+1));authors=boundary<0?'':cleanValue(head.slice(0,boundary));
           const containerMatch=tail.match(/^(.+?)(?:[,，]\s*|[.。]\s+)(?=(?:18|19|20)\d{2}\b)/);
           if(containerMatch)container=cleanValue(containerMatch[1]);
@@ -529,7 +531,7 @@ function pdfIdentityCandidate(text,info,parsed,sourceUrl){
         }
       }
       const yearSearchBody=(typeMatch?body.slice(typeMatch.index+typeMatch[0].length):body).replace(/\bISBN(?:-1[03])?\s*[:：]?\s*(?:97[89][\s-]?)?[\dXx][\dXx\s-]{8,20}/ig,' ');
-      const years=[...yearSearchBody.matchAll(/(?:18|19|20)\d{2}/g)].map(x=>Number(x[0])),year=publicationDate?Number(publicationDate.slice(0,4)):years.length?years[0]:null;
+      const years=[...yearSearchBody.matchAll(/(?:18|19|20)\d{2}/g)].map(x=>Number(x[0])),year=publicationDate?Number(publicationDate.slice(0,4)):body.match(/\.\s*\(\s*((?:18|19|20)\d{2})[a-z]?\s*\)\s*\./)?.[1]?Number(body.match(/\.\s*\(\s*((?:18|19|20)\d{2})[a-z]?\s*\)\s*\./)[1]):years.length?years[0]:null;
       const volIssue=body.match(/(?:18|19|20)\d{2}\s*[,，]\s*([A-Za-z]?\d+[A-Za-z]?)\s*(?:\(\s*([^)]+?)\s*\))?/ )||body.match(/,\s*(\d+)\s*\(([^)]+)\)\s*[,：:]/);
       const issueWithoutVolume=!volIssue?body.match(/(?:18|19|20)\d{2}\s*[\(（]\s*([^)）]+?)\s*[\)）]/):null;
       const pageMatches=[...body.matchAll(/[:：]\s*([A-Za-z]?\d+(?:\s*[-–—]\s*[A-Za-z]?\d+)?(?:\s*[,，]\s*[A-Za-z]?\d+(?:\s*[-–—]\s*[A-Za-z]?\d+)?)*)(?=\s*(?:[.。;；]|$))/g)];
@@ -725,7 +727,7 @@ function pdfIdentityCandidate(text,info,parsed,sourceUrl){
       const raw=String(text||'').replace(/\s+/g,' ').trim(),withoutUrl=raw.replace(/\s*https?:\/\/doi\.org\/\S+\s*$/i,'').trim();
       const head=withoutUrl.match(/^(.*?)\.\s*\((\d{4})\)\.\s*(.+)$/),tail=head?.[3]?.match(/^(.+)\.\s+([^,]+),\s*([^,(]+?)(?:\(([^)]+)\))?,\s*([^.]+)\.?$/);
       if(!head||!tail)return null;
-      const registryAuthors=head[1].split(/\s*(?:，|、|；|;|\s&\s)\s*/).map(cleanValue).filter(Boolean),submittedAuthors=splitSubmittedAuthors(parsed.authors);
+      const registryAuthors=splitSubmittedAuthors(head[1]).map(cleanValue).filter(Boolean),submittedAuthors=splitSubmittedAuthors(parsed.authors);
       const authorCovered=registryAuthors.length&&registryAuthors.every(name=>submittedAuthors.some(submitted=>authorKey(submitted)===authorKey(name)||diceSimilarity(submitted,name)>.82));
       const partialAuthors=authorCovered&&submittedAuthors.length>registryAuthors.length,registryPages=cleanValue(tail[5]).replace(/[–—]/g,'-'),partialPages=!!(parsed.pages&&registryPages&&!registryPages.includes('-')&&parsed.pages.startsWith(`${registryPages}-`));
       const authors=partialAuthors?submittedAuthors:registryAuthors,pages=partialPages?parsed.pages:registryPages,partialFields=[];
@@ -782,7 +784,7 @@ function pdfIdentityCandidate(text,info,parsed,sourceUrl){
       const authors=Array.isArray(item.author)?item.author.filter(author=>author&&typeof author==='object'):[];
       const people=authors.map(author=>cleanValue(author.name||(/^[\p{Script=Han}\s·]+$/u.test(String(author.given||'')+String(author.family||''))?[author.family,author.given].filter(Boolean).join(''):[author.given,author.family].filter(Boolean).join(' ')))).filter(Boolean);
       const authorKeys=authors.map(author=>normalizeText(author.family||authorKey(author.name||[author.given,author.family].filter(Boolean).join(' ')))).filter(Boolean);
-      return{source:'Crossref',sources:['Crossref'],exactDoi,title:cleanValue(Array.isArray(item.title)?item.title[0]:item.title),authors:people,authorKeys,year:yearFromCrossref(item),acceptedYears:['published-print','published-online','published','issued'].map(key=>item?.[key]?.['date-parts']?.[0]?.[0]).filter(Boolean),container:cleanValue(Array.isArray(item['container-title'])?item['container-title'][0]:item['container-title']),volume:cleanValue(item.volume),issue:cleanValue(item.issue),pages:String(item.page||'').replace(/[–—]/g,'-'),doi:String(item.DOI||'').toLowerCase(),type:item.type||'',sourceUrl:item.DOI?`https://doi.org/${item.DOI}`:item.URL||''};
+      return{source:'Crossref',sources:['Crossref'],exactDoi,title:cleanValue(Array.isArray(item.title)?item.title[0]:item.title),alternateTitles:Array.isArray(item.title)?item.title:[],authors:people,authorKeys,year:yearFromCrossref(item),acceptedYears:['published-print','published-online','published','issued'].map(key=>item?.[key]?.['date-parts']?.[0]?.[0]).filter(Boolean),container:cleanValue(Array.isArray(item['container-title'])?item['container-title'][0]:item['container-title']),volume:cleanValue(item.volume),issue:cleanValue(item.issue),pages:String(item.page||'').replace(/[–—]/g,'-'),doi:String(item.DOI||'').toLowerCase(),type:item.type||'',sourceUrl:item.DOI?`https://doi.org/${item.DOI}`:item.URL||''};
     }
     function openAlexCandidate(item,exactDoi=false){
       const people=(item.authorships||[]).map(a=>a.author?.display_name||a.raw_author_name).filter(Boolean),biblio=item.biblio||{},location=item.primary_location||{};
@@ -804,7 +806,6 @@ function pdfIdentityCandidate(text,info,parsed,sourceUrl){
       if(parsed.container)endpoint.searchParams.set('query.container-title',parsed.container);
       endpoint.searchParams.set('rows','5');
       endpoint.searchParams.set('select',fields);
-      endpoint.searchParams.set('mailto','linhu@scu.edu.cn');
       jobs.push({exact:false,url:endpoint.href});
       const settled=await Promise.allSettled(jobs.map(x=>fetchJson(x.url,signal))),candidates=[];
       settled.forEach((result,i)=>{if(result.status!=='fulfilled')return;const message=result.value?.message,items=Array.isArray(message?.items)?message.items:message?[message]:[];items.forEach(item=>candidates.push(crossrefCandidate(item,jobs[i].exact)))});
@@ -850,16 +851,10 @@ function googleBooksCandidate(item){
 
     async function queryGoogleBooks(parsed,signal){
       const endpoint=new URL('https://www.googleapis.com/books/v1/volumes'),author=authorKey(splitSubmittedAuthors(parsed.authors)[0]||'');
-      endpoint.searchParams.set('q',`intitle:${parsed.title}${author?' inauthor:'+author:''}`);endpoint.searchParams.set('maxResults','8');endpoint.searchParams.set('printType','books');
+      endpoint.searchParams.set('q',parsed.isbn?'isbn:'+parsed.isbn:`intitle:${parsed.title}${author?' inauthor:'+author:''}`);endpoint.searchParams.set('maxResults','8');endpoint.searchParams.set('printType','books');
       const data=await fetchJson(endpoint.href,signal);return{source:'Google Books',candidates:(data.items||[]).map(googleBooksCandidate)};
     }
-    async function queryPubMed(parsed,signal){
-      if(!parsed.pmid)return{source:'PubMed',candidates:[]};
-      const endpoint=new URL('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi');endpoint.searchParams.set('db','pubmed');endpoint.searchParams.set('id',parsed.pmid);endpoint.searchParams.set('retmode','json');
-      const data=await fetchJson(endpoint.href,signal),item=data?.result?.[parsed.pmid];if(!item)return{source:'PubMed',candidates:[]};
-      const authors=(item.authors||[]).map(author=>cleanValue(author.name)).filter(Boolean),doi=(item.articleids||[]).find(entry=>entry.idtype==='doi')?.value||'';
-      return{source:'PubMed',candidates:[{source:'PubMed',sources:['PubMed'],exactDoi:!!(parsed.doi&&doi&&parsed.doi===doi.toLowerCase()),title:cleanValue(item.title),authors,authorKeys:authors.map(authorKey).filter(Boolean),year:Number(String(item.pubdate||'').match(/(?:18|19|20)\d{2}/)?.[0])||null,container:cleanValue(item.fulljournalname||item.source),volume:cleanValue(item.volume),issue:cleanValue(item.issue),pages:cleanValue(item.pages).replace(/[–—]/g,'-'),doi:String(doi).toLowerCase(),pmid:parsed.pmid,type:'journal-article',sourceUrl:`https://pubmed.ncbi.nlm.nih.gov/${parsed.pmid}/`}]};
-    }
+    async function queryPubMed(parsed){return extraSources.queryPubMed(parsed);}
     async function queryArxiv(parsed,signal){
       if(!parsed.arxivId)return{source:'arXiv',candidates:[]};
       const xml=await fetchText(`https://export.arxiv.org/api/query?id_list=${encodeURIComponent(parsed.arxivId)}`,REQUEST_TIMEOUT,signal),doc=new DOMParser().parseFromString(xml,'application/xml'),entry=doc.querySelector('entry');if(!entry)return{source:'arXiv',candidates:[]};
@@ -884,16 +879,22 @@ function googleBooksCandidate(item){
     function buildVerificationPlan(parsed){
       const providers=[],add=name=>providers.includes(name)||providers.push(name),type=baseReferenceType(parsed.type);
       if(parsed.pmid)add('pubmed');
+      if(parsed.doi || ['R','D','PP','DS'].includes(type))add('datacite');
+      if((!hasHan(parsed.title)&&['','J','PP'].includes(type))||parsed.pmid)add('europe-pmc');
+      if(!parsed.pmid&&/\b(?:medicine|medical|clinical|biolog|cancer|health|lancet|bmj|jama|nejm)\w*\b/i.test(parsed.title+' '+parsed.container))add('pubmed');
       if(parsed.arxivId)add('arxiv');
-      if(parsed.isbn){add('open-library');add('crossref');return providers}
+      if(parsed.isbn){add('google-books');add('open-library');add('crossref');return providers}
       if(type==='M'){add('google-books');add('open-library');add('crossref');add('openalex');add('semantic-scholar');return providers}
       if(['S','P','N','EB','DB','CP'].includes(type))return providers;
       if(parsed.doi){add('doi-registry');add('crossref');add('openalex');return providers}
-      if(type==='J'&&hasHan(parsed.title)){if(parsed.container&&parsed.year&&parsed.issue)add('doi-registry');add('openalex');return providers}
-      add('crossref');add('openalex');add('semantic-scholar');
+      if(type==='J'&&hasHan(parsed.title)){add('crossref');if(parsed.container&&parsed.year&&parsed.issue)add('doi-registry');add('openalex');return providers}
+      add('datacite');add('crossref');add('openalex');add('semantic-scholar');
       return providers;
     }
     function providerJob(provider,parsed,signal){
+      checkActive(signal);
+      if(provider==='datacite')return{source:'DataCite',promise:extraSources.queryDataCite(parsed,signal)};
+      if(provider==='europe-pmc')return{source:'Europe PMC',promise:extraSources.queryEuropePmc(parsed,signal)};
       checkActive(signal);
       if(provider==='crossref')return{source:'Crossref',promise:queryCrossref(parsed,signal)};
       if(provider==='openalex')return{source:'OpenAlex',promise:queryOpenAlex(parsed,signal)};
@@ -914,7 +915,7 @@ function googleBooksCandidate(item){
         if(!prior){merged.set(key,{...candidate,sources:[...candidate.sources],partialFields:[...(candidate.partialFields||[])]});continue}
         const hadCompleteAuthors=!!prior.authors?.length&&!prior.partialFields.includes('其余作者'),hadCompletePages=!!prior.pages&&!prior.partialFields.includes('末页')&&/[-–—]/.test(String(prior.pages));
         prior.sources=[...new Set([...prior.sources,...candidate.sources])];
-        prior.source=prior.sources.join(' + ');prior.exactDoi=prior.exactDoi||candidate.exactDoi;
+        prior.source=prior.sources.join(' + ');prior.exactDoi=prior.exactDoi||candidate.exactDoi;prior.acceptedYears=[...new Set([...(prior.acceptedYears||[]),...(candidate.acceptedYears||[])])];prior.origins=[...new Set([...(prior.origins||[]),prior.origin,candidate.origin].filter(Boolean))];
         prior.partialFields=[...new Set([...(prior.partialFields||[]),...(candidate.partialFields||[])])];
         for(const field of ['title','authors','authorKeys','year','container','volume','issue','pages','doi','isbn','pmid','arxivId','type','sourceUrl']){
           const missing=Array.isArray(prior[field])?!prior[field].length:!prior[field];
@@ -1014,7 +1015,7 @@ function googleBooksCandidate(item){
     async function verifyOneLocalRaw(reference,signal){
       checkActive(signal);
       const parsed=parseReference(reference),type=String(parsed.type||'').toUpperCase(),trusted=queryTrustedReferenceCache(parsed);
-      if(!trusted.candidates.length&&!parsed.arxivId&&!parsed.pmid&&(type.includes('/OL')||(parsed.url&&!parsed.doi&&(!type||['EB','DB','CP','N','S','P'].includes(baseReferenceType(type))))))return verifyWebReference(reference,parsed,signal);
+      if(!trusted.candidates.length&&!parsed.arxivId&&!parsed.pmid&&(type.includes('/OL')&&!parsed.doi||(parsed.url&&!parsed.doi&&(!type||['EB','DB','CP','N','S','P'].includes(baseReferenceType(type))))))return verifyWebReference(reference,parsed,signal);
       try{
         const jobs=trusted.candidates.length?[{source:trusted.source,promise:Promise.resolve(trusted)}]:buildVerificationPlan(parsed).map(provider=>providerJob(provider,parsed,signal));
         if(!jobs.length)return{status:'unverified',confidence:0,submitted:reference,differences:[],note:'已识别文献类型，但当前没有可直接调用的开放结构化目录。未能自动确认不等于文献虚假，请使用下方按类型提供的公开复核入口继续核对。',checkedSources:[],evidenceLinks:scholarlyEvidenceLinks(parsed,parsed.doi)};

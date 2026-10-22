@@ -1,0 +1,22 @@
+{
+  "name": "Wenzheng disjoint reserve set v1",
+  "date": "2026-10-22",
+  "distinctWorks": 100,
+  "cases": 300,
+  "overlapWithDevelopmentOrSeedTitles": 0,
+  "humanAdjudicationCompleted": false,
+  "labelMethod": "Source metadata and controlled variants, not human-adjudicated truth labels. No further engine tuning on reserve outcomes.",
+  "sourceCounts": {
+    "crossref": 40,
+    "datacite": 30,
+    "europepmc": 20,
+    "openlibrary": 10
+  },
+  "source-records.jsonl.gz_sha256": "2e6f49f95cbdc57f8c646dc380e7916bdd411fb27a539d7ee8aff581f174388e",
+  "cases.jsonl.gz_sha256": "be00858eb8831f1af9af0251426c97b6a2ddf469d735be4db392b7d632058a7b",
+  "engineSha256": {
+    "index.html": "a2f0cde83ca238ecf15f4cc0916aad849140c939565e4f7e8fc21404eae9ce16",
+    "citation-policy.js": "2e1f20e1b89519dd7422ad41577076f3c00364d2f5e4c021399a521250aee1a0",
+    "open-sources.js": "49b7098cac5766f8ae7ef217216f97f6c412e79a9f3b41f53b8a1191ba0397fd"
+  }
+}

@@ -1,3 +1,4 @@
+const extraSources = require("./open-sources").create({fetchJson,authorKey});
 const CitationPolicy = require("./citation-policy");
 const cheerio = require("cheerio");
 const iconv = require("iconv-lite");
@@ -10,7 +11,7 @@ const JOURNALS = require("./cn-journals.json");
 // CloudBase 免费体验版的云函数执行时间只有 3 秒。所有外部请求必须在平台
 // 截止前主动结束，给解析、评分和返回结果预留时间。
 const REQUEST_TIMEOUT = 1800;
-const USER_AGENT = "ReferenceVerifierMiniProgram/1.0 (mailto:linhu@scu.edu.cn)";
+const USER_AGENT = "ReferenceVerifierMiniProgram/1.0";
     const VERIFIED_REFERENCE_INDEX=[
 {"source": "IFLA 官方声明原文（2020年理事会通过）", "sourceUrl": "https://www.ifla.org/wp-content/uploads/2019/05/assets/faife/ifla_statement_on_libraries_and_artificial_intelligence.pdf", "urlAliases": ["https://repository.ifla.org/handle/20.500.14598/1646", "https://repository.ifla.org/items/8c05d706-498b-42c2-a93a-3d47f69f7646"], "title": "IFLA Statement on Libraries and Artificial Intelligence", "authors": ["International Federation of Library Associations and Institutions"], "year": 2020, "type": "report", "online": true, "strictIdentity": true, "verifiedOn": "2026-10-22", "volume": "", "issue": "", "pages": "", "evidenceNote": "原文第3页：IFLA Governing Board于2020-09-17通过；IFLA官方回顾列为2020-10发布。路径2019/05不是出版日期。FAIFE与IFLA存在上下级责任关系，不作普通缩写等价。"},
 {"source": "ALA 官方文件（2009年通过版）", "sourceUrl": "https://www.ala.org/sites/default/files/2024-04/finalcorecompstat09.pdf", "urlAliases": ["https://www.ala.org/educationcareers/sites/ala.org.educationcareers/files/content/careers/corecomp/corecompetences/finalcorecompstat09.pdf", "https://www.ala.org/sites/default/files/educationcareers/content/careers/corecomp/corecompetences/finalcorecompstat09.pdf"], "title": "ALA’s Core Competences of Librarianship", "authors": ["American Library Association"], "year": 2009, "publicationDate": "2009-01-27", "container": "American Library Association", "type": "report", "strictIdentity": true, "verifiedOn": "2026-10-22", "volume": "", "issue": "", "pages": ""},
@@ -81,7 +82,7 @@ function normalizeText(value) {
 }
 
 function cleanValue(value) {
-  return String(value ?? "")
+  return decodeBibliographicEntities(value)
     .replace(/^[\s.,，。;；:：/／]+|[\s.,，。;；:：]+$/g, "")
     .trim();
 }
@@ -213,7 +214,7 @@ function normalizeDate(value) {
 
 function decodeBibliographicEntities(value){
  const named={amp:'&',quot:'"',apos:"'",nbsp:' ',lt:'<',gt:'>',lsquo:'‘',rsquo:'’',ldquo:'“',rdquo:'”',ndash:'–',mdash:'—'};
- return String(value||'').replace(/&#(x[0-9a-f]+|\d+);/ig,(all,code)=>{const n=code[0].toLowerCase()==='x'?parseInt(code.slice(1),16):Number(code);return n>0&&n<=0x10ffff?String.fromCodePoint(n):all}).replace(/&([a-z]+);/ig,(all,name)=>named[name.toLowerCase()]??all);
+ let text=String(value||'');for(let i=0;i<4;i++){const next=text.replace(/&#(x[0-9a-f]+|\d+);/ig,(all,code)=>{const n=code[0].toLowerCase()==='x'?parseInt(code.slice(1),16):Number(code);return n>0&&n<=0x10ffff?String.fromCodePoint(n):all}).replace(/&([a-z]+);/ig,(all,name)=>named[name.toLowerCase()]??all);if(next===text)break;text=next;}return text.replace(/<\/?[a-z][a-z0-9:-]*(?:\s[^>]*?)?\/?>/ig,' ').replace(/\s+/g,' ');
 }
 
 function isCorporateAuthor(value){return /\b(?:association|federation|organization|organisation|university|institute|council|committee|commission|unesco|ifla|ala)\b/i.test(String(value||''));}
@@ -267,7 +268,7 @@ function pdfIdentityCandidate(text,info,parsed,sourceUrl){
         if(authorStop>0&&looksLikeChineseAuthorList(possibleAuthors)&&cnkiContainerMatch){
           title=cleanValue(before);authors=possibleAuthors;container=cleanValue(cnkiContainerMatch[1]);cnkiTitleFirst=true;
         }else{
-          const head=before.replace(/\b([A-Z])\.(?=\s+[A-Z][a-z]+[,;.])/g,'$1').replace(/\b([A-Z])\.(?=\s*[A-Z]\.|\s*[,;&])/g,'$1'),boundary=head.search(/[.。]/);
+          const head=before.replace(/^((?:[A-Z]\.\s*)+)(?=[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*[.,;])/g,part=>part.replace(/\./g,'')).replace(/\b([A-Z])\.(?=\s+[A-Z][a-z]+[,;.])/g,'$1').replace(/\b([A-Z])\.(?=\s*[A-Z]\.|\s*[,;&])/g,'$1'),boundary=head.search(/[.。]/);
           title=boundary<0?cleanValue(head):cleanValue(head.slice(boundary+1));authors=boundary<0?'':cleanValue(head.slice(0,boundary));
           const containerMatch=tail.match(/^(.+?)(?:[,，]\s*|[.。]\s+)(?=(?:18|19|20)\d{2}\b)/);
           if(containerMatch)container=cleanValue(containerMatch[1]);
@@ -305,7 +306,7 @@ function pdfIdentityCandidate(text,info,parsed,sourceUrl){
         }
       }
       const yearSearchBody=(typeMatch?body.slice(typeMatch.index+typeMatch[0].length):body).replace(/\bISBN(?:-1[03])?\s*[:：]?\s*(?:97[89][\s-]?)?[\dXx][\dXx\s-]{8,20}/ig,' ');
-      const years=[...yearSearchBody.matchAll(/(?:18|19|20)\d{2}/g)].map(x=>Number(x[0])),year=publicationDate?Number(publicationDate.slice(0,4)):years.length?years[0]:null;
+      const years=[...yearSearchBody.matchAll(/(?:18|19|20)\d{2}/g)].map(x=>Number(x[0])),year=publicationDate?Number(publicationDate.slice(0,4)):body.match(/\.\s*\(\s*((?:18|19|20)\d{2})[a-z]?\s*\)\s*\./)?.[1]?Number(body.match(/\.\s*\(\s*((?:18|19|20)\d{2})[a-z]?\s*\)\s*\./)[1]):years.length?years[0]:null;
       const volIssue=body.match(/(?:18|19|20)\d{2}\s*[,，]\s*([A-Za-z]?\d+[A-Za-z]?)\s*(?:\(\s*([^)]+?)\s*\))?/ )||body.match(/,\s*(\d+)\s*\(([^)]+)\)\s*[,：:]/);
       const issueWithoutVolume=!volIssue?body.match(/(?:18|19|20)\d{2}\s*[\(（]\s*([^)）]+?)\s*[\)）]/):null;
       const pageMatches=[...body.matchAll(/[:：]\s*([A-Za-z]?\d+(?:\s*[-–—]\s*[A-Za-z]?\d+)?(?:\s*[,，]\s*[A-Za-z]?\d+(?:\s*[-–—]\s*[A-Za-z]?\d+)?)*)(?=\s*(?:[.。;；]|$))/g)];
@@ -648,22 +649,23 @@ function yearFromCrossref(item) {
 
 function crossrefCandidate(item, exactDoi = false) {
   const people = (item.author || [])
-    .map((author) => cleanValue([author.given, author.family].filter(Boolean).join(" ")))
+    .map((author) => cleanValue(author.name || (hasHan(String(author.given||"")+String(author.family||""))?[author.family,author.given].filter(Boolean).join(""):[author.given,author.family].filter(Boolean).join(" "))))
     .filter(Boolean);
   return {
     source: "Crossref",
     sources: ["Crossref"],
     exactDoi,
-    title: Array.isArray(item.title) ? item.title[0] : item.title || "",
+    title: cleanValue(Array.isArray(item.title) ? item.title[0] : item.title || ""),
+    alternateTitles: Array.isArray(item.title)?item.title.map(cleanValue):[],
     authors: people,
     authorKeys: (item.author || [])
       .map((author) => normalizeText(author.family || authorKey([author.given, author.family].filter(Boolean).join(" "))))
       .filter(Boolean),
     year: yearFromCrossref(item),
     acceptedYears: ["published-print","published-online","published","issued"].map(key=>item?.[key]?.["date-parts"]?.[0]?.[0]).filter(Boolean),
-    container: Array.isArray(item["container-title"])
+    container: cleanValue(Array.isArray(item["container-title"])
       ? item["container-title"][0]
-      : item["container-title"] || "",
+      : item["container-title"] || ""),
     volume: item.volume || "",
     issue: item.issue || "",
     pages: item.page?.replace(/[–—]/g, "-") || "",
@@ -804,7 +806,6 @@ async function queryCrossref(parsed) {
   }
   titleQuery.searchParams.set("rows", "5");
   titleQuery.searchParams.set("select", fields);
-  titleQuery.searchParams.set("mailto", "linhu@scu.edu.cn");
   jobs.push({
     exact: false,
     url: titleQuery.href
@@ -830,7 +831,7 @@ async function queryOpenAlex(parsed) {
   if (parsed.doi) {
     jobs.push({
       exact: true,
-      url: `https://api.openalex.org/works?filter=doi:${encodeURIComponent(`https://doi.org/${parsed.doi}`)}&per-page=3&select=${select}&mailto=linhu%40scu.edu.cn`
+      url: `https://api.openalex.org/works?filter=doi:${encodeURIComponent(`https://doi.org/${parsed.doi}`)}&per-page=3&select=${select}`
     });
   }
   const query = parsed.title && normalizeText(parsed.title).length >= 4
@@ -838,7 +839,7 @@ async function queryOpenAlex(parsed) {
     : parsed.work;
   jobs.push({
     exact: false,
-    url: `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=5&select=${select}&mailto=linhu%40scu.edu.cn`
+    url: `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=5&select=${select}`
   });
 
   const settled = await Promise.allSettled(jobs.map((job) => fetchJson(job.url)));
@@ -943,43 +944,11 @@ function googleBooksCandidate(item){
 
 async function queryGoogleBooks(parsed){
  const endpoint=new URL('https://www.googleapis.com/books/v1/volumes'),author=authorKey(splitSubmittedAuthors(parsed.authors)[0]||'');
- endpoint.searchParams.set('q',`intitle:${parsed.title}${author?' inauthor:'+author:''}`);endpoint.searchParams.set('maxResults','8');endpoint.searchParams.set('printType','books');
+ endpoint.searchParams.set('q',parsed.isbn?'isbn:'+parsed.isbn:`intitle:${parsed.title}${author?' inauthor:'+author:''}`);endpoint.searchParams.set('maxResults','8');endpoint.searchParams.set('printType','books');
  const data=await fetchJson(endpoint.href);return{source:'Google Books',candidates:(data.items||[]).map(googleBooksCandidate)};
 }
-async function queryPubMed(parsed) {
-  if (!parsed.pmid) return { source: "PubMed", candidates: [] };
-  const endpoint = new URL("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi");
-  endpoint.searchParams.set("db", "pubmed");
-  endpoint.searchParams.set("id", parsed.pmid);
-  endpoint.searchParams.set("retmode", "json");
-  const data = await fetchJson(endpoint.href);
-  const item = data?.result?.[parsed.pmid];
-  if (!item) return { source: "PubMed", candidates: [] };
-  const authors = (item.authors || []).map((author) => cleanValue(author.name)).filter(Boolean);
-  const doi = (item.articleids || []).find((entry) => entry.idtype === "doi")?.value || "";
-  return {
-    source: "PubMed",
-    candidates: [{
-      source: "PubMed",
-      sources: ["PubMed"],
-      exactDoi: Boolean(parsed.doi && doi && parsed.doi === doi.toLowerCase()),
-      title: cleanValue(item.title),
-      authors,
-      authorKeys: authors.map(authorKey).filter(Boolean),
-      year: Number(String(item.pubdate || "").match(/(?:18|19|20)\d{2}/)?.[0]) || null,
-      container: cleanValue(item.fulljournalname || item.source),
-      volume: cleanValue(item.volume),
-      issue: cleanValue(item.issue),
-      pages: cleanValue(item.pages).replace(/[–—]/g, "-"),
-      doi: String(doi).toLowerCase(),
-      pmid: parsed.pmid,
-      type: "journal-article",
-      sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${parsed.pmid}/`
-    }]
-  };
-}
-
-async function queryArxiv(parsed) {
+async function queryPubMed(parsed){return extraSources.queryPubMed(parsed);}
+    async function queryArxiv(parsed) {
   if (!parsed.arxivId) return { source: "arXiv", candidates: [] };
   const xml = await fetchText(
     `https://export.arxiv.org/api/query?id_list=${encodeURIComponent(parsed.arxivId)}`
@@ -1024,9 +993,13 @@ function buildVerificationPlan(parsed) {
   // “能否确认真实存在”的前置门槛。
   add("search-engine");
   if (parsed.pmid) add("pubmed");
+  if(parsed.doi || ["R","D","PP","DS"].includes(type))add("datacite");
+  if((!hasHan(parsed.title)&&["","J","PP"].includes(type))||parsed.pmid)add("europe-pmc");
+  if(!parsed.pmid&&/\b(?:medicine|medical|clinical|biolog|cancer|health|lancet|bmj|jama|nejm)\w*\b/i.test(parsed.title+" "+parsed.container))add("pubmed");
   if (parsed.arxivId) add("arxiv");
 
   if (parsed.isbn) {
+    add("google-books");
     add("open-library");
     add("crossref");
     return providers;
@@ -1052,6 +1025,7 @@ function buildVerificationPlan(parsed) {
   }
 
   if (type === "J" && hasHan(parsed.title)) {
+    add("crossref");
     if (parsed.container && parsed.year && parsed.issue) add("doi-registry");
     add("openalex");
     return providers;
@@ -1117,6 +1091,8 @@ async function queryOfficialJournal(parsed) {
 }
 
 function providerJob(provider, parsed) {
+  if(provider==="datacite")return{source:"DataCite",promise:extraSources.queryDataCite(parsed)};
+  if(provider==="europe-pmc")return{source:"Europe PMC",promise:extraSources.queryEuropePmc(parsed)};
   if(provider === "official-journal")return {source:"期刊官网题录",promise:queryOfficialJournal(parsed)};
   if (provider === "crossref") {
     return { source: "Crossref", promise: queryCrossref(parsed) };
@@ -1501,8 +1477,7 @@ function parseDoiCitation(text, doi, parsed) {
   );
   if (!head || !tail) return null;
 
-  const registryAuthors = head[1]
-    .split(/\s*(?:，|、|；|;|\s&\s)\s*/)
+  const registryAuthors = splitSubmittedAuthors(head[1])
     .map(cleanValue)
     .filter(Boolean);
   const submittedAuthors = splitSubmittedAuthors(parsed.authors);
@@ -1672,6 +1647,8 @@ function mergeCandidates(candidates) {
     prior.sources = [...new Set([...prior.sources, ...(candidate.sources || [candidate.source])])];
     prior.source = prior.sources.join(" + ");
     prior.exactDoi = prior.exactDoi || candidate.exactDoi;
+    prior.acceptedYears=[...new Set([...(prior.acceptedYears||[]),...(candidate.acceptedYears||[])])];
+    prior.origins=[...new Set([...(prior.origins||[]),prior.origin,candidate.origin].filter(Boolean))];
     prior.partialFields = [...new Set([
       ...(prior.partialFields || []),
       ...(candidate.partialFields || [])
@@ -2417,7 +2394,7 @@ async function verifyReference(reference) {
   const trusted = queryVerifiedReferenceIndex(parsed);
   if (
     !trusted.candidates.length && !parsed.arxivId && !parsed.pmid && (
-      type.includes("/OL") ||
+      type.includes("/OL") && !parsed.doi ||
       (parsed.url && !parsed.doi && (
         !type ||
         ["EB", "DB", "CP", "N", "S", "P"].includes(baseReferenceType(type))
@@ -2449,5 +2426,5 @@ module.exports = {
   buildVerificationPlan,
   diceSimilarity,
   normalizeText,
-  _test: {readPublicPdf,decodeBibliographicEntities,officialJournalCandidate,officialJournalUrls,referenceEdition,structuredWebMetadata,pdfIdentityCandidate,googleBooksCandidate,queryGoogleBooks,openLibraryCandidate,queryVerifiedReferenceIndex,fetchWebCandidate}
+  _test: {extraSources,scoreCandidate,academicDifferences,crossrefCandidate,mergeCandidates,readPublicPdf,decodeBibliographicEntities,officialJournalCandidate,officialJournalUrls,referenceEdition,structuredWebMetadata,pdfIdentityCandidate,googleBooksCandidate,queryGoogleBooks,openLibraryCandidate,queryVerifiedReferenceIndex,fetchWebCandidate}
 };
