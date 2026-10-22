@@ -15,7 +15,7 @@ test('未预存的第三版Routledge图书可由独立目录确认',async()=>{
  global.fetch=async input=>{if(!String(input).startsWith('https://www.googleapis.com/books/'))throw Error('offline');return new Response(JSON.stringify({items:[{id:'synthetic',volumeInfo:{title:'Designing Learning Services',authors:['Alice Smith'],publisher:'Routledge',publishedDate:'2021',infoLink:'https://books.google.com/books?id=synthetic'}}]}))};
  const raw='Smith, A. (2021). *Designing Learning Services* (3rd ed.). Routledge.';
  assert.equal(core._test.queryVerifiedReferenceIndex(core.parseReference(raw)).candidates.length,0);
- const r=await core.verifyReference(raw);assert.ok(good.includes(r.status),r.note);assert.match(r.source,/Google Books/);assert.match(r.canonical,/3rd ed/);
+ const r=await core.verifyReference(raw);assert.ok(good.includes(r.status),r.note);assert.match(r.source,/Google Books/);assert.doesNotMatch(r.canonical,/3rd ed/);assert.equal(r.canonicalComplete,false);assert.match(r.canonicalWarnings.join(''),/版次尚未核实/);
 });
 test('只有作品级初版年份的目录不用于改写后来版次的出版年',()=>{
  const parsed=core.parseReference('Smith, A. (2021). Designing Learning Services (3rd ed.). Routledge.');

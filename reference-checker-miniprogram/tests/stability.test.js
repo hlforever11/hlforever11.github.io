@@ -38,7 +38,7 @@ test('本机缓存严格区分DOI与URL标点、路径大小写，停用旧缓�
  assert.equal(api.cachedVerification(REF+' DOI:10.98765/ab.'),null);
  api.rememberVerification(REF+' https://example.org/Case_A',valid);
  assert.equal(api.cachedVerification(REF+' https://example.org/case_a'),null);
- assert.ok(saved.has('wenzheng-success-cache-v7'));assert.equal(saved.has('wenzheng-success-cache-v3'),false);
+ assert.ok(saved.has('wenzheng-success-cache-v8'));assert.equal(saved.has('wenzheng-success-cache-v3'),false);
 });
 test('无效置信度不进入成功缓存',()=>{
  const {api}=frontend();for(const confidence of [NaN,Infinity,-1,2])api.rememberVerification(REF,{...valid,confidence});

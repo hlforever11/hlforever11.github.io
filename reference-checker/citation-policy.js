@@ -5,7 +5,7 @@
   else root.CitationPolicy = api;
 })(typeof globalThis === 'object' ? globalThis : this, function () {
   'use strict';
-  const VERSION = '2026.10.22-v22';
+  const VERSION = '2026.10.22-v23';
   const norm = value => String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9\u3400-\u9fff]/g, '');
   const groups = [
     ['IFLA', 'International Federation of Library Associations and Institutions'],
@@ -117,7 +117,7 @@
       acceptedYears: candidate.acceptedYears || [],
       partialFields: candidate.partialFields || [],
       publicationDateRole: candidate.publicationDateRole || ''
-      ,record: Object.fromEntries(['title','authors','container','year','publicationDate','citationDate','volume','issue','pages','doi','isbn','type','online','sourceUrl','edition','version','publicationPlace','acceptedYears'].map(key => [key, candidate[key]]))
+      ,record: Object.fromEntries(['title','authors','container','year','publicationDate','citationDate','volume','issue','pages','doi','isbn','type','online','sourceUrl','edition','version','publicationPlace','acceptedYears','partialFields'].map(key => [key, candidate[key]]))
     };
   }
   function equivalentSource(a, b) {
@@ -201,6 +201,51 @@
     if (/\/OL$/.test(type) && !url) warnings.push('电子资源获取路径待补核（7.8）');
     return {text, warnings};
   }
+  function sourceCitation(record, parsed) {
+    // A source citation must not silently inherit unverified submitted fields.
+    const partial=record.partialFields||[];
+    if(partial.includes('其余作者'))record={...record,authors:[]};
+    if(partial.includes('末页'))record={...record,pages:''};
+    const journal=/article|journal/i.test(String(record.type||''));
+    const supportedPages=journal&&record.pages&&parsed.pages&&pagesCompatible(parsed.pages,record.pages)?parsed.pages:'';
+    const safe={raw:'',authors:'',title:'',type:'',container:record.container||'',pages:supportedPages,accessDate:parsed.accessDate||''};
+    const formatted=formatGb2025(record,safe),warnings=formatted.warnings.slice();
+    if(!record.authors?.length)warnings.push('作者尚未取得，请核对原文。');
+    if(!record.year&&!record.publicationDate&&!record.citationDate)warnings.push('出版年份或日期尚未取得。');
+    if(journal&&!record.container)warnings.push('刊名尚未取得。');
+    if(journal&&!record.pages)warnings.push('页码或文章编号尚未取得。');
+    for(const [field,label]of [['edition','版次'],['version','版本'],...(journal?[['volume','卷号'],['issue','期号']]:[])])if(parsed[field]&&!record[field])warnings.push(`提交的${label}尚未核实，下列著录不代填该项。`);
+    if(parsed.pages&&!journal)warnings.push('原著录引文页码尚未核实，未纳入下列来源著录。');
+    if(record.partialFields?.length)warnings.push('来源信息待补：'+record.partialFields.join('、')+'。');
+    return {...formatted,warnings:[...new Set(warnings)]};
+  }
+  function sameCitation(a,b) {
+    const key=value=>{
+      const text=String(value||'').normalize('NFKC').replace(/^\s*(?:\[\s*\d+\s*\]|[（(]\s*\d+\s*[）)]|\d+[.、)])\s*/,'');
+      const doi=(text.match(/10\.\d{4,9}\/[-._;()/:A-Z0-9]+/i)?.[0]||'').replace(/[.,;:]+$/,'').toLowerCase();
+      const urls=(text.match(/https?:\/\/[^\s<>]+/ig)||[]).filter(u=>!/^https?:\/\/(?:dx\.)?doi\.org\//i.test(u)).map(u=>u.replace(/[.,;。]+$/,'')).join('|');
+      return [norm(text.replace(/\(\s*0+(\d+)\s*\)/g,'($1)')),doi,urls].join('\u0000');
+    };
+    return key(a)===key(b);
+  }
+  function citationPresentation(result,parsed,e,formatted,factual,confirmed) {
+    const text=formatted.text,review=result.status==='review',chinese=/[\u3400-\u9fff]/.test(parsed.title||'');
+    const changes=factual.map(d=>d.field),record=e.record||{};
+    for(const [field,label]of [['authors','作者'],['container','来源'],['year','年份'],['volume','卷号'],['issue','期号'],['pages','页码'],['doi','DOI'],['edition','版次'],['version','版本']]){
+      const absent=field==='authors'?!splitAuthors(parsed.authors).length:!parsed[field];
+      if(absent&&(Array.isArray(record[field])?record[field].length:record[field]))changes.push('补充'+label);
+    }
+    if(!parsed.type&&record.type)changes.push('补充文献类型');
+    const unchanged=!!text&&!review&&!factual.length&&sameCitation(parsed.raw||result.submitted,text);
+    const optional=confirmed&&!chinese&&!factual.length&&!changes.length;
+    const complete=!!text&&!!e.authority&&!formatted.warnings.length;
+    const label=review?'匹配记录的著录':optional?'可选国标格式':complete?'核对后的著录':'来源参考著录（待补核）';
+    return {showCanonical:!!text&&!unchanged,canonicalOpen:!!text&&!unchanged&&(review||!optional),canonicalUnchanged:unchanged,
+      canonicalLabel:label,canonicalComplete:complete,canonicalCopyLabel:review?'复制匹配记录':complete?'复制著录':'复制草稿',
+      canonicalWarnings:formatted.warnings,canonicalChanges:[...new Set(changes)],
+      canonicalNote:review?'请先确认这是否是您要引用的文献。':optional?'按国标转换，原有英文格式可保留。':changes.length?'已核对并整理：'+[...new Set(changes)].join('、')+'。':complete?'依据来源记录整理，可复制使用。':'仅列出来源中已取得的信息。',
+      canonicalPurpose:review?'candidate-record':optional?'optional-conversion':'source-citation'};
+  }
   function applyResult(result, parsed) {
     if (result.citationPolicy === VERSION) return result;
     const e = result.citationEvidence || {authority: /官方|官网|原文|正式题录|DOI 注册元数据|Crossref/.test(result.source || '')};
@@ -224,7 +269,7 @@
       } else factual.push({...d, evidence: result.source || '原始记录'});
     }
     const confirmed = ['verified', 'partial', 'corrected'].includes(result.status);
-    const formatted = e.record && confirmed ? formatGb2025(e.record, parsed) : {text: '', warnings: []};
+    const formatted = e.record && (confirmed||result.status==='review') ? sourceCitation({...e.record,partialFields:e.record.partialFields||e.partialFields||[]}, parsed) : {text: '', warnings: []};
     const chinese = /[\u3400-\u9fff]/.test(parsed.title || '');
     const formatChecks = formatted.warnings.slice();
     if (chinese) for (const d of observations.filter(item=>item.submitted==='未提供' && ['卷号','期号','页码'].includes(item.field))) formatChecks.push(`${d.field}：来源提供 ${d.verified}；按第8.5条结合实际引文页码核对补充，不据此判文献虚假`);
@@ -233,16 +278,14 @@
     const detailsNote = result.detailsNote || result.note || '';
     let note = detailsNote;
     if (confirmed) note = factual.length ? `已找到对应文献，请核对以下${factual.length}项。` : observations.length || result.status==='partial' ? `已找到对应文献，部分信息待核对。` : `已在${result.source || '公开来源'}找到对应文献。`;
-    else if(status==='review')note='找到近似记录，请核对题名和作者。';
+    else if(status==='review')note='找到匹配记录，请确认是否为所引文献。';
     else if(status==='unverified')note=result.checkedSources?.length?'暂未找到足够证据，请查看复核链接。':'核验源暂未响应，请重试或查看复核链接。';
     else if(status==='error')note='服务暂不可用，请稍后重试。';
     return {...result, status, note, detailsNote, displayStyle: chinese ? "" : detectStyle(parsed.raw || result.submitted).certainty==="family" ? (detectStyle(parsed.raw || result.submitted).label.startsWith("作者")?"著者—出版年制（初步识别）":"GB/T 7714式") : "未识别", differences: factual, accuracyDifferences: factual, observations,
       equivalentForms: [...new Set(equivalent)], citationStyle: detectStyle(parsed.raw || result.submitted),
       canonical: formatted.text, formatChecks,
       canonicalStandard: formatted.text ? 'GB/T 7714—2025' : '',
-      canonicalLabel: chinese ? '参考著录' : '可选国标格式',
-      canonicalComplete: formatChecks.length === 0 && !!e.record,
-      canonicalPurpose: 'optional-conversion', citationPolicy: VERSION};
+      ...citationPresentation(result,parsed,e,formatted,factual,confirmed), citationPolicy: VERSION};
   }
-  return {VERSION, splitAuthors, compareName, authorsRelation, detectStyle, evidence, applyResult, equivalentSource, formatGb2025, pagesCompatible};
+  return {VERSION, splitAuthors, compareName, authorsRelation, detectStyle, evidence, applyResult, equivalentSource, formatGb2025, pagesCompatible,sourceCitation,sameCitation};
 });

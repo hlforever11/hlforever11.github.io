@@ -47,7 +47,7 @@ test('中文期刊依据2025第8.5条生成，补充字段与真实性分别表�
  const record={title:parsed.title,authors:['张三','李四','王五','赵六'],type:'journal-article',year:2024,container:'图书馆',volume:'43',issue:'5',pages:'10-20',source:'期刊官网'};
  const r=policy.applyResult({status:'verified',confidence:.97,source:'期刊官网',differences:[],citationEvidence:policy.evidence(record)},parsed);
  assert.equal(r.canonical,'张三, 李四, 王五, 等. 学习服务研究[J]. 图书馆, 2024, 43(5):10-20.');
- assert.equal(r.canonicalLabel,'参考著录');assert.match(r.formatChecks.join(''),/文献类型标识/);assert.equal(r.status,'verified');
+ assert.equal(r.canonicalLabel,'核对后的著录');assert.match(r.formatChecks.join(''),/文献类型标识/);assert.equal(r.status,'verified');
 });
 test('2025作者姓氏大小写、书籍出版地和版次按条文处理，不虚构城市',()=>{
  const r=policy.formatGb2025({title:'Example book',authors:['Albert Einstein'],container:'Example Press',type:'book',year:2020},{edition:'2nd ed.',container:'Example Press'});
@@ -84,7 +84,7 @@ test('出版者常见变体、刊名规范缩写不作为直接纠错，不能�
  assert.equal(policy.equivalentSource('Journal of Data Science','Journal of Library Science'),false);
 });
 test('英语原著录仅提示推测格式，可选转换默认收起，旧响应不冒充2025输出',()=>{
- const {api}=browserApi();const r=policy.applyResult({status:'verified',confidence:.99,source:'官网',differences:[],citationEvidence:policy.evidence({title:'Example',authors:['John Smith'],year:2024,type:'book',container:'Press'})},{raw:'Smith, J. (2024). Example. Press.',title:'Example'});
+ const {api}=browserApi();const r=policy.applyResult({status:'verified',confidence:.99,source:'官网',differences:[],citationEvidence:policy.evidence({title:'Example',authors:['John Smith'],year:2024,type:'book',container:'Press'})},api.parseReference('Smith, J. (2024). Example. Press.'));
  const html=api.card(r,0);assert.match(html,/可选国标格式/);assert.doesNotMatch(html,/<details class="canonical" open/);assert.doesNotMatch(html,/著录需修正/);
  assert.equal(policy.applyResult({status:'verified',confidence:.98,differences:[],canonical:'old 2015 output'},{raw:'Example'}).canonical,'');
 });

@@ -7,7 +7,7 @@ const {
 const { withTimeout } = require("../../utils/cloud");
 const MAX_REFERENCES = 20;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v7";
+const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v8";
 const VERIFICATION_CACHE_TTL = 180 * 24 * 60 * 60 * 1000;
 const VERIFICATION_CACHE_LIMIT = 120;
 const VISIT_BASE = 1000;
@@ -526,7 +526,9 @@ Page({
       confidencePercent: Math.round(Number(
         result.authenticityConfidence ?? result.confidence ?? 0
       ) * 100),
-      canonicalOpen: false,
+      canonicalOpen: Boolean(result.canonicalOpen),
+      showCanonical: result.showCanonical !== false,
+      canonicalWarnings: result.canonicalWarnings || result.formatChecks || [],
       differences: result.differences || [],
       links
     };
@@ -572,7 +574,7 @@ Page({
     if (!citation) return;
     wx.setClipboardData({
       data: citation,
-      success: () => wx.showToast({ title: "建议著录已复制", icon: "success" })
+      success: () => wx.showToast({ title: "著录已复制", icon: "success" })
     });
   }
 });

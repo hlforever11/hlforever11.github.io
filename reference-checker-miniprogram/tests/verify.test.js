@@ -243,7 +243,7 @@ test("同一核验云函数可通过 HTTP 网关供网站调用并返回跨域�
   const result = JSON.parse(response.body);
   assert.equal(result.status, "verified");
   assert.ok(result.confidence >= 0.9);
-  assert.equal(result.build, "2026.10.22-v22");
+  assert.equal(result.build, "2026.10.22-v23");
 });
 
 test("英文期刊优先用题名、作者和刊名查询 Crossref，并缓存成功结果", async () => {
@@ -298,7 +298,7 @@ test("英文期刊优先用题名、作者和刊名查询 Crossref，并缓存�
   assert.ok(["verified", "partial"].includes(first.status));
   assert.ok(first.confidence >= 0.8);
   assert.match(first.source, /Crossref/);
-  assert.equal(first.build, "2026.10.22-v22");
+  assert.equal(first.build, "2026.10.22-v23");
   assert.equal(crossrefCalls, 1);
 
   global.fetch = async () => {

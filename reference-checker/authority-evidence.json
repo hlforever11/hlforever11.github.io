@@ -115,6 +115,25 @@
       "issue": "",
       "pages": "",
       "evidenceNote": "原文第3页：IFLA Governing Board于2020-09-17通过；IFLA官方回顾列为2020-10发布。路径2019/05不是出版日期。FAIFE与IFLA存在上下级责任关系，不作普通缩写等价。"
+    },
+    {
+      "title": "Guidance for Generative AI in Education and Research",
+      "authors": [
+        "Fengchun Miao",
+        "Wayne Holmes"
+      ],
+      "year": 2023,
+      "publicationDate": "2023-09-07",
+      "publicationPlace": "Paris",
+      "doi": "10.54675/ewzm9535",
+      "isbn": "9789231006128",
+      "type": "report",
+      "online": true,
+      "source": "UNESCO 官方文献记录",
+      "sourceUrl": "https://unesdoc.unesco.org/ark:/48223/pf0000386693",
+      "metadataEvidenceUrl": "https://www.unesco.org/en/articles/guidance-generative-ai-education-and-research?hub=66973",
+      "verifiedOn": "2026-10-22",
+      "evidenceNote": "UNESCO出版物页面列出Miao, Fengchun和Holmes, Wayne、2023年及2023-09-07发布日期；数字图书馆题录列DOI与ISBN。2026-01-16是网页更新日期，不作报告出版日期。"
     }
   ]
 }

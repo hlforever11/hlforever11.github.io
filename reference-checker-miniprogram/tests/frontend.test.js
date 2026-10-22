@@ -50,3 +50,17 @@ test('中英文参考著录默认收起，用户可展开',()=>{
  assert.equal(english.canonicalOpen,false);assert.equal(chinese.canonicalOpen,false);
  page.data.results=[english,chinese];page.toggleCanonical({currentTarget:{dataset:{index:0}}});assert.equal(page.data.results[0].canonicalOpen,true);
 });
+
+test('新响应隐藏重复著录，并按服务标记展开更正或匹配记录',()=>{
+ const {page}=frontend();
+ const same=page.prepareResult({status:'verified',canonical:'张三.测试[J].图书馆,2024.',showCanonical:false,canonicalUnchanged:true,canonicalComplete:true},'[7] 张三.测试[J].图书馆,2024.',0);
+ assert.equal(same.showCanonical,false);assert.equal(same.canonicalUnchanged,true);
+ const review=page.prepareResult({status:'review',canonical:'Miao F, Holmes W. Guidance[R/OL].2023.',showCanonical:true,canonicalOpen:true,canonicalLabel:'匹配记录的著录'},'[3] Guidance[R/OL].2023.',2);
+ assert.equal(review.canonicalOpen,true);assert.equal(review.status,'review');assert.match(review.canonical,/^\[3\]/);assert.equal(review.canonicalLabel,'匹配记录的著录');
+});
+
+test('小程序复制完整参考著录并保留原序号',()=>{
+ let copied;const {page}=frontend({setClipboardData:x=>{copied=x.data;x.success()},showToast(){}});
+ page.copyCitation({currentTarget:{dataset:{citation:'[29] 张三. 测试[J]. 图书馆, 2024.'}}});
+ assert.equal(copied,'[29] 张三. 测试[J]. 图书馆, 2024.');
+});

@@ -55,5 +55,5 @@ test('已确认结果只显示简短结论，详细依据和参考著录默认�
  const {api}=browserApi(),parsed=api.parseReference('张三. 测试方法[J]. 图书馆, 2024.');
  const r=policy.applyResult({status:'verified',confidence:.99,source:'Crossref',submitted:parsed.raw,differences:[],note:'详细来源说明，未见明确冲突；这不代表完整格式审校。',citationEvidence:policy.evidence({title:'测试方法',authors:['张三'],container:'图书馆',year:2024,type:'journal-article'})},parsed);
  assert.equal(r.note,'已在Crossref找到对应文献。');assert.equal(r.displayStyle,'');
- const html=api.card(r,0);assert.doesNotMatch(html,/<details[^>]*open|未见明确字段冲突/);assert.match(html,/核验详情/);assert.match(html,/参考著录/);
+ const html=api.card(r,0);assert.doesNotMatch(html,/<details[^>]*open|未见明确字段冲突/);assert.match(html,/核验详情/);assert.equal(r.showCanonical,false);assert.doesNotMatch(html,/<details class="canonical"/);assert.match(html,/页码或文章编号尚未取得/);
 });

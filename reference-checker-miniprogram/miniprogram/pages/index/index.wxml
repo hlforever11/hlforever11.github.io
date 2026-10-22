@@ -135,16 +135,21 @@
         </view>
       </view>
 
-      <view wx:if="{{result.canonical}}" class="canonical">
+      <view wx:if="{{result.canonical &amp;&amp; result.showCanonical}}" class="canonical">
         <button class="copy-citation" size="mini" data-index="{{index}}" bindtap="toggleCanonical">{{result.canonicalOpen?"收起":"查看"}} {{result.canonicalLabel||"参考著录"}}（{{result.canonicalStandard||"格式待核对"}}）</button>
         <view wx:if="{{result.canonicalOpen}}">
+        <view wx:if="{{result.canonicalNote}}" class="format-note">{{result.canonicalNote}}</view>
         <view>{{result.canonical}}</view>
-        <button class="copy-citation" size="mini" data-citation="{{result.canonical}}" bindtap="copyCitation">复制</button>
-        <view wx:for="{{result.formatChecks}}" wx:key="*this" wx:for-item="formatCheck" class="format-note">{{formatCheck}}</view>
+        <button class="copy-citation" size="mini" data-citation="{{result.canonical}}" bindtap="copyCitation">{{result.canonicalCopyLabel||"复制著录"}}</button>
+        <view wx:for="{{result.canonicalWarnings}}" wx:key="*this" wx:for-item="formatCheck" class="format-note">{{formatCheck}}</view>
 
         </view>
       </view>
 
+      <view wx:if="{{result.canonicalUnchanged}}" class="format-note">
+        <view wx:if="{{result.canonicalComplete}}">原著录可保留。</view>
+        <view wx:for="{{result.canonicalWarnings}}" wx:key="*this" wx:for-item="warning">{{warning}}</view>
+      </view>
       <view wx:if="{{result.links.length}}" class="result-links">
         <button
           class="source-button"

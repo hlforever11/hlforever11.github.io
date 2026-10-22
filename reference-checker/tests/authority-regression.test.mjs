@@ -27,7 +27,7 @@ test('非索引中的英文图书可经新增独立目录确认，目录失效�
  const {api}=browserApi(async url=>{calls.push(String(url));if(!String(url).startsWith('https://www.googleapis.com/books/'))throw Error('offline');
  return new Response(JSON.stringify({items:[{id:'synthetic-test',volumeInfo:{title:'Designing Learning Services',authors:['Alice Smith'],publishedDate:'2021',publisher:'Routledge',infoLink:'https://books.google.com/books?id=synthetic-test'}}]}));});
  assert.equal(api.TRUSTED_REFERENCE_CACHE.some(r=>r.title==='Designing Learning Services'),false);
- const r=await api.verifyOneLocal(raw);assert.ok(confirmed.includes(r.status),r.note);assert.match(r.source,/Google Books/);assert.match(r.canonical,/3rd ed/);assert.ok(calls.some(url=>url.includes('inauthor')));
+ const r=await api.verifyOneLocal(raw);assert.ok(confirmed.includes(r.status),r.note);assert.match(r.source,/Google Books/);assert.doesNotMatch(r.canonical,/3rd ed/);assert.equal(r.canonicalComplete,false);assert.match(r.canonicalWarnings.join(''),/版次尚未核实/);assert.ok(calls.some(url=>url.includes('inauthor')));
 });
 test('作品级目录不把第一版出版年强行改写第二版年份',()=>{
  const {api}=browserApi(),p=api.parseReference('Smith, A. (2021). Designing Learning Services (3rd ed.). Routledge.');
