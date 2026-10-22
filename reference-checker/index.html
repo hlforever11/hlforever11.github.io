@@ -319,7 +319,7 @@
       if(!Number.isFinite(age)||age<0||age>VERIFY_CACHE_TTL||!validVerificationResult(result)||!['verified','partial','corrected'].includes(result.status)||Number(result.authenticityConfidence??result.confidence)<.8){
         delete cache[key];try{localStorage.setItem(VERIFY_CACHE_KEY,JSON.stringify(cache))}catch(error){}return null;
       }
-      return{...result,submitted:reference,cacheHit:true,note:`已使用本机最近一次成功核验的公开书目证据。${result.note||''}`};
+      return{...result,submitted:reference,cacheHit:true,detailsNote:`已使用本机最近一次成功核验的公开书目证据。${result.detailsNote||result.note||''}`};
     }
     function rememberVerification(reference,result){
       if(!validVerificationResult(result)||!['verified','partial','corrected'].includes(result.status)||Number(result.authenticityConfidence??result.confidence)<.8)return;

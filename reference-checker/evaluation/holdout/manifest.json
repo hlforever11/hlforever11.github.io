@@ -18,5 +18,10 @@
     "index.html": "a2f0cde83ca238ecf15f4cc0916aad849140c939565e4f7e8fc21404eae9ce16",
     "citation-policy.js": "2e1f20e1b89519dd7422ad41577076f3c00364d2f5e4c021399a521250aee1a0",
     "open-sources.js": "49b7098cac5766f8ae7ef217216f97f6c412e79a9f3b41f53b8a1191ba0397fd"
+  },
+  "postEvaluationUiChange": {
+    "description": "Move local cache status from the main conclusion into collapsed details. Parsing, source adapters and matching rules unchanged.",
+    "indexSha256Before": "a2f0cde83ca238ecf15f4cc0916aad849140c939565e4f7e8fc21404eae9ce16",
+    "indexSha256After": "9995db04534cd8c1549eaa324f48d8f90c0e1d9ecf6874b1515da7115507f23d"
   }
 }

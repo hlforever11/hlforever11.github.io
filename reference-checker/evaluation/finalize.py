@@ -25,7 +25,7 @@ live['identityAudit']='Rechecked every returned source link against frozen sourc
 p.write_text(json.dumps(live,ensure_ascii=False,indent=2)+'\n')
 dev=load(ROOT/'replay-results.json');reserve=load(ROOT/'holdout/replay-results.json');reserve_live=load(ROOT/'holdout/live-results.json')
 manifest=load(ROOT/'holdout/manifest.json')
-assert all(hashlib.sha256((ROOT.parent/k).read_bytes()).hexdigest()==v for k,v in manifest['engineSha256'].items()),'Engine changed after reserve set was frozen'
+assert all(hashlib.sha256((ROOT.parent/k).read_bytes()).hexdigest()==(manifest.get('postEvaluationUiChange',{}).get('indexSha256After',v) if k=='index.html' else v) for k,v in manifest['engineSha256'].items()),'Unexpected engine change after reserve set was frozen'
 main_titles={r['title'] for r in records.values()};assert not main_titles.intersection(r['title'] for r in rows(ROOT/'holdout/source-records.jsonl.gz'))
 
 # Blank reviewer fields are intentional; these are not invented human labels.
@@ -47,7 +47,7 @@ readme=f'''# 文证外部评测记录（2026-10-22）
 
 ## 样本和结果
 
-共500篇不同作品，生成1,300条输入。开发集400篇、1,000条；保留集100篇、300条，两组及原有52个预置题名之间没有题名交集。开发集曾用于修正规则；保留集在修正规则后冻结，未再用其结果调整网站引擎。
+共500篇不同作品，生成1,300条输入。开发集400篇、1,000条；保留集100篇、300条，两组及原有52个预置题名之间没有题名交集。开发集曾用于修正规则；保留集在修正规则后冻结，未再用其结果调整网站核验规则；之后仅将缓存提示移入折叠详情，未改变核验规则。
 
 | 评测 | 输入数 | 符合本次检查预期 | 解释 |
 | --- | ---: | ---: | --- |

@@ -29,7 +29,7 @@ test('同段落章节标题与连续序号仍能提取，跨行题录保持完�
 });
 test('不同DOI不能因删除点号而命中同一个成功缓存',()=>{
  const {api}=browserApi();const x='SMITH J. Example[J]. Review, 2024. DOI:10.1234/a.b.',y=x.replace('a.b','ab');
- api.rememberVerification(x,good);assert.ok(api.cachedVerification(x));assert.equal(api.cachedVerification(y),null);
+ api.rememberVerification(x,good);assert.ok(api.cachedVerification(x));assert.equal(api.cachedVerification(y),null);assert.equal(api.cachedVerification(x).note,good.note);assert.match(api.cachedVerification(x).detailsNote,/本机最近一次/);
 });
 test('损坏、未来时间及不可信状态的缓存不会变成永久成功',()=>{
  for(const item of [{storedAt:'bad',result:good},{storedAt:Date.now()+86400000,result:good},{storedAt:Date.now(),result:{...good,status:'toString'}},{storedAt:Date.now(),result:{...good,differences:'broken'}}]){

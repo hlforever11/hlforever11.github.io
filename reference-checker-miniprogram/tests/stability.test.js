@@ -34,7 +34,7 @@ test('全角序号和零宽字符可解析，无序号APA换行合并',()=>{
 test('本机缓存严格区分DOI与URL标点、路径大小写，停用旧缓存',()=>{
  const {api,saved}=frontend();
  api.rememberVerification(REF+' DOI:10.98765/a.b.',valid);
- assert.ok(api.cachedVerification(REF+' DOI:10.98765/a.b.'));
+ assert.ok(api.cachedVerification(REF+' DOI:10.98765/a.b.'));assert.equal(api.cachedVerification(REF+' DOI:10.98765/a.b.').note,valid.note);assert.match(api.cachedVerification(REF+' DOI:10.98765/a.b.').detailsNote,/本机最近一次/);
  assert.equal(api.cachedVerification(REF+' DOI:10.98765/ab.'),null);
  api.rememberVerification(REF+' https://example.org/Case_A',valid);
  assert.equal(api.cachedVerification(REF+' https://example.org/case_a'),null);

@@ -54,7 +54,7 @@ function cachedVerification(reference) {
     ...item.result,
     submitted: reference,
     cacheHit: true,
-    note: `已使用本机最近一次成功核验的公开书目证据。${item.result.note || ""}`
+    detailsNote: `已使用本机最近一次成功核验的公开书目证据。${item.result.detailsNote || item.result.note || ""}`
   };
 }
 
