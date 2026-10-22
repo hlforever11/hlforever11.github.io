@@ -11,6 +11,12 @@ const JOURNALS = require("./cn-journals.json");
 const REQUEST_TIMEOUT = 1800;
 const USER_AGENT = "ReferenceVerifierMiniProgram/1.0 (mailto:linhu@scu.edu.cn)";
     const VERIFIED_REFERENCE_INDEX=[
+{"source": "ALA 官方文件（2009年通过版）", "sourceUrl": "https://www.ala.org/sites/default/files/2024-04/finalcorecompstat09.pdf", "urlAliases": ["https://www.ala.org/educationcareers/sites/ala.org.educationcareers/files/content/careers/corecomp/corecompetences/finalcorecompstat09.pdf", "https://www.ala.org/sites/default/files/educationcareers/content/careers/corecomp/corecompetences/finalcorecompstat09.pdf"], "title": "ALA’s Core Competences of Librarianship", "authors": ["American Library Association"], "year": 2009, "publicationDate": "2009-01-27", "container": "American Library Association", "type": "report", "strictIdentity": true, "verifiedOn": "2026-10-22", "volume": "", "issue": "", "pages": ""},
+{"source": "作者官网与出版者书目", "sourceUrl": "https://www.ruhabenjamin.com/race-after-technology", "evidenceUrls": ["https://www.wiley-vch.de/en/areas-interest/humanities-social-sciences/sociology-12so/population-demography-12sog/race-after-technology-978-1-5095-2639-0"], "title": "Race After Technology: Abolitionist Tools for the New Jim Code", "authors": ["Ruha Benjamin"], "year": 2019, "container": "Polity Press", "isbn": "9781509526390", "type": "book", "strictIdentity": true, "verifiedOn": "2026-10-22", "volume": "", "issue": "", "pages": ""},
+{"source": "IFLA 官方工作文件", "sourceUrl": "https://www.ifla.org/g/ai/developing-a-library-strategic-response-to-artificial-intelligence/", "urlAliases": ["https://www.ifla.org/developing-a-library-strategic-response-to-artificial-intelligence/"], "title": "Developing a library strategic response to Artificial Intelligence", "authors": ["Andrew Cox"], "year": 2023, "publicationDate": "2023-11-20", "version": "1.1", "container": "International Federation of Library Associations and Institutions", "doi": "10.15131/shef.data.24631293.v1", "type": "report", "strictIdentity": true, "verifiedOn": "2026-10-22", "volume": "", "issue": "", "pages": ""},
+{"source": "IFLA 官方征稿通知", "sourceUrl": "https://www.ifla.org/news/information-literacy-section-call-for-papers-lets-work-together-to-develop-critical-thinkers-in-the-chatgpt-era/", "title": "Information Literacy Section Call for Papers: “Let’s Work Together to Develop Critical Thinkers in the ChatGPT Era”", "authors": ["International Federation of Library Associations and Institutions"], "year": 2023, "publicationDate": "2023-04-07", "container": "International Federation of Library Associations and Institutions", "type": "webpage", "strictIdentity": true, "verifiedOn": "2026-10-22", "volume": "", "issue": "", "pages": ""},
+{"source": "Routledge 官方第二版书目", "sourceUrl": "https://www.routledge.com/How-Colleges-Change-Understanding-Leading-and-Enacting-Change/Kezar/p/book/9781315121178", "title": "How Colleges Change: Understanding, Leading, and Enacting Change", "authors": ["Adrianna Kezar"], "year": 2018, "container": "Routledge", "edition": "2nd ed.", "isbn": "9781315121178", "doi": "10.4324/9781315121178", "type": "book", "strictIdentity": true, "verifiedOn": "2026-10-22", "volume": "", "issue": "", "pages": ""},
+
       {source:'《图书馆论坛》官网',sourceUrl:'https://tsglt.zslib.com.cn/CN/Y2023/V43/I5/104',title:'ChatGPT类智能对话工具兴起对图书馆行业的机遇与挑战',authors:['李书宁','刘一鸣'],year:2023,container:'图书馆论坛',volume:'43',issue:'5',pages:'104-110',type:'journal-article'},
       {source:'《现代情报》正式题录（DOI）',sourceUrl:'https://doi.org/10.3969/j.issn.1008-0821.2023.04.001',title:'从ChatGPT看生成式AI对情报学研究与实践的影响',authors:['曹树金','曹茹烨'],year:2023,container:'现代情报',volume:'43',issue:'4',pages:'3-10',doi:'10.3969/j.issn.1008-0821.2023.04.001',type:'journal-article'},
       {source:'OpenAI 官方报告',sourceUrl:'https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf',title:'Language Models are Unsupervised Multitask Learners',authors:['Alec Radford','Jeffrey Wu','Rewon Child','David Luan','Dario Amodei','Ilya Sutskever'],year:2019,container:'OpenAI',volume:'',issue:'',pages:'',online:true,type:'report'},
@@ -79,7 +85,7 @@ function cleanValue(value) {
 }
 
 function cleanWebField(value) {
-  return String(value || "")
+  return decodeBibliographicEntities(value)
     .replace(/[\u00a0\s]+/g, " ")
     .replace(/^\s*[|｜·•—–_-]+\s*|\s*[|｜·•—–_-]+\s*$/g, "")
     .trim();
@@ -201,6 +207,40 @@ function normalizeDate(value) {
   return `${year}-${month}-${String(Number(match[3])).padStart(2, "0")}`;
 }
 
+
+
+function decodeBibliographicEntities(value){
+ const named={amp:'&',quot:'"',apos:"'",nbsp:' ',lt:'<',gt:'>',lsquo:'‘',rsquo:'’',ldquo:'“',rdquo:'”',ndash:'–',mdash:'—'};
+ return String(value||'').replace(/&#(x[0-9a-f]+|\d+);/ig,(all,code)=>{const n=code[0].toLowerCase()==='x'?parseInt(code.slice(1),16):Number(code);return n>0&&n<=0x10ffff?String.fromCodePoint(n):all}).replace(/&([a-z]+);/ig,(all,name)=>named[name.toLowerCase()]??all);
+}
+
+function isCorporateAuthor(value){return /\b(?:association|federation|organization|organisation|university|institute|council|committee|commission|unesco|ifla|ala)\b/i.test(String(value||''));}
+function referenceEdition(value){
+ const cleaned=String(value||'').replace(/\*{1,3}([^*\n]+)\*{1,3}/g,'$1').replace(/(^|\s)_([^_\n]+)_(?=\s|[.,]|$)/g,'$1$2');
+ const match=cleaned.match(/\s*\(\s*((?:\d+(?:st|nd|rd|th)?\s*(?:ed(?:ition)?\.?))|(?:(?:version|ver\.?|v)\s*\d+(?:\.\d+)*))\s*\)\s*$/i);
+ const edition=match && !/^(?:version|ver\.?|v)\s*\d/i.test(match[1])?match[1]:'';
+ const version=match && !edition?match[1].replace(/^(?:version|ver\.?|v)\s*/i,''):'';
+ return {title:cleanValue(match?cleaned.slice(0,match.index):cleaned),edition,version};
+}
+function recordUrlMatches(parsed,record){return !!(parsed.url && [record.sourceUrl,...(record.urlAliases||[])].filter(Boolean).some(url=>comparableUrl(parsed.url)===comparableUrl(url)));}
+function structuredWebMetadata(html){
+ const nodes=[];
+ const add=value=>{if(Array.isArray(value))value.forEach(add);else if(value&&typeof value==='object'){nodes.push(value);if(value['@graph'])add(value['@graph']);}};
+ for(const match of String(html).matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/ig)){try{add(JSON.parse(match[1]))}catch(error){}}
+ const item=nodes.find(n=>/^(?:Book|Report|Article|NewsArticle|ScholarlyArticle)$/i.test(String(n['@type']||'')))||nodes.find(n=>/^(?:WebPage|CreativeWork)$/i.test(String(n['@type']||'')))||{};
+ const names=value=>(Array.isArray(value)?value:[value]).filter(Boolean).map(v=>typeof v==='string'?v:v.name||'').filter(Boolean);
+ return {title:item.headline||item.name||'',authors:names(item.author||item.creator),publicationDate:item.datePublished||'',publisher:names(item.publisher)[0]||'',type:item['@type']||''};
+}
+function pdfIdentityCandidate(text,info,parsed,sourceUrl){
+ const lines=String(text||'').slice(0,6000).split(/\n+/).map(v=>v.trim()).filter(v=>v&&!/^\d+$/.test(v));
+ const headings=[String(info?.Title||'')];
+ for(let start=0;start<Math.min(lines.length,5);start++)for(let end=start+1;end<=Math.min(lines.length,start+6);end++)headings.push(lines.slice(start,end).join(' '));
+ const title=headings.filter(v=>v&&!/^microsoft|^untitled|\.docx?$/i.test(v)).sort((a,b)=>diceSimilarity(parsed.title,b)-diceSimilarity(parsed.title,a))[0]||'';
+ const date=String(text).match(/\b(?:adopted|published|publication date)\b[^\n]{0,150}?\b((?:19|20)\d{2})\b/i)?.[1]||'';
+ const authors=String(info?.Author||'').split(/\s*;\s*/).filter(v=>v&&!/microsoft|adobe|anonymous/i.test(v));
+ return {source:'PDF 原文元数据与首页正文',sources:['PDF 原文元数据与首页正文'],sourceUrl,url:sourceUrl,title,authors,authorKeys:authors.map(authorKey),year:date?Number(date):null,publicationDate:date,container:'',type:'report',contentType:'pdf',reachable:true};
+}
+
     function looksLikeChineseAuthorList(value){
       const names=String(value||'').split(/\s*[;；,，、]\s*/).map(cleanValue).filter(Boolean);
       return!!(names.length&&names.length<=20&&names.every(name=>/^[\p{Script=Han}·]{2,24}$/u.test(name.replace(/\s+/g,''))));
@@ -274,7 +314,9 @@ function normalizeDate(value) {
         else if(volIssue?.[1]||volIssue?.[2]||pages)type='J';
         else if(/\b(?:press|springer|wiley|publisher)\b/i.test(body)||/出版社/.test(body))type='M';
       }
-      return{raw,work,doi,isbn,pmid,arxivId,standardNumber,patentNumber,url,type,title,authors,container,year,publicationDate,accessDate,volume:volIssue?.[1]||'',issue:volIssue?.[2]||issueWithoutVolume?.[1]||'',pages,cnkiTitleFirst};
+      const editionInfo=referenceEdition(title);title=editionInfo.title;
+      if(!type && !url && (editionInfo.edition || /\b(?:routledge|polity|palgrave|penguin|elsevier|press|publisher|springer|wiley)\b/i.test(container)))type='M';
+      return{raw,work,doi,isbn,pmid,arxivId,standardNumber,patentNumber,url,type,title,authors,container,year,publicationDate,accessDate,edition:editionInfo.edition,version:editionInfo.version,volume:volIssue?.[1]||'',issue:volIssue?.[2]||issueWithoutVolume?.[1]||'',pages,cnkiTitleFirst};
     }
     function conventionalReference(parsed){
       if(!parsed?.cnkiTitleFirst)return parsed?.raw||'';
@@ -284,18 +326,17 @@ function normalizeDate(value) {
       if(parsed.pages)value+=`:${parsed.pages}`;
       return`${value}.`;
     }
-function splitSubmittedAuthors(value) {
-  return String(value || "")
-    .replace(/\bet\s+al\.?/ig, "")
-    .replace(/(?:,|，|、|;|；)?\s*等\.?\s*$/u, "")
-    .split(/\s*(?:,|，|、|;|；|\band\b|&)\s*/i)
-    .map(cleanValue)
-    .filter((name) => name && name !== "等");
-}
+function splitSubmittedAuthors(value){
+      const text=String(value||'').replace(/\bet\s+al\.?/ig,'').replace(/(?:,|，|、|;|；)?\s*等\.?\s*$/u,'');
+      if(isCorporateAuthor(text))return text.split(/\s*[;；]\s*/).map(cleanValue).filter(Boolean);
+      return text.replace(/([A-Z\u00c0-\u024f][A-Za-z\u00c0-\u024f'’\-]+),\s*((?:[A-Z]\.?(?:\s+|(?=[,;&]|$))){1,5})(?=\s*(?:[,;&]|\band\b|$))/g,'$1\ue000 $2')
+        .split(/\s*(?:,|，|、|;|；|\band\b|&)\s*/i).map(name=>cleanValue(name.replace(/\ue000/g,','))).filter(name=>name&&name!=='等');
+    }
 
 function authorKey(name) {
   const value = String(name || "").trim();
   if (!value) return "";
+  if(isCorporateAuthor(value))return normalizeText(value);
   if (/^[\u3400-\u9fff\s·]+$/.test(value)) return normalizeText(value);
   const commaFamily = value.split(",")[0]?.trim();
   if (value.includes(",") && commaFamily) return normalizeText(commaFamily);
@@ -717,16 +758,16 @@ function queryVerifiedReferenceIndex(parsed) {
       const sourceUrlExact = Boolean(
         parsed.url &&
         record.sourceUrl &&
-        comparableUrl(parsed.url) === comparableUrl(record.sourceUrl)
+        recordUrlMatches(parsed,record)
       );
       const authorSupported = !submittedAuthorKeys.length ||
         directAuthorMatch ||
         (sourceUrlExact && titleMatch >= 0.98) ||
         (weakInitialAuthors && titleMatch >= 0.98 && (sourceSupported || yearSupported));
-      return titleMatch >= 0.9 && authorSupported && (
+      return (!record.strictIdentity||normalizeText(parsed.title)===normalizeText(record.title)) && titleMatch >= 0.9 && authorSupported && (
         !parsed.url ||
         !record.sourceUrl ||
-        comparableUrl(parsed.url) === comparableUrl(record.sourceUrl)
+        recordUrlMatches(parsed,record)
       );
     })
     .map((record) => ({
@@ -833,7 +874,7 @@ async function querySemanticScholar(parsed) {
   };
 }
 
-function openLibraryCandidate(item, isbn = "") {
+function openLibraryCandidate(item, isbn = "", parsed = {}) {
   const authors = (item.authors || item.author_name || [])
     .map((author) => cleanValue(author?.name || author))
     .filter(Boolean);
@@ -841,13 +882,14 @@ function openLibraryCandidate(item, isbn = "") {
     .map((publisher) => cleanValue(publisher?.name || publisher))
     .filter(Boolean);
   const publishDate = String(item.publish_date || item.first_publish_year || "");
-  const year = Number(publishDate.match(/(?:18|19|20)\d{2}/)?.[0]) || null;
+  const year = parsed.edition && !item.publish_date && !item.edition_name ? null : Number(publishDate.match(/(?:18|19|20)\d{2}/)?.[0]) || null;
   const key = item.key || "";
   return {
     source: "Open Library",
     sources: ["Open Library"],
     exactDoi: false,
-    title: item.title || "",
+    title: [item.title,item.subtitle].filter(Boolean).join(": "),
+    edition:item.edition_name || "",
     authors,
     authorKeys: authors.map(authorKey).filter(Boolean),
     year,
@@ -874,7 +916,7 @@ async function queryOpenLibrary(parsed) {
     const item = data?.[bibkey];
     return {
       source: "Open Library",
-      candidates: item ? [openLibraryCandidate(item, parsed.isbn)] : []
+      candidates: item ? [openLibraryCandidate(item, parsed.isbn, parsed)] : []
     };
   }
   const endpoint = new URL("https://openlibrary.org/search.json");
@@ -889,10 +931,21 @@ async function queryOpenLibrary(parsed) {
   const data = await fetchJson(endpoint.href);
   return {
     source: "Open Library",
-    candidates: (data?.docs || []).map((item) => openLibraryCandidate(item))
+    candidates: (data?.docs || []).map((item) => openLibraryCandidate(item,"",parsed))
   };
 }
 
+
+function googleBooksCandidate(item){
+ const v=item?.volumeInfo||{},authors=Array.isArray(v.authors)?v.authors:[],date=String(v.publishedDate||''),isbn=(v.industryIdentifiers||[]).find(i=>i.type==='ISBN_13')?.identifier||'';
+ return {source:'Google Books',sources:['Google Books'],title:[v.title,v.subtitle].filter(Boolean).join(': '),authors,authorKeys:authors.map(authorKey),year:Number(date.slice(0,4))||null,container:v.publisher||'',type:'book',isbn,sourceUrl:v.infoLink||`https://books.google.com/books?id=${encodeURIComponent(item.id||'')}`,volume:'',issue:'',pages:''};
+}
+
+async function queryGoogleBooks(parsed){
+ const endpoint=new URL('https://www.googleapis.com/books/v1/volumes'),author=authorKey(splitSubmittedAuthors(parsed.authors)[0]||'');
+ endpoint.searchParams.set('q',`intitle:${parsed.title}${author?' inauthor:'+author:''}`);endpoint.searchParams.set('maxResults','8');endpoint.searchParams.set('printType','books');
+ const data=await fetchJson(endpoint.href);return{source:'Google Books',candidates:(data.items||[]).map(googleBooksCandidate)};
+}
 async function queryPubMed(parsed) {
   if (!parsed.pmid) return { source: "PubMed", candidates: [] };
   const endpoint = new URL("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi");
@@ -979,6 +1032,7 @@ function buildVerificationPlan(parsed) {
     return providers;
   }
   if (type === "M") {
+    add("google-books");
     // 无 ISBN 的英文图书不能只依赖单一目录。并行查询图书目录、出版
     // 元数据与学术索引；若提交项实际是在线报告，结果类型由候选记录纠正。
     add("open-library");
@@ -1079,6 +1133,7 @@ function providerJob(provider, parsed) {
   if (provider === "search-engine") {
     return { source: "搜索引擎结果摘要", promise: querySearchEngineEvidence(parsed) };
   }
+  if(provider === "google-books")return{source:"Google Books",promise:queryGoogleBooks(parsed)};
   if (provider === "open-library") {
     return { source: "Open Library", promise: queryOpenLibrary(parsed) };
   }
@@ -1770,7 +1825,7 @@ function displayName(name) {
 
 function gtAuthor(name) {
   const value = displayName(name);
-  if (hasHan(value)) return value;
+  if (hasHan(value) || isCorporateAuthor(value)) return value;
   if (/\b(?:association|organization|university|committee|institute|library|society|department|centre|center|council|academy|ministry)\b/i.test(value)) {
     return value;
   }
@@ -1782,6 +1837,7 @@ function gtAuthor(name) {
 
     function candidateGbType(candidate){
       const type=String(candidate?.type||'').toLowerCase();
+      if(/webpage|web-site/.test(type))return'EB/OL';
       if(/book/.test(type))return'M';
       if(/proceedings|conference/.test(type))return'C';
       if(/dissertation|thesis/.test(type))return'D';
@@ -1793,6 +1849,7 @@ function gtAuthor(name) {
       return'';
     }
     function canonicalCitation(candidate,parsed){
+      if(candidateGbType(candidate)==='EB/OL')return webCanonicalCitation(candidate,parsed);
       const names=(candidate.authors||[]).map(gtAuthor).filter(Boolean),hasChinese=names.some(hasHan);
       let authors=names.slice(0,3).join(', ');if(names.length>3)authors+=hasChinese?', 等':', et al.';
       const candidateType=String(candidate.type||'').toLowerCase();let type=candidateGbType(candidate)||parsed?.type||'J';if(type==='R'&&parsed?.url)type='R/OL';
@@ -1800,6 +1857,8 @@ function gtAuthor(name) {
       const title=submittedNorm&&verifiedNorm&&submittedNorm.includes(verifiedNorm)?submittedTitle:verifiedTitle;
       const container=cleanValue(candidate.container||parsed?.container),year=candidate.year||parsed?.year,isReport=/report|preprint/.test(candidateType),volume=isReport?'':cleanValue(candidate.volume||parsed?.volume),issue=isReport?'':cleanValue(candidate.issue||parsed?.issue),pages=isReport?'':cleanValue(candidate.pages||parsed?.pages);
       let citation=`${authors?`${authors}. `:''}${title}[${type}]`;
+      if(type==='M'&&(candidate.edition||parsed?.edition))citation+=`. ${cleanValue(candidate.edition||parsed.edition)}`;
+      if(type.startsWith('R')&&(candidate.version||parsed?.version))citation+=`. Version ${candidate.version||parsed.version}`;
       if(container)citation+=type==='C'?`//${container}`:`. ${container}`;
       if(year)citation+=`${container?', ':'. '}${year}`;
       if(volume)citation+=`, ${volume}${issue?`(${issue})`:''}`;else if(issue)citation+=`(${issue})`;
@@ -1813,6 +1872,8 @@ function missingMetadataFields(parsed, candidate) {
   const journalLike = /article|journal/.test(candidateType);
   if (parsed.authors && !(candidate.authors || []).length) fields.push("作者");
   if (parsed.year && !candidate.year) fields.push("年份");
+  if(parsed.edition&&!candidate.edition)fields.push("版次");
+  if(parsed.version&&!candidate.version)fields.push("版本");
   if (parsed.container && !candidate.container) fields.push("刊名/来源");
   if (journalLike && parsed.volume && !candidate.volume) fields.push("卷号");
   if (journalLike && parsed.issue && !candidate.issue) fields.push("期号");
@@ -1824,6 +1885,8 @@ function missingMetadataFields(parsed, candidate) {
 
     function academicDifferences(parsed,candidate,metrics){
       const out=[],add=(field,submitted,verified)=>out.push({field,submitted:submitted||'未提供',verified:verified||'未提供'}),same=(a,b)=>normalizeText(a)===normalizeText(b),sameNumberField=(a,b)=>{const left=cleanValue(a),right=cleanValue(b);return/^\d+$/.test(left)&&/^\d+$/.test(right)?Number(left)===Number(right):same(left,right)};
+      if(parsed.edition&&candidate.edition&&normalizeText(parsed.edition)!==normalizeText(candidate.edition))add('版次',parsed.edition,candidate.edition);
+      if(parsed.version&&candidate.version&&parsed.version!==candidate.version)add('版本',parsed.version,candidate.version);
       const submittedTitle=normalizeText(parsed.title),verifiedTitle=normalizeText(candidate.title),canonicalTitleScore=diceSimilarity(parsed.title,candidate.title),oneContainsOther=submittedTitle&&verifiedTitle&&(submittedTitle.includes(verifiedTitle)||verifiedTitle.includes(submittedTitle));
       if(parsed.title&&candidate.title&&canonicalTitleScore<.96&&canonicalTitleScore>.58&&!oneContainsOther)add('篇名',parsed.title,candidate.title);
       if(parsed.authors&&candidate.authors?.length&&metrics.titleScore>.88&&(metrics.authorScore<.55||(!candidate.partialFields?.includes('其余作者')&&splitSubmittedAuthors(parsed.authors).some(name=>!candidate.authors.some(actual=>authorKey(name)===authorKey(actual)||diceSimilarity(name,actual)>.86)))))add('作者',parsed.authors,candidate.authors.map(displayName).join('，'));
@@ -1888,6 +1951,11 @@ function chooseBestPageTitle(parsedTitle, titles) {
     .sort((a, b) => b.score - a.score)[0].title;
 }
 
+async function readPublicPdf(buffer) {
+  // Older PDF.js reads pooled Node Buffers incorrectly; use an owned byte array.
+  return require("pdf-parse")(new Uint8Array(buffer),{max:2});
+}
+
 async function fetchWebCandidate(parsed) {
   const { response, finalUrl } = await fetchPublicPage(parsed.url);
   const contentType = response.headers.get("content-type") || "";
@@ -1898,22 +1966,13 @@ async function fetchWebCandidate(parsed) {
     : await response.buffer();
   if (buffer.length > 4 * 1024 * 1024) throw new Error("原始页面内容过大");
 
-  if (/application\/pdf/i.test(contentType) || buffer.subarray(0, 4).toString() === "%PDF") {
-    return {
-      source: "提交的原始网址",
-      sourceUrl: finalUrl || parsed.url,
-      reachable: true,
-      title: "",
-      authors: [],
-      publicationDate: "",
-      year: null,
-      container: "",
-      contentType: "pdf"
-    };
+  if (/application\/pdf/i.test(contentType) || buffer.subarray(0,4).toString()==="%PDF") {
+    const pdf=await readPublicPdf(buffer);
+    return pdfIdentityCandidate(pdf.text,pdf.info||{},parsed,finalUrl||parsed.url);
   }
 
   const html = decodeHtml(buffer, contentType);
-  const $ = cheerio.load(html);
+  const $ = cheerio.load(html),structured=structuredWebMetadata(html);
   const titles = pageValues($, [
     'meta[name="citation_title"]',
     'meta[property="og:title"]',
@@ -1924,6 +1983,7 @@ async function fetchWebCandidate(parsed) {
     "h1",
     "title"
   ]);
+  if(structured.title)titles.unshift(structured.title);
   const title = chooseBestPageTitle(parsed.title, titles);
   const metaAuthors = pageValues($, [
     'meta[name="citation_author"]',
@@ -1939,7 +1999,7 @@ async function fetchWebCandidate(parsed) {
   );
   const authors = metaAuthors.length
     ? metaAuthors
-    : labeledAuthor
+    : structured.authors.length ? structured.authors : labeledAuthor
       ? splitSubmittedAuthors(labeledAuthor)
       : [];
   const rawDate = firstPageValue($, [
@@ -1950,13 +2010,13 @@ async function fetchWebCandidate(parsed) {
     'meta[name="dc.date"]',
     'meta[name="pubdate"]',
     'meta[name="publishdate"]',
-    "time[datetime]"
+    "time[datetime]", "article h1 + p", "main h1 + p", "h1 + p"
   ]) || labeledPageValue(
     visibleText,
     ["发布时间", "发布日期", "发布于", "时间"],
     ["文章来源", "来源", "作者", "责任编辑", "编辑"]
   );
-  const publicationDate = normalizeDate(rawDate);
+  const publicationDate = englishTextDate(rawDate || structured.publicationDate) || normalizeDate(rawDate || structured.publicationDate);
   const container = firstPageValue($, [
     'meta[property="og:site_name"]',
     'meta[name="publisher"]',
@@ -2444,5 +2504,5 @@ module.exports = {
   buildVerificationPlan,
   diceSimilarity,
   normalizeText,
-  _test: {officialJournalCandidate,officialJournalUrls}
+  _test: {readPublicPdf,decodeBibliographicEntities,officialJournalCandidate,officialJournalUrls,referenceEdition,structuredWebMetadata,pdfIdentityCandidate,googleBooksCandidate,queryGoogleBooks,openLibraryCandidate,queryVerifiedReferenceIndex,fetchWebCandidate}
 };

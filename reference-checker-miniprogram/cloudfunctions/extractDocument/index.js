@@ -4,7 +4,7 @@ const https = require("node:https");
 const pdfParse = require("pdf-parse");
 const { extractReferences } = require("./lib/references");
 
-const FUNCTION_BUILD = "2026.10.15-extract2";
+const FUNCTION_BUILD = "2026.10.22-extract3";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_TEXT_LENGTH = 2 * 1024 * 1024;
 
@@ -25,7 +25,7 @@ async function extractText(buffer, extension) {
     return result.value || "";
   }
   if (extension === "pdf") {
-    const result = await pdfParse(buffer, {
+    const result = await pdfParse(new Uint8Array(buffer), {
       max: 101
     });
     if (result.numpages > 100) {
@@ -179,5 +179,6 @@ exports.main = async (event) => {
 };
 
 exports._test = {
+  extractText,
   downloadTemporaryFile
 };

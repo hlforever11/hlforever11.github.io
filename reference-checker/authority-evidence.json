@@ -1,0 +1,99 @@
+{
+  "verifiedOn": "2026-10-22",
+  "records": [
+    {
+      "source": "ALA 官方文件（2009年通过版）",
+      "sourceUrl": "https://www.ala.org/sites/default/files/2024-04/finalcorecompstat09.pdf",
+      "urlAliases": [
+        "https://www.ala.org/educationcareers/sites/ala.org.educationcareers/files/content/careers/corecomp/corecompetences/finalcorecompstat09.pdf",
+        "https://www.ala.org/sites/default/files/educationcareers/content/careers/corecomp/corecompetences/finalcorecompstat09.pdf"
+      ],
+      "title": "ALA’s Core Competences of Librarianship",
+      "authors": [
+        "American Library Association"
+      ],
+      "year": 2009,
+      "publicationDate": "2009-01-27",
+      "container": "American Library Association",
+      "type": "report",
+      "verifiedOn": "2026-10-22",
+      "volume": "",
+      "issue": "",
+      "pages": ""
+    },
+    {
+      "source": "作者官网与出版者书目",
+      "sourceUrl": "https://www.ruhabenjamin.com/race-after-technology",
+      "evidenceUrls": [
+        "https://www.wiley-vch.de/en/areas-interest/humanities-social-sciences/sociology-12so/population-demography-12sog/race-after-technology-978-1-5095-2639-0"
+      ],
+      "title": "Race After Technology: Abolitionist Tools for the New Jim Code",
+      "authors": [
+        "Ruha Benjamin"
+      ],
+      "year": 2019,
+      "container": "Polity Press",
+      "isbn": "9781509526390",
+      "type": "book",
+      "verifiedOn": "2026-10-22",
+      "volume": "",
+      "issue": "",
+      "pages": ""
+    },
+    {
+      "source": "IFLA 官方工作文件",
+      "sourceUrl": "https://www.ifla.org/g/ai/developing-a-library-strategic-response-to-artificial-intelligence/",
+      "urlAliases": [
+        "https://www.ifla.org/developing-a-library-strategic-response-to-artificial-intelligence/"
+      ],
+      "title": "Developing a library strategic response to Artificial Intelligence",
+      "authors": [
+        "Andrew Cox"
+      ],
+      "year": 2023,
+      "publicationDate": "2023-11-20",
+      "version": "1.1",
+      "container": "International Federation of Library Associations and Institutions",
+      "doi": "10.15131/shef.data.24631293.v1",
+      "type": "report",
+      "verifiedOn": "2026-10-22",
+      "volume": "",
+      "issue": "",
+      "pages": ""
+    },
+    {
+      "source": "IFLA 官方征稿通知",
+      "sourceUrl": "https://www.ifla.org/news/information-literacy-section-call-for-papers-lets-work-together-to-develop-critical-thinkers-in-the-chatgpt-era/",
+      "title": "Information Literacy Section Call for Papers: “Let’s Work Together to Develop Critical Thinkers in the ChatGPT Era”",
+      "authors": [
+        "International Federation of Library Associations and Institutions"
+      ],
+      "year": 2023,
+      "publicationDate": "2023-04-07",
+      "container": "International Federation of Library Associations and Institutions",
+      "type": "webpage",
+      "verifiedOn": "2026-10-22",
+      "volume": "",
+      "issue": "",
+      "pages": ""
+    },
+    {
+      "source": "Routledge 官方第二版书目",
+      "sourceUrl": "https://www.routledge.com/How-Colleges-Change-Understanding-Leading-and-Enacting-Change/Kezar/p/book/9781315121178",
+      "title": "How Colleges Change: Understanding, Leading, and Enacting Change",
+      "authors": [
+        "Adrianna Kezar"
+      ],
+      "year": 2018,
+      "container": "Routledge",
+      "edition": "2nd ed.",
+      "isbn": "9781315121178",
+      "doi": "10.4324/9781315121178",
+      "type": "book",
+      "verifiedOn": "2026-10-22",
+      "volume": "",
+      "issue": "",
+      "pages": ""
+    }
+  ]
+}

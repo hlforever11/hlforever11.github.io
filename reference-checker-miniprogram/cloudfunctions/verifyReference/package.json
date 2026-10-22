@@ -9,7 +9,8 @@
   "dependencies": {
     "abort-controller": "3.0.0",
     "cheerio": "1.0.0-rc.12",
+    "iconv-lite": "0.7.0",
     "node-fetch": "2.7.0",
-    "iconv-lite": "0.7.0"
+    "pdf-parse": "1.1.1"
   }
 }

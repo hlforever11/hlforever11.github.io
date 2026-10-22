@@ -7,7 +7,7 @@ const {
 const { withTimeout } = require("../../utils/cloud");
 const MAX_REFERENCES = 20;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v4";
+const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v5";
 const VERIFICATION_CACHE_TTL = 180 * 24 * 60 * 60 * 1000;
 const VERIFICATION_CACHE_LIMIT = 120;
 const VISIT_BASE = 1000;

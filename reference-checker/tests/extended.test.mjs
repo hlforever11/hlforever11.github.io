@@ -118,5 +118,5 @@ test('PDF worker版本与解析器一致且资源完整',()=>{
 });
 test('网站与小程序使用独立计数',()=>{
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.match(html,/id="websiteVisitCount">1,012/);assert.match(html,/id="websiteVisitStatus"/);assert.doesNotMatch(html,/busuanzi_(?:page|site)_pv/);
- const wxml=readFileSync(new URL('../../reference-checker-miniprogram/miniprogram/pages/index/index.wxml',import.meta.url),'utf8');assert.doesNotMatch(wxml,/历史累计用户|新版累计访问/);assert.match(wxml,/累计访问 \{\{visitTotal\}\} 次/);
+ const wxml=readFileSync(new URL('../../reference-checker-miniprogram/miniprogram/pages/index/index.wxml',import.meta.url),'utf8');assert.doesNotMatch(wxml,/历史累计用户|新版累计访问/);assert.doesNotMatch(wxml,/累计访问 \{\{visitTotal\}\} 次/);
 });
