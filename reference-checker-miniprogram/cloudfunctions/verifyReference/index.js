@@ -1,6 +1,7 @@
 const { verifyReference } = require("./lib/core");
+const { handleUsage } = require("./lib/usage-stats");
 
-const FUNCTION_BUILD = "2026.10.22-v23";
+const FUNCTION_BUILD = "2026.11.04-usage1";
 const RESULT_CACHE = new Map();
 const RESULT_CACHE_LIMIT = 300;
 const RESULT_CACHE_TTL = 30 * 24 * 60 * 60 * 1000;
@@ -95,6 +96,18 @@ exports.main = async (event) => {
     return httpResponse(204, {});
   }
   const payload = eventPayload(event);
+  if (['usage.read', 'usage.record', 'usage.retainedHistory'].includes(payload?.action)) {
+    try {
+      const headers = event?.headers || {};
+      const origin = String(headers.origin || headers.Origin || '');
+      const result = withBuild(await handleUsage(payload, { http, origin }));
+      return http ? httpResponse(200, result) : result;
+    } catch (error) {
+      const result = withBuild({ ok: false, kind: 'wenzheng-usage-v1', message: '统计暂不可用，核验功能不受影响。' });
+      console.error('usage stats failed', error.message);
+      return http ? httpResponse(503, result) : result;
+    }
+  }
   const reference = String(payload?.reference || "").replace(/\s+/g, " ").trim();
   if (!reference) {
     const result = withBuild({

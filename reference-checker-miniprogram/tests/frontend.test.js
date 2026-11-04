@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 function frontend(wx={},globalData={}) {
  let page;
- const context={wx,getApp:()=>({globalData}),Page:x=>{page=x},require:p=>require(p.endsWith('/cloud')?'../miniprogram/utils/cloud':'../miniprogram/utils/references'),console,setTimeout,clearTimeout};
+ const context={wx,getApp:()=>({globalData}),Page:x=>{page=x},require:p=>require(p.endsWith('/cloud')?'../miniprogram/utils/cloud':p.endsWith('/usage')?'../miniprogram/utils/usage':'../miniprogram/utils/references'),console,setTimeout,clearTimeout};
  vm.runInNewContext(fs.readFileSync(require.resolve('../miniprogram/pages/index/index.js'),'utf8')+'\nglobalThis.cacheApi={cachedVerification,rememberVerification};',context);
  return {page,api:context.cacheApi};
 }
@@ -63,4 +63,16 @@ test('小程序复制完整参考著录并保留原序号',()=>{
  let copied;const {page}=frontend({setClipboardData:x=>{copied=x.data;x.success()},showToast(){}});
  page.copyCitation({currentTarget:{dataset:{citation:'[29] 张三. 测试[J]. 图书馆, 2024.'}}});
  assert.equal(copied,'[29] 张三. 测试[J]. 图书馆, 2024.');
+});
+test('未启用历史记录时也统计核验条次，缓存结果只上报匿名数量',async()=>{
+ const saved=new Map(),packets=[];
+ const {page,api}=frontend({cloud:{},getStorageSync:k=>saved.get(k),setStorageSync:(k,v)=>saved.set(k,v),pageScrollTo(){}},{cloudAvailable:true});
+ page.setData=values=>Object.assign(page.data,values);
+ const raw='[1] 王明. 文献核验方法[J]. 测试期刊,2024,3(1):1-8.';
+ page.data.inputValue=raw;page.data.count=1;page.data.historyEnabled=false;
+ api.rememberVerification(raw,{status:'verified',confidence:.99,canonical:raw,differences:[],evidenceLinks:[]});
+ page.callCloud=async(name,data)=>{assert.equal(name,'verifyReference');packets.push(data);return{ok:true,kind:'wenzheng-usage-v1',acknowledged:data.items.map(i=>i.index)}};
+ await page.verifyAll();await page._usageTracker.flush();
+ assert.equal(page.data.results.length,1);assert.equal(packets.length,1);assert.equal(packets[0].platform,'miniprogram');assert.equal(packets[0].items[0].cached,true);
+ assert.doesNotMatch(JSON.stringify(packets),/王明|测试期刊|reference"|submitted/);
 });

@@ -39,15 +39,26 @@
     <section class="boundary" id="limits"><div class="kicker">BOUNDARIES</div><h2>“暂未证实”不等于“虚假”</h2><p>证据匹配度只依据篇名、作者、来源、永久标识和原始网址等作品身份字段及证据强度计算。年份、卷期页等事实差异与格式检查分开。中文依据 GB/T 7714—2025；英文格式仅作谨慎识别，不把姓名缩写、大小写和不同引用规范直接判错。证据匹配度是系统评分，未经统计校准为真实性概率。若来源暂时不可访问或未被数据库收录，系统只会标记为“暂未证实”，并保留官网与搜索引擎复核入口。</p></section>
   </main>
   <footer><div>系统优先检索公开题录，再由专业来源与原始网页复核。重要用途请以出版者原始记录为准。</div><div class="footer-meta"><a class="author-email" href="mailto:linhu@scu.edu.cn" aria-label="网站联系邮箱">linhu@scu.edu.cn</a><span class="site-counter ready" id="siteCounter" aria-live="polite" title="最近已确认记录；起始基数1000，与小程序分别计数"><span class="dot" aria-hidden="true">·</span><span>累计访问 <span class="site-counter-value" id="websiteVisitCount">1,012</span> 次 <span class="visit-status" id="websiteVisitStatus">（更新中）</span></span></span></div></footer>
-  <meta name="wenzheng-build" content="2026.10.15-stability2">
+  <meta name="wenzheng-build" content="2026.11.04-usage1">
   <script>window.WENZHENG_API_URL="https://cloud1-d6gtx1retbc8754fa-1457855977.ap-shanghai.app.tcloudbase.com/api/verify-reference";</script>
   <script defer src="./counter.js?v=20261009-counter-fix2"></script>
   <script src="./citation-policy.js?v=20261022-v23"></script>
   <script src="./open-sources.js?v=20261022-v23"></script>
+  <script src="./usage-client.js?v=20261104-v24"></script>
   <script type="module">
     const extraSources=window.WenzhengSources.create({fetchJson,authorKey});
     const CitationPolicy=window.CitationPolicy;
     const MAX=20,MAX_SIZE=15*1024*1024,REQUEST_TIMEOUT=9000,CLOUD_VERIFY_ENDPOINT=String(window.WENZHENG_API_URL||'').trim();
+    const usageTracker=window.WenzhengUsage?.createUsageTracker({platform:'website',
+      load:key=>localStorage.getItem(key),save:(key,value)=>localStorage.setItem(key,JSON.stringify(value)),
+      list:()=>Object.keys(localStorage),remove:key=>localStorage.removeItem(key),
+      send:payload=>withDeadline(async signal=>{
+        const response=await fetch(CLOUD_VERIFY_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload),credentials:'omit',keepalive:true,signal});
+        if(!response.ok)throw Error('Usage service unavailable');
+        let data=await response.json();if(typeof data?.body==='string')data=JSON.parse(data.body);return data;
+      },8000)});
+    window.addEventListener?.('pagehide',()=>{void usageTracker?.flush()});
+    window.addEventListener?.('online',()=>{void usageTracker?.flush()});
     function operationError(message,name='AbortError'){const error=Error(message);error.name=name;return error}
     function checkActive(signal){if(signal?.aborted)throw operationError('操作已停止')}
     async function withDeadline(operation,timeout,signal){
@@ -1088,7 +1099,7 @@ function googleBooksCandidate(item){
     verifyBtn.onclick=async()=>{
       if(verifying){activeBatch?.controller.abort();return}
       const all=refs(input.value),list=all.slice(0,MAX);if(!list.length||fileReading)return;
-      const batch={controller:new AbortController()};activeBatch=batch;verifying=true;update();
+      const batch={controller:new AbortController(),usage:usageTracker?.newBatch()};activeBatch=batch;verifying=true;update();
       if(all.length>MAX)fileState(`共识别 ${all.length} 条参考文献，本次自动核验前 20 条。`,'success');
       verifyBtn.innerHTML='<span class="spinner"></span>停止核验';$('#results').classList.remove('hidden');$('#cards').innerHTML='';$('#summary').innerHTML='';$('#progress').textContent=`0 / ${list.length}`;
       const out=new Array(list.length);let next=0,done=0;
@@ -1102,6 +1113,7 @@ function googleBooksCandidate(item){
           }
           if(batch.controller.signal.aborted||activeBatch!==batch)return;
           if(!validVerificationResult(out[i]))out[i]={status:'error',confidence:0,submitted:list[i],differences:[],note:'核验结果格式异常，请重试。'};
+          usageTracker?.record(batch.usage,i,out[i]);
           out[i].position=i;done++;$('#progress').textContent=`${done} / ${list.length}`;render(out.filter(Boolean));
         }
       }

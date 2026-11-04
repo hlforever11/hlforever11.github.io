@@ -5,6 +5,7 @@ const {
 } = require("../../utils/references");
 
 const { withTimeout } = require("../../utils/cloud");
+const { createUsageTracker } = require("../../utils/usage");
 const MAX_REFERENCES = 20;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const VERIFICATION_CACHE_KEY = "wenzheng-success-cache-v8";
@@ -119,6 +120,7 @@ Page({
   },
 
   onLoad() {
+    this.ensureUsageTracker();
     this.restoreHistoryState();
     this.refreshVisits();
   },
@@ -141,6 +143,7 @@ Page({
   },
 
   onUnload() {
+    void this._usageTracker?.flush();
     this._documentVersion = (this._documentVersion || 0) + 1;
     this._activeBatch?.cancel();
     this._activeBatch = null;
@@ -152,6 +155,7 @@ Page({
   },
 
   onShow() {
+    void this.ensureUsageTracker().flush();
     let replay;
     try { replay = wx.getStorageSync("historyReplay"); } catch(error) {}
 
@@ -450,6 +454,16 @@ Page({
     }
   },
 
+  ensureUsageTracker() {
+    if (!app.globalData.usageTracker) app.globalData.usageTracker = createUsageTracker({
+      platform: 'miniprogram', load: key => wx.getStorageSync(key), save: (key, value) => wx.setStorageSync(key, value),
+      list: () => wx.getStorageInfoSync().keys, remove: key => wx.removeStorageSync(key),
+      send: payload => withTimeout(() => this.callCloud('verifyReference', payload), 8000, '统计上报暂不可用')
+    });
+    this._usageTracker = app.globalData.usageTracker;
+    return this._usageTracker;
+  },
+
   stopVerification() {
     const batch=this._activeBatch;
     if(!batch)return;
@@ -469,7 +483,8 @@ Page({
     }
     let cancel;
     const stopped=new Promise(resolve=>{cancel=resolve});
-    const batch={cancelled:false,done:0,total:references.length,cancel(){this.cancelled=true;cancel(null)}};
+    const usage=this.ensureUsageTracker();
+    const batch={cancelled:false,done:0,total:references.length,usage:usage.newBatch(),cancel(){this.cancelled=true;cancel(null)}};
     this._activeBatch=batch;
     const current=()=>this._activeBatch===batch && !batch.cancelled;
     this.setData({loading:true,canVerify:false,showResults:true,results:[],summary:this.buildSummary([]),progressText:`0 / ${references.length}`});
@@ -484,6 +499,7 @@ Page({
         }
         if(!current())return;
         output.push(this.prepareResult(result || {},references[index],index));
+        usage.record(batch.usage,index,output[output.length-1]);
         batch.done++;
         this.setData({results:output.slice(),summary:this.buildSummary(output),progressText:`${batch.done} / ${references.length}`});
       }

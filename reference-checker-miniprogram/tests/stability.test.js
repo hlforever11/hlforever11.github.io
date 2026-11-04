@@ -11,7 +11,7 @@ function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve
 function frontend(extraWx={}){
  let page;const saved=new Map();
  const wx={cloud:{},getStorageSync:k=>saved.get(k),setStorageSync:(k,v)=>saved.set(k,v),removeStorageSync:k=>saved.delete(k),showToast(){},showModal(){},pageScrollTo(){},...extraWx};
- const context={wx,getApp:()=>({globalData:{cloudAvailable:true}}),Page:p=>{page=p},require:p=>p.endsWith('/cloud')?require('../miniprogram/utils/cloud'):parser,setTimeout,clearTimeout,console};
+ const context={wx,getApp:()=>({globalData:{cloudAvailable:true}}),Page:p=>{page=p},require:p=>p.endsWith('/cloud')?require('../miniprogram/utils/cloud'):p.endsWith('/usage')?require('../miniprogram/utils/usage'):parser,setTimeout,clearTimeout,console};
  vm.runInNewContext(fs.readFileSync(require.resolve('../miniprogram/pages/index/index.js'),'utf8')+'\nglobalThis.cacheApi={cachedVerification,rememberVerification};',context);
  page.setData=data=>Object.assign(page.data,data);
  return{page,saved,api:context.cacheApi};
